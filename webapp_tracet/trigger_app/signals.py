@@ -31,6 +31,7 @@ my_number = os.environ.get('TWILIO_PHONE_NUMBER', None)
 def group_trigger(sender, instance, **kwargs):
     """Check if the latest Event has already been observered or if it is new and update the models accordingly
     """
+    print('DEBUG - group_trigger')
     # instance is the new Event
     logger.info('Trying to group with similar events')
     # ------------------------------------------------------------------------------
@@ -106,7 +107,6 @@ def group_trigger(sender, instance, **kwargs):
                 )
             elif prop_dec.decision == "T":
                 # Check new event position is further away than the repointing limit
-
                 if (prop_dec.ra and prop_dec.dec):
                     old_event_coord = SkyCoord(
                         ra=prop_dec.ra * u.degree, dec=prop_dec.dec * u.degree)
@@ -204,6 +204,7 @@ def proposal_worth_observing(
     observation_reason : `str`, optional
         The reason for this observation. The default is "First Observation" but other potential reasons are "Repointing".
     """
+    print('DEBUG - proposal_worth_observing')
     logger.info(
         f'Checking that proposal {prop_dec.proposal} is worth observing.')
     # Defaults if not worth observing
@@ -221,13 +222,14 @@ def proposal_worth_observing(
         decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {voevent.id}: The Events declination ({ prop_dec.dec }) is outside limit 1 ({ prop_dec.proposal.atca_dec_min_1 } < dec < {prop_dec.proposal.atca_dec_max_1}) or limit 2 ({ prop_dec.proposal.atca_dec_min_2 } < dec < {prop_dec.proposal.atca_dec_max_2}). \n"
     else:
         # Continue to next test
-
         if prop_dec.proposal.event_telescope is None or str(prop_dec.proposal.event_telescope).strip() == voevent.telescope.strip():
             # This project observes events from this telescope
 
             # Check if this proposal thinks this event is worth observing
             proj_source_bool = False
+            
             if prop_dec.proposal.source_type == "GRB" and prop_dec.event_group_id.source_type == "GRB":
+                print('DEBUG - prop_dec.source_type is GRB')
                 # This proposal wants to observe GRBs so check if it is worth observing
                 trigger_bool, debug_bool, pending_bool, decision_reason_log = worth_observing_grb(
                     # event values
@@ -309,17 +311,20 @@ def proposal_worth_observing(
         else:
             # Proposal does not observe event from this telescope so update message
             decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {voevent.id}: This proposal does not trigger on events from {voevent.telescope}. \n"
-
+    print(trigger_bool, debug_bool, pending_bool, decision_reason_log)
     if trigger_bool:
         # Check if you can observe and if so send off the observation
         logger.info(
             'Check if you can observe and if so send off the observation')
+        print("DEBUG - trigger observation")
         decision, decision_reason_log = trigger_observation(
             prop_dec,
             decision_reason_log,
             reason=observation_reason,
             event_id=voevent.id,
         )
+        print("DEBUG - trigger_observation result")
+        print(decision, decision_reason_log)
         if decision == 'E':
             # Error observing so send off debug
             debug_bool = True

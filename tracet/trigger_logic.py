@@ -67,17 +67,18 @@ def worth_observing_grb(
     decision_reason_log : `str`
         A log of all the decisions made so far so a user can understand why the source was(n't) observed.
     """
+    print('DEBUG - worth_observing_grb')
     # Setup up defaults
     trigger_bool = False
     debug_bool = False
     pending_bool = False
-
     # Check the events likelyhood data
     likely_bool = False
     if fermi_most_likely_index is not None:
         # Fermi triggers have their own probability
         if fermi_most_likely_index == 4:
             logger.debug("MOST_LIKELY = GRB")
+            print('DEBUG - MOST_LIKELY = GRB')
             # ignore things that don't reach our probability threshold
             if fermi_detection_prob >= fermi_min_detection_prob:
                 likely_bool = True
@@ -87,6 +88,7 @@ def worth_observing_grb(
                 decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: Fermi GRB probability less than {fermi_min_detection_prob} so not triggering. \n"
         else:
             logger.debug("MOST LIKELY != GRB")
+            print('DEBUG - MOST LIKELY != GRB')
             debug_bool = False
             decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: Fermi GRB likely index not 4. \n"
     elif swift_rate_signif is not None:
@@ -129,7 +131,7 @@ def worth_observing_grb(
         else:
             debug_bool = True
             decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: Event duration outside of all time ranges so not triggering. \n"
-
+    
     return trigger_bool, debug_bool, pending_bool, decision_reason_log
 
 def worth_observing_nu(
