@@ -13756,17 +13756,26 @@ telescope: LVC
 trig_id: MS181101ab
 trig_pairs:
 - SWIFT_BAT_GRB_Pos
+- SWIFT_BAT_GRB_POS_ACK
 - SWIFT_XRT_Pos
+- SWIFT_XRT_POSITION
 - SWIFT_UVOT_Pos
+- SWIFT_UVOT_POS
 - Fermi_GBM_Flt_Pos
+- FERMI_GBM_FLT_POS
 - Fermi_GBM_Gnd_Pos
+- FERMI_GBM_GND_POS
 - Fermi_GBM_Fin_Pos
+- FERMI_GBM_FIN_POS
 - HESS_GRB_To
 - LVC_EarlyWarning
 - LVC_Preliminary
+- LVC_PRELIMINARY
 - LVC_Initial
+- LVC_INITIAL
 - LVC_Update
 - LVC_Retraction
+- LVC_RETRACTION
 - AMON_ICECUBE_BRONZE_Event
 - AMON_ICECUBE_GOLD_Event
 - Antares_Alert

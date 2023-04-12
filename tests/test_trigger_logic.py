@@ -38,6 +38,8 @@ def test_trigger_grb_event():
             True, False, False, '2022-09-08 01:30:34.201740: Event ID None: SWIFT rate significance (0) >= swift_min_rate (0.000) sigma. \n2022-09-08 01:30:34.201740: Event ID None: Event duration between 0.256 and 1.023 s so triggering. \n']),
         # A SWIFT trigger that results in a pending decision
         ('SWIFT_pending.yaml', [False, False, True, '2023-03-30 07:00:22.985516: Event ID None: SWIFT rate significance (13.74) >= swift_min_rate (0.000) sigma. \n2023-03-30 07:00:22.985532: Event ID None: Event duration between 0.124 and 0.255 s so waiting for a human\'s decision. \n']),
+        # A newer swift event we want to trigger on
+        ('SWIFT#BAT_GRB_Pos_1163119-055.yaml', [True, False, False, '2023-04-12 01:55:08.575334: Event ID None: SWIFT rate significance (22.91) >= swift_min_rate (0.000) sigma. \n2023-04-12 01:55:08.575349: Event ID None: Event duration between 0.256 and 1.023 s so triggering. \n']),
     ]
 
     for yaml_file, exp_worth_obs in xml_tests:
