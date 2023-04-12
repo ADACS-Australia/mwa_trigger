@@ -256,9 +256,9 @@ def trigger_atca_observation(
         A list of observations that were scheduled by ATCA (currently there is no functionality to record this so will be empty).
     """
     prop_obj = proposal_decision_model.proposal
-
+    
     # TODO add any schedule checks or observation parsing here
-
+    print("DEBUG - trigger_atca_observation")
     # Not below horizon limit so observer
     logger.info(f"Triggering  ATCA at UTC time {Time.now()} ...")
 
@@ -317,9 +317,9 @@ def trigger_atca_observation(
     request = arrApi.api(rapidObj)
     try:
         response = request.send()
-    except arrApi.responseError as r:
-        logger.error(f"ATCA return message: {r}")
-        decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: ATCA return message: {r}\n "
+    except Exception as r:
+        logger.error(f"ATCA error message: {r}")
+        decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: ATCA error message: {r}\n "
         return 'E', decision_reason_log, []
 
     # # Check for errors
