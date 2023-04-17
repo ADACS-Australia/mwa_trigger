@@ -8,7 +8,7 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord, EarthLocation
 from astropy.time import Time
 
-from tracet.triggerservice import trigger_mwa
+from tracet.triggerservice import trigger
 import atca_rapid_response_api as arrApi
 
 logger = logging.getLogger(__name__)
@@ -172,7 +172,7 @@ def mwa_proposal_id(project_id, secure_key):
     secure_key : `str`
         The secure key (password) for this project.
     """
-    result = trigger_mwa(
+    result = trigger(
         project_id=project_id,
         secure_key=secure_key,
         pretend=True,
