@@ -277,6 +277,10 @@ def proposal_worth_observing(
 
             elif prop_dec.proposal.source_type == "GW" and prop_dec.event_group_id.source_type == "GW":
                 # This proposal wants to observe GRBs so check if it is worth observing
+                print('DEBUG - prop_dec.source_type is GRB')
+
+                print(vars(voevent))
+
                 trigger_bool, debug_bool, pending_bool, decision_reason_log = worth_observing_gw(
                     # Event values
                     lvc_binary_neutron_star_probability=voevent.lvc_binary_neutron_star_probability,
@@ -301,6 +305,7 @@ def proposal_worth_observing(
                     # Other
                     decision_reason_log=decision_reason_log,
                     event_id=voevent.id,
+                    event_type=voevent.event_type
                 )
                 proj_source_bool = True
             # TODO set up other source types here
