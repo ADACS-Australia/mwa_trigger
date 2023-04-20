@@ -66,7 +66,7 @@ class test_grb_group_01(TestCase):
     with open('trigger_app/test_yamls/atca_test_api_response.yaml', 'r') as file:
         atca_test_api_response = safe_load(file)
 
-    @patch('trigger_app.telescope_observe.trigger_mwa', return_value=trigger_mwa_test)
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
     @patch('atca_rapid_response_api.api.send', return_value=atca_test_api_response)
     def setUp(self, fake_atca_api, fake_mwa_api):
 
@@ -117,7 +117,7 @@ class test_grb_group_02(TestCase):
     with open('trigger_app/test_yamls/atca_test_api_response.yaml', 'r') as file:
         atca_test_api_response = safe_load(file)
 
-    @patch('trigger_app.telescope_observe.trigger_mwa', return_value=trigger_mwa_test)
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
     @patch('atca_rapid_response_api.api.send', return_value=atca_test_api_response)
     def setUp(self, fake_atca_api, fake_mwa_api):
         xml_paths = [
@@ -182,7 +182,7 @@ class test_grb_group_03(TestCase):
     with open('trigger_app/test_yamls/atca_test_api_response.yaml', 'r') as file:
         atca_test_api_response = safe_load(file)
 
-    @patch('trigger_app.telescope_observe.trigger_mwa', return_value=trigger_mwa_test)
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
     @patch('atca_rapid_response_api.api.send', return_value=atca_test_api_response)
     def setUp(self, fake_atca_api, fake_mwa_api):
         xml_paths = [
@@ -280,7 +280,7 @@ class test_grb_observation_fail_mwa(TestCase):
     with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
         trigger_mwa_test = safe_load(file)
 
-    @patch('trigger_app.telescope_observe.trigger_mwa', return_value=trigger_mwa_test)
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
     def setUp(self, fake_mwa_api):
         fake_mwa_api.side_effect = requests.exceptions.Timeout()
         xml_paths = [
@@ -316,7 +316,7 @@ class test_grb_observation_fail_mwa(TestCase):
     with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
         trigger_mwa_test = safe_load(file)
 
-    @patch('trigger_app.telescope_observe.trigger_mwa', return_value=trigger_mwa_test)
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
     def setUp(self, fake_mwa_api):
         xml_paths = [
             "../tests/test_events/Swift_BAT_GRB_Pos_fail.xml"
@@ -354,7 +354,7 @@ class test_nu(TestCase):
     with open('trigger_app/test_yamls/atca_test_api_response.yaml', 'r') as file:
         atca_test_api_response = safe_load(file)
 
-    @patch('trigger_app.telescope_observe.trigger_mwa', return_value=trigger_mwa_test)
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
     @patch('atca_rapid_response_api.api.send', return_value=atca_test_api_response)
     def setUp(self, fake_atca_api, fake_mwa_api):
         xml_paths = [
@@ -412,7 +412,7 @@ class test_fs(TestCase):
     with open('trigger_app/test_yamls/atca_test_api_response.yaml', 'r') as file:
         atca_test_api_response = safe_load(file)
 
-    @patch('trigger_app.telescope_observe.trigger_mwa', return_value=trigger_mwa_test)
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
     @patch('atca_rapid_response_api.api.send', return_value=atca_test_api_response)
     def setUp(self, fake_atca_api, fake_mwa_api):
         xml_paths = [
@@ -461,7 +461,7 @@ class test_hess_any_dur(TestCase):
     with open('trigger_app/test_yamls/atca_test_api_response.yaml', 'r') as file:
         atca_test_api_response = safe_load(file)
 
-    @patch('trigger_app.telescope_observe.trigger_mwa', return_value=trigger_mwa_test)
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
     @patch('atca_rapid_response_api.api.send', return_value=atca_test_api_response)
     def setUp(self, fake_atca_api, fake_mwa_api):
         xml_paths = [
@@ -491,3 +491,44 @@ class test_hess_any_dur(TestCase):
             proposal__event_any_duration=True).first().decision, 'T')
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__event_any_duration=False).first().decision, 'I')
+
+class test_use_mwa_sub_arrays(TestCase):
+    """Tests that on early LVC events MWA will make an observation with sub arrays"
+    """
+    # Load default fixtures
+    fixtures = [
+        "default_data.yaml",
+        # Standard proposal that shouldn't trigger
+        "trigger_app/test_yamls/mwa_early_lvc_mwa_proposal_settings.yaml",
+    ]
+
+    # with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
+    #     trigger_mwa_test = safe_load(file)
+
+    # @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
+    def setUp(self):
+        xml_paths = [
+            "../tests/test_events/LVC_example_early_warning.xml",
+        ]
+
+        # Setup current RA and Dec at zenith for the MWA
+        MWA = EarthLocation(lat='-26:42:11.95',
+                            lon='116:40:14.93', height=377.8 * u.m)
+        mwa_coord = SkyCoord(az=0., alt=90., unit=(
+            u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
+        ra_dec = mwa_coord.icrs
+
+        # Parse and upload the xml file group
+        for xml in xml_paths:
+            trig = parsed_VOEvent(xml)
+            print(trig)
+            create_voevent_wrapper(trig, ra_dec)
+
+    def test_trigger_groups(self):
+        # Check event was made
+        self.assertEqual(len(Event.objects.all()), 1)
+        self.assertEqual(len(EventGroup.objects.all()), 1)
+
+    def test_proposal_decision(self):
+        # Test only one proposal triggered
+        self.assertEqual(ProposalDecision.objects.all().first().decision, 'T')
