@@ -92,7 +92,11 @@ try:
                 f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Uploading {v.attrib["ivorn"]}')
             CometLog.objects.create(
                 log=f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Uploading {v.attrib["ivorn"]}')
-            res = write_and_upload(value)
+            try:
+                res = write_and_upload(value)
+            except Exception as e:
+                print(f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Error {e}')
+                CometLog.objects.create(log=f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Error {e}')
             print(
                 f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Response {res.status_code} {res.reason}')
             CometLog.objects.create(
