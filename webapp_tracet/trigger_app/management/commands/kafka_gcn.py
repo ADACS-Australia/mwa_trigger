@@ -1,29 +1,28 @@
+
+from django.core.management.base import BaseCommand, CommandError
 from gcn_kafka import Consumer
 import os
-from upload_xml import write_and_upload
 from datetime import datetime
 import voeventparse
-import os
-# Configure settings for project
-# Need to run this before calling models from application!
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'webapp_tracet.settings')
-import django
-# Import settings
-django.setup()
-from django.conf import settings
+import logging
+
+from trigger_app.views import parse_and_save_xml
+logger = logging.getLogger(__name__)
 from trigger_app.models import CometLog, Status
 
 # Environment variables
 GCN_KAFKA_CLIENT = os.getenv('GCN_KAFKA_CLIENT')
 GCN_KAFKA_SECRET = os.getenv('GCN_KAFKA_SECRET')
 
-# Connect as a consumer.
-# Warning: don't share the client secret with others.
-consumer = Consumer(client_id=GCN_KAFKA_CLIENT,
-                    client_secret=GCN_KAFKA_SECRET)
 
-# Subscribe to topics and receive alerts
-consumer.subscribe(['gcn.classic.voevent.AMON_NU_EM_COINC',
+class Command(BaseCommand):
+    help = "Kafka Consume"
+
+    def handle(self, *args, **kwargs):
+        try:
+            consumer = Consumer(client_id=GCN_KAFKA_CLIENT,
+                                client_secret=GCN_KAFKA_SECRET)
+            consumer.subscribe(['gcn.classic.voevent.AMON_NU_EM_COINC',
                     'gcn.classic.voevent.FERMI_GBM_ALERT',
                     'gcn.classic.voevent.FERMI_GBM_FIN_POS',
                     'gcn.classic.voevent.FERMI_GBM_FLT_POS',
@@ -69,38 +68,46 @@ consumer.subscribe(['gcn.classic.voevent.AMON_NU_EM_COINC',
                     'gcn.classic.voevent.SWIFT_XRT_THRESHPIX',
                     'gcn.classic.voevent.SWIFT_XRT_THRESHPIX_PROC'])
 
-date = datetime.today()
-# 2023-03-09T02:43:10+0000
-print(f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Started')
-CometLog.objects.create(
-    log=f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Started')
-try:
-    while True:
-        for message in consumer.consume(timeout=1):
-            value = message.value()
-            date = datetime.today()
-            v = voeventparse.loads(value)
+            startDate = datetime.today()
+            # 2023-03-09T02:43:10+0000
 
             kafka_status = Status.objects.get(name='kafka')
             kafka_status.status = 0
             kafka_status.save()
-            print(
-                f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Recieved {v.attrib["ivorn"]}')
+            self.stdout.write(f'{startDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Started')
             CometLog.objects.create(
-                log=f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Recieved {v.attrib["ivorn"]}')
-            print(
-                f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Uploading {v.attrib["ivorn"]}')
+                log=f'{startDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Started')
+            while True:
+                for message in consumer.consume(timeout=1):
+                    value = message.value()
+                    messageDate = datetime.today()
+                    v = voeventparse.loads(value)
+
+                    self.stdout.write(
+                        f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Recieved {v.attrib["ivorn"]}')
+                    CometLog.objects.create(
+                        log=f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Recieved {v.attrib["ivorn"]}')
+
+                    self.stdout.write(
+                        f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Saving {v.attrib["ivorn"]}')
+                    CometLog.objects.create(
+                        log=f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Saving {v.attrib["ivorn"]}')
+
+                    voevent_string = voeventparse.prettystr(v)
+                    
+                    new_event = parse_and_save_xml(voevent_string)
+                    new_event_id = new_event.data['id']
+
+                    self.stdout.write(
+                        f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Saved event: {new_event_id}')
+                    CometLog.objects.create(
+                        log=f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Saved event: {new_event_id}')
+        except Exception as e:
+            errorDate = datetime.today()
+            self.stdout.write(f'{errorDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Error {e}')
             CometLog.objects.create(
-                log=f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Uploading {v.attrib["ivorn"]}')
-            res = write_and_upload(value)
-            print(
-                f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Response {res.status_code} {res.reason}')
-            CometLog.objects.create(
-                log=f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Response {res.status_code} {res.reason}')
-except:
-    print(f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Error')
-    CometLog.objects.create(
-        log=f'{date.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Error')
-    kafka_status = Status.objects.get(name='kafka')
-    kafka_status.status = 2
-    kafka_status.save()
+                log=f'{errorDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Error {e}')
+            kafka_status = Status.objects.get(name='kafka')
+            kafka_status.status = 2
+            kafka_status.save()           
+

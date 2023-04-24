@@ -60,6 +60,7 @@ def group_trigger(sender, instance, **kwargs):
     )[0]
     # Link the Event (have to update this way to prevent save() triggering this function again)
     logger.info(f'Linking event ({instance.id}) to group {event_group}')
+    
     Event.objects.filter(id=instance.id).update(event_group_id=event_group)
 
     if instance.ignored:

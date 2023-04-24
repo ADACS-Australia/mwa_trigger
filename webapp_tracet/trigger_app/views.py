@@ -558,7 +558,7 @@ def voevent_view(request, id):
     xml_pretty_str = vp.prettystr(v)
     return HttpResponse(xml_pretty_str, content_type='text/xml')
 
-
+@transaction.atomic
 def parse_and_save_xml(xml):
     logger.info(f'Attempting to parse xml {xml}')
     trig = parse_xml.parsed_VOEvent(None, packet=xml)
@@ -613,7 +613,6 @@ def parse_and_save_xml(xml):
 @api_view(['POST'])
 @authentication_classes([SessionAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticated])
-@transaction.atomic
 def event_create(request):
     logger.info('Request to create an event received',
                 extra={'event_create': True})
