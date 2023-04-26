@@ -64,6 +64,7 @@ def test_parse_grb_event():
         ('SWIFT_BAT_Lightcurve.xml', None),
         # A trigger type that we choose to ignore
         ('HESS_test_event.xml', None),
+        ('fermi_GBM_00.xml', None),
         ('SWIFT_Point_Dir_Change.xml', None),
         ('SWIFT#BAT_GRB_Pos_1163119-055.xml', None)
 
