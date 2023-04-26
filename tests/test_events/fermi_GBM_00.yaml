@@ -1,0 +1,127 @@
+antares_ranking: null
+dec: 56.49
+dec_dms: '56:29:24'
+err: 24.62
+event_duration: null
+event_observed: 2023-04-24 09:26:42.920000+00:00
+event_type: GBM_Fin_Pos
+fermi_detection_prob: null
+fermi_most_likely_index: null
+grb_ident: null
+hess_significance: null
+ignore: false
+lvc_binary_black_hole_probability: null
+lvc_binary_neutron_star_probability: null
+lvc_event_url: null
+lvc_false_alarm_rate: null
+lvc_includes_neutron_star_probability: null
+lvc_neutron_star_black_hole_probability: null
+lvc_prob_density_tile: null
+lvc_retraction_message: null
+lvc_significance: null
+lvc_skymap_file: null
+lvc_skymap_fits: null
+lvc_terrestial_probability: null
+packet: "<VOEvent xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ivorn=\"\
+  ivo://nasa.gsfc.gcn/Fermi#GBM_Fin_Pos2023-04-24T09:26:42.92_704021207_0-980\" role=\"\
+  observation\" version=\"2.0\" xsi:schemaLocation=\"http://www.ivoa.net/xml/VOEvent/v2.0\
+  \  http://www.ivoa.net/xml/VOEvent/VOEvent-v2.0.xsd\">\n  <Who>\n    <AuthorIVORN>ivo://nasa.gsfc.tan/gcn</AuthorIVORN>\n\
+  \    <Author>\n      <shortName>Fermi (via VO-GCN)</shortName>\n      <contactName>Julie\
+  \ McEnery</contactName>\n      <contactPhone>+1-301-286-1632</contactPhone>\n  \
+  \    <contactEmail>Julie.E.McEnery@nasa.gov</contactEmail>\n    </Author>\n    <Date>2023-04-24T10:27:26</Date>\n\
+  \    <Description>This VOEvent message was created with GCN VOE version: 15.08 17jun22</Description>\n\
+  \  </Who>\n  <What>\n    <Param name=\"Packet_Type\" value=\"115\"/>\n    <Param\
+  \ name=\"Pkt_Ser_Num\" value=\"14\"/>\n    <Param name=\"TrigID\" value=\"704021207\"\
+  \ ucd=\"meta.id\"/>\n    <Param name=\"Sequence_Num\" value=\"0\" ucd=\"meta.id.part\"\
+  />\n    <Param name=\"Burst_TJD\" value=\"20058\" unit=\"days\" ucd=\"time\"/>\n\
+  \    <Param name=\"Burst_SOD\" value=\"34002.92\" unit=\"sec\" ucd=\"time\"/>\n\
+  \    <Param name=\"Burst_Inten\" value=\"0\" unit=\"cts\" ucd=\"phot.count\"/>\n\
+  \    <Param name=\"Data_Integ\" value=\"0.000\" unit=\"sec\" ucd=\"time.interval\"\
+  />\n    <Param name=\"Burst_Signif\" value=\"0.00\" unit=\"sigma\" ucd=\"stat.snr\"\
+  />\n    <Param name=\"Phi\" value=\"68.08\" unit=\"deg\" ucd=\"pos.az.azi\"/>\n\
+  \    <Param name=\"Theta\" value=\"97.15\" unit=\"deg\" ucd=\"pos.az.zd\"/>\n  \
+  \  <Param name=\"Algorithm\" value=\"415\" unit=\"dn\"/>\n    <Param name=\"Lo_Energy\"\
+  \ value=\"50000\" unit=\"keV\"/>\n    <Param name=\"Hi_Energy\" value=\"300000\"\
+  \ unit=\"keV\"/>\n    <Param name=\"Trigger_ID\" value=\"0x00000000\"/>\n    <Param\
+  \ name=\"Misc_flags\" value=\"0x40000001\"/>\n    <Group name=\"Trigger_ID\">\n\
+  \      <Param name=\"Def_NOT_a_GRB\" value=\"false\"/>\n      <Param name=\"Target_in_Blk_Catalog\"\
+  \ value=\"false\"/>\n      <Param name=\"Human_generated\" value=\"false\"/>\n \
+  \     <Param name=\"Robo_generated\" value=\"true\"/>\n      <Param name=\"Spatial_Prox_Match\"\
+  \ value=\"false\"/>\n      <Param name=\"Temporal_Prox_Match\" value=\"false\"/>\n\
+  \      <Param name=\"Test_Submission\" value=\"false\"/>\n    </Group>\n    <Group\
+  \ name=\"Misc_Flags\">\n      <Param name=\"Values_Out_of_Range\" value=\"false\"\
+  />\n      <Param name=\"Flt_Generated\" value=\"false\"/>\n      <Param name=\"\
+  Gnd_Generated\" value=\"true\"/>\n      <Param name=\"CRC_Error\" value=\"false\"\
+  />\n    </Group>\n    <Param name=\"LightCurve_URL\" value=\"http://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/triggers/2023/bn230424394/qu\
+  \ icklook/glg_lc_medres34_bn230424394.gif\" ucd=\"meta.ref.url\"/>\n    <Param name=\"\
+  LocationMap_URL\" value=\"http://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/triggers/2023/bn230424394/q\
+  \ uicklook/glg_locplot_all_bn230424394.png\" ucd=\"meta.ref.url\"/>\n    <Param\
+  \ name=\"Coords_Type\" value=\"1\" unit=\"dn\"/>\n    <Param name=\"Coords_String\"\
+  \ value=\"source_object\"/>\n    <Group name=\"Obs_Support_Info\">\n      <Description>The\
+  \ Sun and Moon values are valid at the time the VOEvent XML message was created.</Description>\n\
+  \      <Param name=\"Sun_RA\" value=\"31.75\" unit=\"deg\" ucd=\"pos.eq.ra\"/>\n\
+  \      <Param name=\"Sun_Dec\" value=\"12.85\" unit=\"deg\" ucd=\"pos.eq.dec\"/>\n\
+  \      <Param name=\"Sun_Distance\" value=\"68.03\" unit=\"deg\" ucd=\"pos.angDistance\"\
+  />\n      <Param name=\"Sun_Hr_Angle\" value=\"4.63\" unit=\"hr\"/>\n      <Param\
+  \ name=\"Moon_RA\" value=\"85.13\" unit=\"deg\" ucd=\"pos.eq.ra\"/>\n      <Param\
+  \ name=\"Moon_Dec\" value=\"27.55\" unit=\"deg\" ucd=\"pos.eq.dec\"/>\n      <Param\
+  \ name=\"MOON_Distance\" value=\"83.02\" unit=\"deg\" ucd=\"pos.angDistance\"/>\n\
+  \      <Param name=\"Moon_Illum\" value=\"19.10\" unit=\"%\" ucd=\"arith.ratio\"\
+  />\n      <Param name=\"Galactic_Long\" value=\"97.56\" unit=\"deg\" ucd=\"pos.galactic.lon\"\
+  />\n      <Param name=\"Galactic_Lat\" value=\"3.97\" unit=\"deg\" ucd=\"pos.galactic.lat\"\
+  />\n      <Param name=\"Ecliptic_Long\" value=\"2.72\" unit=\"deg\" ucd=\"pos.ecliptic.lon\"\
+  />\n      <Param name=\"Ecliptic_Lat\" value=\"64.13\" unit=\"deg\" ucd=\"pos.ecliptic.lat\"\
+  />\n    </Group>\n    <Description>The Fermi-GBM location of a transient.</Description>\n\
+  \  </What>\n  <WhereWhen>\n    <ObsDataLocation>\n      <ObservatoryLocation id=\"\
+  GEOLUN\"/>\n      <ObservationLocation>\n        <AstroCoordSystem id=\"UTC-FK5-GEO\"\
+  />\n        <AstroCoords coord_system_id=\"UTC-FK5-GEO\">\n          <Time unit=\"\
+  s\">\n            <TimeInstant>\n              <ISOTime>2023-04-24T09:26:42.92</ISOTime>\n\
+  \            </TimeInstant>\n          </Time>\n          <Position2D unit=\"deg\"\
+  >\n            <Name1>RA</Name1>\n            <Name2>Dec</Name2>\n            <Value2>\n\
+  \              <C1>322.1300</C1>\n              <C2>56.4900</C2>\n            </Value2>\n\
+  \            <Error2Radius>24.6200</Error2Radius>\n          </Position2D>\n   \
+  \     </AstroCoords>\n      </ObservationLocation>\n    </ObsDataLocation>\n   \
+  \ <Description>The RA,Dec coordinates are of the type: source_object.</Description>\n\
+  \  </WhereWhen>\n  <How>\n    <Description>Fermi Satellite, GBM Instrument</Description>\n\
+  \    <Reference uri=\"http://gcn.gsfc.nasa.gov/fermi.html\" type=\"url\"/>\n  </How>\n\
+  \  <Why importance=\"0.95\">\n    <Inference probability=\"1.0\">\n      <Concept>process.variation.burst;em.gamma</Concept>\n\
+  \    </Inference>\n  </Why>\n  <Citations>\n    <EventIVORN cite=\"followup\">ivo://nasa.gsfc.gcn/Fermi#GBM_Alert_2023-04-24T09:26:42.92_704021207_1-722</EventIVORN>\n\
+  \    <Description>This is an updated position to the original trigger.</Description>\n\
+  \  </Citations>\n  <Description>\n  </Description>\n  <original_prefix>voe</original_prefix>\n\
+  </VOEvent>\n"
+ra: 322.13
+ra_hms: '21:28:31.2'
+role: observation
+self_generated_trig_id: false
+sequence_num: 0
+source_name: null
+source_type: GRB
+swift_rate_signif: null
+telescope: Fermi
+trig_id: '704021207'
+trig_pairs:
+- SWIFT_BAT_GRB_Pos
+- SWIFT_BAT_GRB_POS_ACK
+- SWIFT_XRT_Pos
+- SWIFT_XRT_POSITION
+- SWIFT_UVOT_Pos
+- SWIFT_UVOT_POS
+- Fermi_GBM_Flt_Pos
+- FERMI_GBM_FLT_POS
+- Fermi_GBM_Gnd_Pos
+- FERMI_GBM_GND_POS
+- Fermi_GBM_Fin_Pos
+- FERMI_GBM_FIN_POS
+- HESS_GRB_To
+- LVC_EarlyWarning
+- LVC_Preliminary
+- LVC_PRELIMINARY
+- LVC_Initial
+- LVC_INITIAL
+- LVC_Update
+- LVC_Retraction
+- LVC_RETRACTION
+- AMON_ICECUBE_BRONZE_Event
+- AMON_ICECUBE_GOLD_Event
+- Antares_Alert
+xml: tests/test_events/fermi_GBM_00.xml
