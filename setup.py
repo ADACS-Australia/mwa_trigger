@@ -21,7 +21,6 @@ setup(name="tracet",
             'astropy_healpix',
             'mwa_pb'
       ],
-      scripts=['webapp_tracet/upload_xml.py'],
       setup_requires=['pytest-runner'],
       tests_require=['pytest']
 )

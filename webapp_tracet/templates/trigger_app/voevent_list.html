@@ -19,8 +19,17 @@
         <td width="7.5%">Max (inclusive)</td>
       </tr>
       <tr>
-        <td>{{ filter.form.source_type.label_tag }}</td>
-        <td>{{ filter.form.source_type }}</td>
+        <td>
+          
+          {% if filter.form.source_type %}
+          {{ filter.form.source_type.label_tag }}
+          {% endif %}
+        </td>
+        <td>
+          {% if filter.form.source_type %}
+          {{ filter.form.source_type }}
+          {% endif %}
+        </td>
         <td>Event ID:</td>
         <td>{{ filter.form.trig_id }}</td>
         <td>Duration (s):</td>
@@ -30,8 +39,16 @@
       <tr>
         <td>Telescope:</td>
         <td>{{ filter.form.telescopes }}</td>
-        <td>{{ filter.form.source_name.label_tag }}</td>
-        <td>{{ filter.form.source_name }}</td>
+        <td>
+          {% if filter.form.source_name %}
+          {{ filter.form.source_name.label_tag }}
+          {% endif %}
+        </td>
+        <td>
+          {% if filter.form.source_name %}
+          {{ filter.form.source_name }}
+          {% endif %}
+        </td>
         <td>RA (deg):</td>
         <td>{{ filter.form.ra__gte }}</td>
         <td>{{ filter.form.ra__lte }}</td>

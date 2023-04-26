@@ -478,19 +478,23 @@ class parsed_VOEvent:
             return
         # Parse trigger info (telescope dependent)
         if self.telescope == "Fermi":
-            self.event_duration = float(
-                v.find(".//Param[@name='Trig_Timescale']").attrib["value"]
-            )
+            if v.find(".//Param[@name='Trig_Timescale']") != None:
+                self.event_duration = float(
+                    v.find(".//Param[@name='Trig_Timescale']").attrib["value"]
+                )
             self.sequence_num = int(
                 v.find(".//Param[@name='Sequence_Num']").attrib["value"]
             )
             # Fermi triggers have likely hood statistics
-            self.fermi_most_likely_index = int(
-                v.find(".//Param[@name='Most_Likely_Index']").attrib["value"]
-            )
-            self.fermi_detection_prob = int(
-                v.find(".//Param[@name='Most_Likely_Prob']").attrib["value"]
-            )
+            if v.find(".//Param[@name='Most_Likely_Index']") != None:
+                self.fermi_most_likely_index = int(
+                    v.find(".//Param[@name='Most_Likely_Index']").attrib["value"]
+                )
+            if v.find(".//Param[@name='Most_Likely_Prob']") != None:
+                self.fermi_detection_prob = int(
+                    v.find(".//Param[@name='Most_Likely_Prob']").attrib["value"]
+                )
+                
         elif self.telescope == "SWIFT":
             # Check if SWIFT tracking fails
             startrack_lost_lock = v.find(
