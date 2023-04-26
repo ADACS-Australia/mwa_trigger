@@ -79,29 +79,37 @@ class Command(BaseCommand):
                 log=f'{startDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Started')
             while True:
                 for message in consumer.consume(timeout=1):
-                    value = message.value()
-                    messageDate = datetime.today()
-                    v = voeventparse.loads(value)
+                    try:
+                        value = message.value()
+                        messageDate = datetime.today()
+                        v = voeventparse.loads(value)
 
-                    self.stdout.write(
-                        f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Recieved {v.attrib["ivorn"]}')
-                    CometLog.objects.create(
-                        log=f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Recieved {v.attrib["ivorn"]}')
+                        self.stdout.write(
+                            f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Recieved {v.attrib["ivorn"]}')
+                        CometLog.objects.create(
+                            log=f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Recieved {v.attrib["ivorn"]}')
 
-                    self.stdout.write(
-                        f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Saving {v.attrib["ivorn"]}')
-                    CometLog.objects.create(
-                        log=f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Saving {v.attrib["ivorn"]}')
+                        self.stdout.write(
+                            f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Saving {v.attrib["ivorn"]}')
+                        CometLog.objects.create(
+                            log=f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Saving {v.attrib["ivorn"]}')
 
-                    voevent_string = voeventparse.prettystr(v)
+                        voevent_string = voeventparse.prettystr(v)
+                        
+                        new_event = parse_and_save_xml(voevent_string)
+                        new_event_id = new_event.data['id']
+
+                        self.stdout.write(
+                            f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Saved event: {new_event_id}')
+                        CometLog.objects.create(
+                            log=f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Saved event: {new_event_id}')
                     
-                    new_event = parse_and_save_xml(voevent_string)
-                    new_event_id = new_event.data['id']
-
-                    self.stdout.write(
-                        f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Saved event: {new_event_id}')
-                    CometLog.objects.create(
-                        log=f'{messageDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Saved event: {new_event_id}')
+                    except Exception as e:
+                        errorDate = datetime.today()
+                        self.stdout.write(f'{errorDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Error processing event: {e}')
+                        CometLog.objects.create(
+                            log=f'{errorDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Error processing event: {e}')
+        
         except Exception as e:
             errorDate = datetime.today()
             self.stdout.write(f'{errorDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Error {e}')
