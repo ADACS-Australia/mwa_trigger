@@ -172,10 +172,10 @@ def trigger_mwa_observation(
     # Not below horizon limit so observer
     logger.info(f"Triggering MWA at UTC time {Time.now()} ...")
     # Handle early warning events without position using sub arrays
-    if(proposal_decision_model.proposal.start_observation_at_high_sensitivity and proposal_decision_model.ra or proposal_decision_model.dec):
+    if(proposal_decision_model.proposal.start_observation_at_high_sensitivity and (proposal_decision_model.ra == None and proposal_decision_model.dec == None)):
         ps=proposal_decision_model.proposal
 
-
+        print("DEBUG - Scheduling a subarray observation")
         result = trigger(
             project_id=prop_settings.project_id.id,
             secure_key=prop_settings.project_id.password,
@@ -200,6 +200,7 @@ def trigger_mwa_observation(
             vcsmode=vcsmode,
         )
     else:
+        print("DEBUG - Scheduling a single beam observation")
         result = trigger(
             project_id=prop_settings.project_id.id,
             secure_key=prop_settings.project_id.password,

@@ -454,6 +454,7 @@ class parsed_VOEvent:
 
         # Get current position
         self.ra, self.dec, self.err = get_position_info(v)
+        print(f"DEBUG - ra: {self.ra}, dec: {self.dec}")
         if self.ra is None or self.dec is None:
             self.ra_hms = None
             self.dec_dms = None

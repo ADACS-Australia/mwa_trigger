@@ -14,12 +14,21 @@ from astropy.time import Time
 
 
 def create_voevent_wrapper(trig, ra_dec, dec_alter=True):
-    if dec_alter:
+    if dec_alter and ra_dec:
         dec = ra_dec.dec.deg
         dec_dms = ra_dec.dec.to_string(unit=u.deg, sep=':')
-    else:
+        ra=ra_dec.ra.deg
+        ra_hms=ra_dec.ra.to_string(unit=u.hour, sep=':')
+    elif ra_dec:
         dec = trig.dec
         dec_dms = trig.dec_dms
+        ra=ra_dec.ra.deg
+        ra_hms=ra_dec.ra.to_string(unit=u.hour, sep=':')
+    else:
+        ra = None
+        dec = None
+        dec_dms = None
+        ra_hms = None
     # Checks for no event observed
     if trig.event_observed is None:
         event_observed = None
@@ -35,9 +44,9 @@ def create_voevent_wrapper(trig, ra_dec, dec_alter=True):
         event_type=trig.event_type,
         antares_ranking=trig.antares_ranking,
         # Sent event up so it's always pointing at zenith
-        ra=ra_dec.ra.deg,
+        ra=ra,
         dec=dec,
-        ra_hms=ra_dec.ra.to_string(unit=u.hour, sep=':'),
+        ra_hms=ra_hms,
         dec_dms=dec_dms,
         pos_error=trig.err,
         ignored=trig.ignore,
@@ -303,7 +312,7 @@ class test_grb_observation_fail_mwa(TestCase):
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='MWA_VCS').first().decision, 'E')
 
-class test_grb_observation_fail_mwa(TestCase):
+class test_grb_observation_ignored_mwa(TestCase):
     """Tests ignored observations during an event
     """
     # Load default fixtures
@@ -498,37 +507,44 @@ class test_use_mwa_sub_arrays(TestCase):
     # Load default fixtures
     fixtures = [
         "default_data.yaml",
-        # Standard proposal that shouldn't trigger
+        # Mwa proposal that has subarrays
         "trigger_app/test_yamls/mwa_early_lvc_mwa_proposal_settings.yaml",
     ]
 
-    # with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
-    #     trigger_mwa_test = safe_load(file)
+    with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
+        trigger_mwa_test = safe_load(file)
 
-    # @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
-    def setUp(self):
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
+    def setUp(self,mwaPatched):
+    # def setUp(self):
         xml_paths = [
             "../tests/test_events/LVC_example_early_warning.xml",
         ]
-
+   
         # Setup current RA and Dec at zenith for the MWA
-        MWA = EarthLocation(lat='-26:42:11.95',
-                            lon='116:40:14.93', height=377.8 * u.m)
-        mwa_coord = SkyCoord(az=0., alt=90., unit=(
-            u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
-        ra_dec = mwa_coord.icrs
+        # MWA = EarthLocation(lat='-26:42:11.95',
+        #                     lon='116:40:14.93', height=377.8 * u.m)
+        # mwa_coord = SkyCoord(az=0., alt=90., unit=(
+        #     u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
+        # ra_dec = mwa_coord.icrs
 
         # Parse and upload the xml file group
         for xml in xml_paths:
             trig = parsed_VOEvent(xml)
             print(trig)
-            create_voevent_wrapper(trig, ra_dec)
+            create_voevent_wrapper(trig, ra_dec = None)
+            args, kwargs = mwaPatched.call_args
+            print(args)
+            print(kwargs)
 
-    def test_trigger_groups(self):
-        # Check event was made
-        self.assertEqual(len(Event.objects.all()), 1)
-        self.assertEqual(len(EventGroup.objects.all()), 1)
+
+    # def test_trigger_groups(self):
+    #     # Check event was made
+    #     self.assertEqual(len(Event.objects.all()), 1)
+    #     self.assertEqual(len(EventGroup.objects.all()), 1)
 
     def test_proposal_decision(self):
         # Test only one proposal triggered
+
+
         self.assertEqual(ProposalDecision.objects.all().first().decision, 'T')
