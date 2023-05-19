@@ -324,13 +324,17 @@ def proposal_worth_observing(
         # Check if you can observe and if so send off the observation
         logger.info(
             'Check if you can observe and if so send off the observation')
-        print("DEBUG - trigger observation")
-        decision, decision_reason_log = trigger_observation(
-            prop_dec,
-            decision_reason_log,
-            reason=observation_reason,
-            event_id=voevent.id,
-        )
+        print("DEBUG - Trigger observation")
+        try:
+            decision, decision_reason_log = trigger_observation(
+                prop_dec,
+                decision_reason_log,
+                reason=observation_reason,
+                event_id=voevent.id,
+            )
+        except Exception as e:
+            logger.info(e)
+            decision = 'E'
         print("DEBUG - trigger_observation result")
         print(decision, decision_reason_log)
         if decision == 'E':

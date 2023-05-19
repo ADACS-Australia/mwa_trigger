@@ -72,6 +72,7 @@ def worth_observing_grb(
     trigger_bool = False
     debug_bool = False
     pending_bool = False
+
     # Check the events likelyhood data
     likely_bool = False
     if fermi_most_likely_index is not None:
@@ -110,7 +111,6 @@ def worth_observing_grb(
     else:
         likely_bool = True
         decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: No probability metric given so assume it is a GRB. \n"
-
     # Check the duration of the event
     if event_any_duration and likely_bool:
         trigger_bool = True

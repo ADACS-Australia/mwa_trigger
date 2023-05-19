@@ -563,12 +563,12 @@ class parsed_VOEvent:
                     v.find(".//Param[@name='BBH']").attrib["value"])
                 self.lvc_terrestial_probability = float(
                     v.find(".//Param[@name='Terrestrial']").attrib["value"])
-            lvc_skymap_fits = v.find(".//Param[@name='skymap_fits']").attrib["value"]
+            lvc_skymap_fits = v.find(".//Param[@name='skymap_fits']")
             print(lvc_skymap_fits)
-            if lvc_skymap_fits:
+            if lvc_skymap_fits is not None:
                 logger.info("Parsing skymap")
                 # Initial and Update alerts should contain skymap data as URL
-                self.lvc_skymap_fits = str(lvc_skymap_fits)
+                self.lvc_skymap_fits = str(lvc_skymap_fits.attrib["value"])
 
                 url = self.lvc_skymap_fits
                 with urllib.request.urlopen(url) as response:
