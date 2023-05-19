@@ -22,7 +22,10 @@ python manage.py migrate
 # Start server
 uwsgi --ini webapp_tracet_uwsgi.ini
 
-# Reset comet and kafka event handlers
+# create environment variables required by kafka
 tmux kill-server
+./make_secrets.sh
+
+# Reset comet and kafka event handlers
 tmux new -s kafka -d 'python manage.py kafka_gcn'
 tmux new -s comet -d 'python twistd_comet_wrapper.py'
