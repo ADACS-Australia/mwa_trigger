@@ -544,7 +544,7 @@ class parsed_VOEvent:
             self.sequence_num = None
             logger.info("LVC telescope")
 
-            if self.event_type == 'EarlyWarning' or self.event_type == 'Preliminary' or self.event_type == 'Initial' or self.event_type == 'Update':
+            if self.event_type != 'Retraction':
                 # Capture Probabilities of observations for proposals and analysis
                 self.lvc_includes_neutron_star_probability = float(
                     v.find(".//Param[@name='HasNS']").attrib["value"])
@@ -563,12 +563,12 @@ class parsed_VOEvent:
                     v.find(".//Param[@name='BBH']").attrib["value"])
                 self.lvc_terrestial_probability = float(
                     v.find(".//Param[@name='Terrestrial']").attrib["value"])
-
-            if self.event_type == 'Initial' or self.event_type == 'Update':
+            lvc_skymap_fits = v.find(".//Param[@name='skymap_fits']").attrib["value"]
+            print(lvc_skymap_fits)
+            if lvc_skymap_fits:
                 logger.info("Parsing skymap")
                 # Initial and Update alerts should contain skymap data as URL
-                self.lvc_skymap_fits = str(
-                    v.find(".//Param[@name='skymap_fits']").attrib["value"])
+                self.lvc_skymap_fits = str(lvc_skymap_fits)
 
                 url = self.lvc_skymap_fits
                 with urllib.request.urlopen(url) as response:

@@ -182,12 +182,9 @@ def trigger_mwa_observation(
             pretend=prop_settings.testing,
             creator='VOEvent_Auto_Trigger',  # TODO grab version
             obsname=obsname,
-            subarray_list=[
-                (ps.mwa_sub_alt_NE, ps.mwa_sub_az_NE),
-                (ps.mwa_sub_alt_SE, ps.mwa_sub_az_SE),
-                (ps.mwa_sub_alt_SW, ps.mwa_sub_az_SW),
-                (ps.mwa_sub_alt_NW, ps.mwa_sub_az_NW)
-            ],
+            subarray_list=['all_ne', 'all_nw', 'all_se', 'all_sw'],
+            alt=[ps.mwa_sub_alt_NE, ps.mwa_sub_alt_NW, ps.mwa_sub_alt_SE, ps.mwa_sub_alt_SW],
+            az=[ps.mwa_sub_az_NE, ps.mwa_sub_az_NW, ps.mwa_sub_az_SE, ps.mwa_sub_az_SW],
             nobs=prop_settings.mwa_nobs,
             # Assume always using 24 contiguous coarse frequency channels
             freqspecs=prop_settings.mwa_freqspecs,

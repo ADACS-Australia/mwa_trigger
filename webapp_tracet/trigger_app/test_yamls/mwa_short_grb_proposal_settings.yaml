@@ -25,6 +25,7 @@
         "pending_max_duration_1": 0.0,
         "pending_min_duration_2": 0.0,
         "pending_max_duration_2": 0.0,
+        "start_observation_at_high_sensitivity": true,
         "fermi_prob": 50.0,
         "swift_rate_signf": 0.0,
         "repointing_limit": 10.0,
