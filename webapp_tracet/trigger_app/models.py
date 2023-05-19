@@ -147,7 +147,7 @@ class ProposalSettings(models.Model):
 
     # MWA settings
     start_observation_at_high_sensitivity = models.BooleanField(verbose_name="Without positional data, start observations with MWA sub array at high sensitivity area",
-                                                                default=True, help_text="On early warnings there will not be positional data so start MWA in sub array mode at the high sensitivity area over the indian ocean")
+                                                                default=False, help_text="On early warnings there will not be positional data so start MWA in sub array mode at the high sensitivity area over the indian ocean")
     # Alt/az in degrees: (90, 0), (66.85, 270), (43.97, 270), (59.35, 219.88)
     mwa_sub_alt_NE = models.FloatField(default=90., verbose_name="NE alt(deg)",
                                     help_text="Altitude in degrees for the North-East sub array")
