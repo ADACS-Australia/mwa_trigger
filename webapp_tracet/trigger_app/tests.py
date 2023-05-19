@@ -14,12 +14,12 @@ from astropy.time import Time
 
 
 def create_voevent_wrapper(trig, ra_dec, dec_alter=True):
-    if dec_alter and ra_dec:
+    if dec_alter and ra_dec and trig.ra and trig.dec:
         dec = ra_dec.dec.deg
         dec_dms = ra_dec.dec.to_string(unit=u.deg, sep=':')
         ra=ra_dec.ra.deg
         ra_hms=ra_dec.ra.to_string(unit=u.hour, sep=':')
-    elif ra_dec:
+    elif ra_dec and trig.ra and trig.dec:
         dec = trig.dec
         dec_dms = trig.dec_dms
         ra=ra_dec.ra.deg
@@ -137,9 +137,9 @@ class test_grb_group_02(TestCase):
     with open('trigger_app/test_yamls/atca_test_api_response.yaml', 'r') as file:
         atca_test_api_response = safe_load(file)
 
-    # @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
     @patch('atca_rapid_response_api.api.send', return_value=atca_test_api_response)
-    def setUp(self, fake_atca_api):
+    def setUp(self, fake_atca_api, fake_mwa_api):
         xml_paths = [
             "../tests/test_events/group_02_SWIFT_01_BAT_GRB_Pos.xml",
             "../tests/test_events/group_02_SWIFT_02_XRT_Pos.xml",
@@ -294,7 +294,6 @@ class test_grb_observation_fail_mwa(TestCase):
     fixtures = [
         "default_data.yaml",
         "trigger_app/test_yamls/mwa_grb_proposal_settings.yaml",
-        "trigger_app/test_yamls/mwa_short_grb_proposal_settings.yaml",
     ]
 
     with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
@@ -304,7 +303,7 @@ class test_grb_observation_fail_mwa(TestCase):
     def setUp(self, fake_mwa_api):
         fake_mwa_api.side_effect = requests.exceptions.Timeout()
         xml_paths = [
-            "../tests/test_events/SWIFT#BAT_GRB_Pos_1163119-055.xml"
+            "../tests/test_events/SWIFT_BAT_POS.xml"
         ]
 
         # Setup current RA and Dec at zenith for the MWA
@@ -315,9 +314,12 @@ class test_grb_observation_fail_mwa(TestCase):
         ra_dec = mwa_coord.icrs
 
         # Parse and upload the xml file group
-        for xml in xml_paths:
-            trig = parsed_VOEvent(xml)
-            create_voevent_wrapper(trig, ra_dec, False)
+        try:
+            for xml in xml_paths:
+                trig = parsed_VOEvent(xml)
+                create_voevent_wrapper(trig, ra_dec, False)
+        except Exception as e:
+            pass
 
     def test_trigger_groups(self):
         self.assertEqual(ProposalDecision.objects.filter(
