@@ -27,5 +27,5 @@ tmux kill-server
 ./make_secrets.sh
 
 # Reset comet and kafka event handlers
-tmux new -s kafka -d 'python manage.py kafka_gcn'
+tmux new -s kafka -d 'until $(python manage.py kafka_gcn); do echo "Kafka died with exit code $?, restarting..." >&2; sleep 1;done'
 tmux new -s comet -d 'python twistd_comet_wrapper.py'
