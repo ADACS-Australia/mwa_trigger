@@ -117,5 +117,5 @@ class Command(BaseCommand):
                 log=f'{errorDate.strftime("%Y-%m-%dT%H:%M:%S+0000")} KAFKA Error {e}')
             kafka_status = Status.objects.get(name='kafka')
             kafka_status.status = 2
-            kafka_status.save()           
+            kafka_status.save()
 

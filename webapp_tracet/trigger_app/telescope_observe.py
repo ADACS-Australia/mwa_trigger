@@ -3,6 +3,9 @@ from astropy.coordinates import SkyCoord, EarthLocation, AltAz
 from astropy.time import Time
 from datetime import timedelta, datetime
 
+import urllib.request
+from trigger_app.utils import getMWAPointingsFromSkymapFile
+from astropy.table import Table
 import atca_rapid_response_api as arrApi
 
 from tracet.triggerservice import trigger
@@ -38,10 +41,12 @@ def trigger_observation(
     decision_reason_log : `str`
         The updated trigger message to include an observation specific logs.
     """
+    print("Trigger observation")
     # Check if source is above the horizon
     if not proposal_decision_model.proposal.start_observation_at_high_sensitivity or (proposal_decision_model.ra or proposal_decision_model.dec) and proposal_decision_model.proposal.telescope.name != "ATCA":
         # ATCA can schedule obs once the source has risen so does
         # not need to check if it is above the horizon
+        print("Set ATCA variables")
 
         # Create Earth location for the telescope
         telescope = proposal_decision_model.proposal.telescope
@@ -85,17 +90,50 @@ def trigger_observation(
         # If telescope ends in VCS then this proposal is for observing in VCS mode
         vcsmode = proposal_decision_model.proposal.telescope.name.endswith(
             "VCS")
+        print("Set MWA variables")
+        if(vcsmode):
+            print("VCS Mode")
 
         # Create an observation name
         # Collect event telescopes
         voevents = Event.objects.filter(
-            event_group_id=proposal_decision_model.event_group_id)
+            event_group_id=proposal_decision_model.event_group_id).order_by('-recieved_data')
         telescopes = []
         for voevent in voevents:
             telescopes.append(voevent.telescope)
         # Make sure they are unique and seperate with a _
         telescopes = "_".join(list(set(telescopes)))
         obsname = f'{telescopes}_{proposal_decision_model.trig_id}'
+
+        latestVoevent = voevents[0]
+
+        if proposal_decision_model.proposal.source_type == 'GW' and latestVoevent.lvc_skymap_file != None:
+            file = latestVoevent.lvc_skymap_file
+            print(f"DEBUG - skymap_fits_file: {file}")
+         
+
+            try:
+                skymap = Table.read(file)
+                # alt=[ps.mwa_sub_alt_NE, ps.mwa_sub_alt_NW, ps.mwa_sub_alt_SE, ps.mwa_sub_alt_SW],
+                # az=[ps.mwa_sub_az_NE, ps.mwa_sub_az_NW, ps.mwa_sub_az_SE, ps.mwa_sub_az_SW],
+                result = getMWAPointingsFromSkymapFile(skymap)
+
+                proposal_decision_model.proposal.mwa_sub_alt_NE = result[0][2]
+                proposal_decision_model.proposal.mwa_sub_az_NE = result[0][1]
+
+                proposal_decision_model.proposal.mwa_sub_alt_NW = result[1][2]
+                proposal_decision_model.proposal.mwa_sub_az_NW = result[1][1]
+
+                proposal_decision_model.proposal.mwa_sub_alt_SE = result[2][2]
+                proposal_decision_model.proposal.mwa_sub_az_SE = result[2][1]
+
+                proposal_decision_model.proposal.mwa_sub_alt_SW = result[3][2]
+                proposal_decision_model.proposal.mwa_sub_az_SW = result[3][1]
+
+            except Exception as e:
+                print(e)
+                logger.error("Error getting MWA pointings from skymap")
+                logger.error(e)
 
         # Check if you can observe and if so send off MWA observation
         decision, decision_reason_log, obsids = trigger_mwa_observation(
@@ -168,26 +206,24 @@ def trigger_mwa_observation(
         A list of observations that were scheduled by MWA.
     """
     prop_settings = proposal_decision_model.proposal
-
+    print("DEBUG - triggering MWA")
+    print(f"DEBUG - proposal: {prop_settings.__dict__}")
     # Not below horizon limit so observer
     logger.info(f"Triggering MWA at UTC time {Time.now()} ...")
     # Handle early warning events without position using sub arrays
-    if(proposal_decision_model.proposal.start_observation_at_high_sensitivity and proposal_decision_model.ra or proposal_decision_model.dec):
+    if(prop_settings.source_type == 'GW'):
         ps=proposal_decision_model.proposal
 
-
+        print("DEBUG - Scheduling a subarray observation")
         result = trigger(
             project_id=prop_settings.project_id.id,
             secure_key=prop_settings.project_id.password,
             pretend=prop_settings.testing,
             creator='VOEvent_Auto_Trigger',  # TODO grab version
             obsname=obsname,
-            subarray_list=[
-                (ps.mwa_sub_alt_NE, ps.mwa_sub_az_NE),
-                (ps.mwa_sub_alt_SE, ps.mwa_sub_az_SE),
-                (ps.mwa_sub_alt_SW, ps.mwa_sub_az_SW),
-                (ps.mwa_sub_alt_NW, ps.mwa_sub_az_NW)
-            ],
+            subarray_list=['all_ne', 'all_nw', 'all_se', 'all_sw'],
+            alt=[ps.mwa_sub_alt_NE, ps.mwa_sub_alt_NW, ps.mwa_sub_alt_SE, ps.mwa_sub_alt_SW],
+            az=[ps.mwa_sub_az_NE, ps.mwa_sub_az_NW, ps.mwa_sub_az_SE, ps.mwa_sub_az_SW],
             nobs=prop_settings.mwa_nobs,
             # Assume always using 24 contiguous coarse frequency channels
             freqspecs=prop_settings.mwa_freqspecs,
@@ -200,6 +236,7 @@ def trigger_mwa_observation(
             vcsmode=vcsmode,
         )
     else:
+        print("DEBUG - Scheduling a single beam observation")
         result = trigger(
             project_id=prop_settings.project_id.id,
             secure_key=prop_settings.project_id.password,
