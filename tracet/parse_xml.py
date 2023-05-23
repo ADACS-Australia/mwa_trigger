@@ -575,32 +575,7 @@ class parsed_VOEvent:
                     body = response.read()
 
                 self.lvc_skymap_file = body
-
-                with open("skymap.fits", mode="wb") as skymap_file:
-                    skymap_file.write(body)
-
-                skymap = Table.read("skymap.fits")
-                i = np.argmax(skymap['PROBDENSITY'])
-                self.lvc_prob_density_tile = float(
-                    skymap[i]['PROBDENSITY'] * (np.pi / 180)**2)
-
-                uniq = skymap[i]['UNIQ']
-                level, ipix = ah.uniq_to_level_ipix(uniq)
-                nside = ah.level_to_nside(level)
-                ra, dec = ah.healpix_to_lonlat(ipix, nside, order='nested')
-
-                logger.info("Successfully parsed Skymap")
-
-                self.ra = float(ra.deg)
-                self.dec = float(dec.deg)
-
-                self.ra_hms = str(
-                    Angle(self.ra, unit=u.deg).to_string(unit=u.hour, sep=':'))
-                self.dec_dms = str(
-                    Angle(self.dec, unit=u.deg).to_string(unit=u.deg, sep=':'))
-
-                os.remove("skymap.fits")
-
+                
             if self.event_type == 'Retraction':
                 # Capture message that comes with retraction
                 self.lvc_retraction_message = str(v.Citations.Description)

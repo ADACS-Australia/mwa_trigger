@@ -515,7 +515,7 @@ class test_hess_any_dur(TestCase):
             proposal__event_any_duration=False).first().decision, 'I')
 
 class test_lvc_mwa_sub_arrays(TestCase):
-    """Tests that on early LVC events MWA will make an observation with sub arrays, single beam if skymap is given"
+    """Tests that on early LVC events MWA will make an observation with sub arrays"
     """
     # Load default fixtures
     fixtures = [
@@ -528,7 +528,7 @@ class test_lvc_mwa_sub_arrays(TestCase):
         trigger_mwa_test = safe_load(file)
 
     @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
-    def setUp(self,mwaPatched):
+    def setUp(self,fake_mwa_api):
         xml_paths = [
             "../tests/test_events/LVC_example_early_warning.xml",
             "../tests/test_events/LVC_real_initial.xml",
@@ -550,7 +550,7 @@ class test_lvc_mwa_sub_arrays(TestCase):
             else:
                 create_voevent_wrapper(trig, ra_dec=None)
 
-            args, kwargs = mwaPatched.call_args
+            args, kwargs = fake_mwa_api.call_args
             print(args)
             print(kwargs)
 
