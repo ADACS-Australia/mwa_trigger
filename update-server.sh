@@ -24,7 +24,6 @@ uwsgi --ini webapp_tracet_uwsgi.ini
 
 # create environment variables required by kafka
 tmux kill-server
-./make_secrets.sh
 
 # Reset comet and kafka event handlers
 tmux new -s kafka -d 'until $(python manage.py kafka_gcn); do echo "Kafka died with exit code $?, restarting..." >&2; sleep 1;done'
