@@ -12,7 +12,7 @@ hess_significance: null
 ignore: false
 lvc_binary_black_hole_probability: 0.03
 lvc_binary_neutron_star_probability: 0.95
-lvc_event_url: https://example.org/superevents/MS181101ab/view/
+lvc_event_url: https://example.org/superevents/S230518h/view/
 lvc_false_alarm_rate: 9.11069936486e-14
 lvc_includes_neutron_star_probability: 0.95
 lvc_neutron_star_black_hole_probability: 0.01
@@ -24,7 +24,7 @@ lvc_skymap_fits: null
 lvc_terrestial_probability: 0.01
 packet: "<VOEvent xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"\
   http://www.ivoa.net/xml/VOEvent/v2.0 http://www.ivoa.net/xml/VOEvent/VOEvent-v2.0.xsd\"\
-  \ version=\"2.0\" role=\"observation\" ivorn=\"ivo://gwnet/LVC#MS181101ab-1-EarlyWarning\"\
+  \ version=\"2.0\" role=\"observation\" ivorn=\"ivo://gwnet/LVC#S230518h-0-EarlyWarning\"\
   >\n  <Who>\n    <Date>2018-11-01T22:34:20Z</Date>\n    <Author>\n      <contactName>LIGO\
   \ Scientific Collaboration, Virgo Collaboration, and KAGRA Collaboration</contactName>\n\
   \    </Author>\n  </Who>\n  <What>\n    <Param dataType=\"int\" name=\"Packet_Type\"\
@@ -35,7 +35,7 @@ packet: "<VOEvent xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:sc
   \    </Param>\n    <Param dataType=\"int\" name=\"Pkt_Ser_Num\" value=\"1\">\n \
   \     <Description>A number that increments by 1 each time a new revision is issued\
   \ for this event</Description>\n    </Param>\n    <Param dataType=\"string\" name=\"\
-  GraceID\" ucd=\"meta.id\" value=\"MS181101ab\">\n      <Description>Identifier in\
+  GraceID\" ucd=\"meta.id\" value=\"S230518h\">\n      <Description>Identifier in\
   \ GraceDB</Description>\n    </Param>\n    <Param dataType=\"string\" name=\"AlertType\"\
   \ ucd=\"meta.version\" value=\"EarlyWarning\">\n      <Description>VOEvent alert\
   \ type</Description>\n    </Param>\n    <Param dataType=\"int\" name=\"HardwareInj\"\
@@ -44,37 +44,34 @@ packet: "<VOEvent xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:sc
   \ dataType=\"int\" name=\"OpenAlert\" ucd=\"meta.number\" value=\"1\">\n      <Description>Indicates\
   \ that this event is an open alert if 1, no if 0</Description>\n    </Param>\n \
   \   <Param dataType=\"string\" name=\"EventPage\" ucd=\"meta.ref.url\" value=\"\
-  https://example.org/superevents/MS181101ab/view/\">\n      <Description>Web page\
-  \ for evolving status of this GW candidate</Description>\n    </Param>\n    <Param\
-  \ dataType=\"string\" name=\"Instruments\" ucd=\"meta.code\" value=\"H1,L1,V1\"\
-  >\n      <Description>List of instruments used in analysis to identify this event</Description>\n\
-  \    </Param>\n    <Param dataType=\"float\" name=\"FAR\" ucd=\"arith.rate;stat.falsealarm\"\
-  \ unit=\"Hz\" value=\"9.11069936486e-14\">\n      <Description>False alarm rate\
-  \ for GW candidates with this strength or greater</Description>\n    </Param>\n\
-  \    <Param dataType=\"string\" name=\"Group\" ucd=\"meta.code\" value=\"CBC\">\n\
-  \      <Description>Data analysis working group</Description>\n    </Param>\n  \
-  \  <Param dataType=\"string\" name=\"Pipeline\" ucd=\"meta.code\" value=\"gstlal\"\
-  >\n      <Description>Low-latency data analysis pipeline</Description>\n    </Param>\n\
-  \    <Param dataType=\"string\" name=\"Search\" ucd=\"meta.code\" value=\"MDC\"\
-  >\n      <Description>Specific low-latency search</Description>\n    </Param>\n\
-  \    <Group name=\"GW_SKYMAP\" type=\"GW_SKYMAP\">\n      <Param dataType=\"string\"\
-  \ name=\"skymap_fits\" ucd=\"meta.ref.url\" value=\"https://emfollow.docs.ligo.org/userguide/_static/bayestar.multiorder.fits,0\"\
-  >\n        <Description>Sky Map FITS</Description>\n      </Param>\n    </Group>\n\
-  \    <Group name=\"Classification\" type=\"Classification\">\n      <Param dataType=\"\
-  float\" name=\"BNS\" ucd=\"stat.probability\" value=\"0.95\">\n        <Description>Probability\
-  \ that the source is a binary neutron star merger (both objects lighter than 3 solar\
-  \ masses)</Description>\n      </Param>\n      <Param dataType=\"float\" name=\"\
-  NSBH\" ucd=\"stat.probability\" value=\"0.01\">\n        <Description>Probability\
-  \ that the source is a neutron star-black hole merger (secondary lighter than 3\
-  \ solar masses)</Description>\n      </Param>\n      <Param dataType=\"float\" name=\"\
-  BBH\" ucd=\"stat.probability\" value=\"0.03\">\n        <Description>Probability\
-  \ that the source is a binary black hole merger (both objects heavier than 3 solar\
-  \ masses)</Description>\n      </Param>\n      <Param dataType=\"float\" name=\"\
-  Terrestrial\" ucd=\"stat.probability\" value=\"0.01\">\n        <Description>Probability\
-  \ that the source is terrestrial (i.e., a background noise fluctuation or a glitch)</Description>\n\
-  \      </Param>\n      <Description>Source classification: binary neutron star (BNS),\
-  \ neutron star-black hole (NSBH), binary black hole (BBH), or terrestrial (noise)</Description>\n\
-  \    </Group>\n    <Group name=\"Properties\" type=\"Properties\">\n      <Param\
+  https://example.org/superevents/S230518h/view/\">\n      <Description>Web page for\
+  \ evolving status of this GW candidate</Description>\n    </Param>\n    <Param dataType=\"\
+  string\" name=\"Instruments\" ucd=\"meta.code\" value=\"H1,L1,V1\">\n      <Description>List\
+  \ of instruments used in analysis to identify this event</Description>\n    </Param>\n\
+  \    <Param dataType=\"float\" name=\"FAR\" ucd=\"arith.rate;stat.falsealarm\" unit=\"\
+  Hz\" value=\"9.11069936486e-14\">\n      <Description>False alarm rate for GW candidates\
+  \ with this strength or greater</Description>\n    </Param>\n    <Param dataType=\"\
+  string\" name=\"Group\" ucd=\"meta.code\" value=\"CBC\">\n      <Description>Data\
+  \ analysis working group</Description>\n    </Param>\n    <Param dataType=\"string\"\
+  \ name=\"Pipeline\" ucd=\"meta.code\" value=\"gstlal\">\n      <Description>Low-latency\
+  \ data analysis pipeline</Description>\n    </Param>\n    <Param dataType=\"string\"\
+  \ name=\"Search\" ucd=\"meta.code\" value=\"MDC\">\n      <Description>Specific\
+  \ low-latency search</Description>\n    </Param>\n    <Group name=\"Classification\"\
+  \ type=\"Classification\">\n      <Param dataType=\"float\" name=\"BNS\" ucd=\"\
+  stat.probability\" value=\"0.95\">\n        <Description>Probability that the source\
+  \ is a binary neutron star merger (both objects lighter than 3 solar masses)</Description>\n\
+  \      </Param>\n      <Param dataType=\"float\" name=\"NSBH\" ucd=\"stat.probability\"\
+  \ value=\"0.01\">\n        <Description>Probability that the source is a neutron\
+  \ star-black hole merger (secondary lighter than 3 solar masses)</Description>\n\
+  \      </Param>\n      <Param dataType=\"float\" name=\"BBH\" ucd=\"stat.probability\"\
+  \ value=\"0.03\">\n        <Description>Probability that the source is a binary\
+  \ black hole merger (both objects heavier than 3 solar masses)</Description>\n \
+  \     </Param>\n      <Param dataType=\"float\" name=\"Terrestrial\" ucd=\"stat.probability\"\
+  \ value=\"0.01\">\n        <Description>Probability that the source is terrestrial\
+  \ (i.e., a background noise fluctuation or a glitch)</Description>\n      </Param>\n\
+  \      <Description>Source classification: binary neutron star (BNS), neutron star-black\
+  \ hole (NSBH), binary black hole (BBH), or terrestrial (noise)</Description>\n \
+  \   </Group>\n    <Group name=\"Properties\" type=\"Properties\">\n      <Param\
   \ dataType=\"float\" name=\"HasNS\" ucd=\"stat.probability\" value=\"0.95\">\n \
   \       <Description>Probability that at least one object in the binary has a mass\
   \ that is less than 3 solar masses</Description>\n      </Param>\n      <Param dataType=\"\
@@ -107,7 +104,7 @@ source_name: null
 source_type: GW
 swift_rate_signif: null
 telescope: LVC
-trig_id: MS181101ab
+trig_id: S230518h
 trig_pairs:
 - SWIFT_BAT_GRB_Pos
 - SWIFT_BAT_GRB_POS_ACK

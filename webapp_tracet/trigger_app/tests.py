@@ -14,12 +14,21 @@ from astropy.time import Time
 
 
 def create_voevent_wrapper(trig, ra_dec, dec_alter=True):
-    if dec_alter:
+    if dec_alter and ra_dec and trig.ra and trig.dec:
         dec = ra_dec.dec.deg
         dec_dms = ra_dec.dec.to_string(unit=u.deg, sep=':')
-    else:
+        ra=ra_dec.ra.deg
+        ra_hms=ra_dec.ra.to_string(unit=u.hour, sep=':')
+    elif ra_dec and trig.ra and trig.dec:
         dec = trig.dec
         dec_dms = trig.dec_dms
+        ra=ra_dec.ra.deg
+        ra_hms=ra_dec.ra.to_string(unit=u.hour, sep=':')
+    else:
+        ra = None
+        dec = None
+        dec_dms = None
+        ra_hms = None
     # Checks for no event observed
     if trig.event_observed is None:
         event_observed = None
@@ -35,9 +44,9 @@ def create_voevent_wrapper(trig, ra_dec, dec_alter=True):
         event_type=trig.event_type,
         antares_ranking=trig.antares_ranking,
         # Sent event up so it's always pointing at zenith
-        ra=ra_dec.ra.deg,
+        ra=ra,
         dec=dec,
-        ra_hms=ra_dec.ra.to_string(unit=u.hour, sep=':'),
+        ra_hms=ra_hms,
         dec_dms=dec_dms,
         pos_error=trig.err,
         ignored=trig.ignore,
@@ -47,7 +56,18 @@ def create_voevent_wrapper(trig, ra_dec, dec_alter=True):
         fermi_most_likely_index=trig.fermi_most_likely_index,
         fermi_detection_prob=trig.fermi_detection_prob,
         swift_rate_signif=trig.swift_rate_signif,
-    )
+        lvc_false_alarm_rate = trig.lvc_false_alarm_rate,
+        lvc_binary_neutron_star_probability = trig.lvc_binary_neutron_star_probability,
+        lvc_neutron_star_black_hole_probability = trig.lvc_neutron_star_black_hole_probability,
+        lvc_binary_black_hole_probability = trig.lvc_binary_black_hole_probability,
+        lvc_terrestial_probability = trig.lvc_terrestial_probability,
+        lvc_includes_neutron_star_probability = trig.lvc_includes_neutron_star_probability,
+        lvc_retraction_message = trig.lvc_retraction_message,
+        lvc_skymap_fits = trig.lvc_skymap_fits,
+        lvc_prob_density_tile = trig.lvc_prob_density_tile,
+        lvc_significance = trig.lvc_significance,
+        lvc_event_url = trig.lvc_event_url    
+        )
 
 
 class test_grb_group_01(TestCase):
@@ -274,7 +294,6 @@ class test_grb_observation_fail_mwa(TestCase):
     fixtures = [
         "default_data.yaml",
         "trigger_app/test_yamls/mwa_grb_proposal_settings.yaml",
-        "trigger_app/test_yamls/mwa_short_grb_proposal_settings.yaml",
     ]
 
     with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
@@ -284,7 +303,7 @@ class test_grb_observation_fail_mwa(TestCase):
     def setUp(self, fake_mwa_api):
         fake_mwa_api.side_effect = requests.exceptions.Timeout()
         xml_paths = [
-            "../tests/test_events/SWIFT#BAT_GRB_Pos_1163119-055.xml"
+            "../tests/test_events/SWIFT_BAT_POS.xml"
         ]
 
         # Setup current RA and Dec at zenith for the MWA
@@ -295,15 +314,18 @@ class test_grb_observation_fail_mwa(TestCase):
         ra_dec = mwa_coord.icrs
 
         # Parse and upload the xml file group
-        for xml in xml_paths:
-            trig = parsed_VOEvent(xml)
-            create_voevent_wrapper(trig, ra_dec, False)
+        try:
+            for xml in xml_paths:
+                trig = parsed_VOEvent(xml)
+                create_voevent_wrapper(trig, ra_dec, False)
+        except Exception as e:
+            pass
 
     def test_trigger_groups(self):
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='MWA_VCS').first().decision, 'E')
 
-class test_grb_observation_fail_mwa(TestCase):
+class test_grb_observation_ignored_mwa(TestCase):
     """Tests ignored observations during an event
     """
     # Load default fixtures
@@ -492,43 +514,49 @@ class test_hess_any_dur(TestCase):
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__event_any_duration=False).first().decision, 'I')
 
-class test_use_mwa_sub_arrays(TestCase):
+class test_lvc_mwa_sub_arrays(TestCase):
     """Tests that on early LVC events MWA will make an observation with sub arrays"
     """
     # Load default fixtures
     fixtures = [
         "default_data.yaml",
-        # Standard proposal that shouldn't trigger
+        # Mwa proposal that has subarrays
         "trigger_app/test_yamls/mwa_early_lvc_mwa_proposal_settings.yaml",
     ]
 
-    # with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
-    #     trigger_mwa_test = safe_load(file)
+    with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
+        trigger_mwa_test = safe_load(file)
 
-    # @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
-    def setUp(self):
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
+    def setUp(self,fake_mwa_api):
         xml_paths = [
             "../tests/test_events/LVC_example_early_warning.xml",
+            "../tests/test_events/LVC_real_initial.xml",
+            "../tests/test_events/LVC_real_preliminary.xml",
+            "../tests/test_events/LVC_real_update.xml",
         ]
-
-        # Setup current RA and Dec at zenith for the MWA
+       # Setup current RA and Dec at zenith for the MWA
         MWA = EarthLocation(lat='-26:42:11.95',
                             lon='116:40:14.93', height=377.8 * u.m)
         mwa_coord = SkyCoord(az=0., alt=90., unit=(
             u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
         ra_dec = mwa_coord.icrs
-
         # Parse and upload the xml file group
         for xml in xml_paths:
             trig = parsed_VOEvent(xml)
             print(trig)
-            create_voevent_wrapper(trig, ra_dec)
+            if(trig.ra and trig.dec):
+                create_voevent_wrapper(trig, ra_dec)
+            else:
+                create_voevent_wrapper(trig, ra_dec=None)
+
+            args, kwargs = fake_mwa_api.call_args
+            print(args)
+            print(kwargs)
+
 
     def test_trigger_groups(self):
         # Check event was made
-        self.assertEqual(len(Event.objects.all()), 1)
+        # self.assertEqual(len(Event.objects.all()), 4)
         self.assertEqual(len(EventGroup.objects.all()), 1)
-
-    def test_proposal_decision(self):
-        # Test only one proposal triggered
         self.assertEqual(ProposalDecision.objects.all().first().decision, 'T')

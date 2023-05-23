@@ -147,7 +147,7 @@ class ProposalSettings(models.Model):
 
     # MWA settings
     start_observation_at_high_sensitivity = models.BooleanField(verbose_name="Without positional data, start observations with MWA sub array at high sensitivity area",
-                                                                default=True, help_text="On early warnings there will not be positional data so start MWA in sub array mode at the high sensitivity area over the indian ocean")
+                                                                default=False, help_text="On early warnings there will not be positional data so start MWA in sub array mode at the high sensitivity area over the indian ocean")
     # Alt/az in degrees: (90, 0), (66.85, 270), (43.97, 270), (59.35, 219.88)
     mwa_sub_alt_NE = models.FloatField(default=90., verbose_name="NE alt(deg)",
                                     help_text="Altitude in degrees for the North-East sub array")
@@ -342,7 +342,7 @@ class Event(models.Model):
     lvc_false_alarm_rate = models.CharField(
         max_length=64, blank=True, null=True)
     lvc_significance = models.CharField(max_length=64, blank=True, null=True)
-    lvc_event_url = models.CharField(max_length=256, blank=True, null=True)
+    lvc_event_url = models.CharField(max_length=512, blank=True, null=True)
     lvc_binary_neutron_star_probability = models.FloatField(
         blank=True, null=True)
     lvc_neutron_star_black_hole_probability = models.FloatField(
@@ -354,7 +354,7 @@ class Event(models.Model):
         blank=True, null=True)
     lvc_retraction_message = models.CharField(
         max_length=1000, blank=True, null=True)
-    lvc_skymap_fits = models.CharField(max_length=256, blank=True, null=True)
+    lvc_skymap_fits = models.CharField(max_length=512, blank=True, null=True)
     lvc_prob_density_tile = models.FloatField(blank=True, null=True)
     lvc_skymap_file = models.FileField(
         upload_to='skymaps/', blank=True, null=True)
@@ -365,7 +365,7 @@ class Event(models.Model):
 
 class CometLog(models.Model):
     id = models.AutoField(primary_key=True)
-    log = models.CharField(max_length=256, blank=True, null=True)
+    log = models.CharField(max_length=512, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
@@ -421,5 +421,5 @@ class Observations(models.Model):
         Telescope, to_field="name", verbose_name="Telescope name", on_delete=models.CASCADE)
     proposal_decision_id = models.ForeignKey(
         ProposalDecision, on_delete=models.SET_NULL, blank=True, null=True)
-    website_link = models.URLField(max_length=256)
-    reason = models.CharField(max_length=256, blank=True, null=True)
+    website_link = models.URLField(max_length=512)
+    reason = models.CharField(max_length=512, blank=True, null=True)

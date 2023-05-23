@@ -32,6 +32,7 @@ def group_trigger(sender, instance, **kwargs):
     """Check if the latest Event has already been observered or if it is new and update the models accordingly
     """
     print('DEBUG - group_trigger')
+
     # instance is the new Event
     logger.info('Trying to group with similar events')
     # ------------------------------------------------------------------------------
@@ -68,6 +69,7 @@ def group_trigger(sender, instance, **kwargs):
         logger.info('Event ignored so do nothing')
         return
     if (instance.ra and instance.dec):
+        print("DEBUG - Has ra and dec so getting sky coordinates")
         logger.info(f'Getting sky coordinates {instance.ra} {instance.dec}')
         event_coord = SkyCoord(ra=instance.ra * u.degree,
                                dec=instance.dec * u.degree)
@@ -322,13 +324,17 @@ def proposal_worth_observing(
         # Check if you can observe and if so send off the observation
         logger.info(
             'Check if you can observe and if so send off the observation')
-        print("DEBUG - trigger observation")
-        decision, decision_reason_log = trigger_observation(
-            prop_dec,
-            decision_reason_log,
-            reason=observation_reason,
-            event_id=voevent.id,
-        )
+        print("DEBUG - Trigger observation")
+        try:
+            decision, decision_reason_log = trigger_observation(
+                prop_dec,
+                decision_reason_log,
+                reason=observation_reason,
+                event_id=voevent.id,
+            )
+        except Exception as e:
+            logger.info(e)
+            decision = 'E'
         print("DEBUG - trigger_observation result")
         print(decision, decision_reason_log)
         if decision == 'E':

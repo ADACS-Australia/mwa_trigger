@@ -454,6 +454,7 @@ class parsed_VOEvent:
 
         # Get current position
         self.ra, self.dec, self.err = get_position_info(v)
+        print(f"DEBUG - ra: {self.ra}, dec: {self.dec}")
         if self.ra is None or self.dec is None:
             self.ra_hms = None
             self.dec_dms = None
@@ -543,7 +544,7 @@ class parsed_VOEvent:
             self.sequence_num = None
             logger.info("LVC telescope")
 
-            if self.event_type == 'EarlyWarning' or self.event_type == 'Preliminary' or self.event_type == 'Initial' or self.event_type == 'Update':
+            if self.event_type != 'Retraction':
                 # Capture Probabilities of observations for proposals and analysis
                 self.lvc_includes_neutron_star_probability = float(
                     v.find(".//Param[@name='HasNS']").attrib["value"])
@@ -562,44 +563,19 @@ class parsed_VOEvent:
                     v.find(".//Param[@name='BBH']").attrib["value"])
                 self.lvc_terrestial_probability = float(
                     v.find(".//Param[@name='Terrestrial']").attrib["value"])
-
-            if self.event_type == 'Initial' or self.event_type == 'Update':
+            lvc_skymap_fits = v.find(".//Param[@name='skymap_fits']")
+            print(lvc_skymap_fits)
+            if lvc_skymap_fits is not None:
                 logger.info("Parsing skymap")
                 # Initial and Update alerts should contain skymap data as URL
-                self.lvc_skymap_fits = str(
-                    v.find(".//Param[@name='skymap_fits']").attrib["value"])
+                self.lvc_skymap_fits = str(lvc_skymap_fits.attrib["value"])
 
                 url = self.lvc_skymap_fits
                 with urllib.request.urlopen(url) as response:
                     body = response.read()
 
                 self.lvc_skymap_file = body
-
-                with open("skymap.fits", mode="wb") as skymap_file:
-                    skymap_file.write(body)
-
-                skymap = Table.read("skymap.fits")
-                i = np.argmax(skymap['PROBDENSITY'])
-                self.lvc_prob_density_tile = float(
-                    skymap[i]['PROBDENSITY'] * (np.pi / 180)**2)
-
-                uniq = skymap[i]['UNIQ']
-                level, ipix = ah.uniq_to_level_ipix(uniq)
-                nside = ah.level_to_nside(level)
-                ra, dec = ah.healpix_to_lonlat(ipix, nside, order='nested')
-
-                logger.info("Successfully parsed Skymap")
-
-                self.ra = float(ra.deg)
-                self.dec = float(dec.deg)
-
-                self.ra_hms = str(
-                    Angle(self.ra, unit=u.deg).to_string(unit=u.hour, sep=':'))
-                self.dec_dms = str(
-                    Angle(self.dec, unit=u.deg).to_string(unit=u.deg, sep=':'))
-
-                os.remove("skymap.fits")
-
+                
             if self.event_type == 'Retraction':
                 # Capture message that comes with retraction
                 self.lvc_retraction_message = str(v.Citations.Description)
