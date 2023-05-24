@@ -1,6 +1,6 @@
 antares_ranking: null
-dec: -17.856895095545468
-dec_dms: '-17:51:24.82234396'
+dec: null
+dec_dms: null
 err: null
 event_duration: null
 event_observed: 2018-11-01 22:22:46.654437+00:00
@@ -16,7 +16,7 @@ lvc_event_url: https://example.org/superevents/MS181101ab/view/
 lvc_false_alarm_rate: 9.11069936486e-14
 lvc_includes_neutron_star_probability: 0.95
 lvc_neutron_star_black_hole_probability: 0.01
-lvc_prob_density_tile: 0.0782516470191411
+lvc_prob_density_tile: null
 lvc_retraction_message: null
 lvc_significance: null
 lvc_skymap_file: !!binary |
@@ -13743,8 +13743,8 @@ packet: "<VOEvent xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:sc
   \ cite=\"supersedes\">ivo://gwnet/LVC#MS181101ab-1-EarlyWarning</EventIVORN>\n \
   \   <Description>Initial localization is now available (preliminary)</Description>\n\
   \  </Citations>\n  <original_prefix>voe</original_prefix>\n</VOEvent>\n"
-ra: 194.30419921874997
-ra_hms: '12:57:13.0078125'
+ra: null
+ra_hms: null
 role: observation
 self_generated_trig_id: false
 sequence_num: null
