@@ -1,3 +1,4 @@
+import time
 from django.test import TestCase
 from unittest.mock import patch
 import pytest
@@ -527,12 +528,13 @@ class test_lvc_mwa_sub_arrays(TestCase):
     with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
         trigger_mwa_test = safe_load(file)
 
-    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
-    def setUp(self,fake_mwa_api):
+    # @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
+    # def setUp(self,fake_mwa_api):
+    def setUp(self):
         xml_paths = [
-            "../tests/test_events/LVC_example_early_warning.xml",
-            "../tests/test_events/LVC_real_initial.xml",
-            "../tests/test_events/LVC_real_preliminary.xml",
+            # "../tests/test_events/LVC_example_early_warning.xml",
+            # "../tests/test_events/LVC_real_initial.xml",
+            # "../tests/test_events/LVC_real_preliminary.xml",
             "../tests/test_events/LVC_real_update.xml",
         ]
        # Setup current RA and Dec at zenith for the MWA
@@ -549,10 +551,10 @@ class test_lvc_mwa_sub_arrays(TestCase):
                 create_voevent_wrapper(trig, ra_dec)
             else:
                 create_voevent_wrapper(trig, ra_dec=None)
-
-            args, kwargs = fake_mwa_api.call_args
-            print(args)
-            print(kwargs)
+            time.sleep(10)
+            # args, kwargs = fake_mwa_api.call_args
+            # print(args)
+            # print(kwargs)
 
 
     def test_trigger_groups(self):
