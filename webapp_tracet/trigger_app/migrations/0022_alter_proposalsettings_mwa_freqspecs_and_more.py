@@ -38,6 +38,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='telescopeprojectid',
             name='password',
-            field=models.CharField(help_text='The project password for the telescope used to automatically schedule observations.', max_length=510, verbose_name='Telescope Project Password'),
+            field=models.CharField(help_text='The project password for the telescope used to automatically schedule observations.', max_length=2020, verbose_name='Telescope Project Password'),
         ),
     ]
