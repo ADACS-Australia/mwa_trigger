@@ -38,7 +38,7 @@ class EventTelescope(models.Model):
 class TelescopeProjectID(models.Model):
     id = models.CharField(primary_key=True, max_length=125, verbose_name="Telescope Project ID",
                           help_text="The project ID for the telescope used to automatically schedule observations.")
-    password = models.CharField(max_length=510, verbose_name="Telescope Project Password",
+    password = models.CharField(max_length=2020, verbose_name="Telescope Project Password",
                                 help_text="The project password for the telescope used to automatically schedule observations.")
     description = models.CharField(
         max_length=5000, help_text="A brief description of the project.")
