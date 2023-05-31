@@ -36,13 +36,13 @@ class EventTelescope(models.Model):
 
 
 class TelescopeProjectID(models.Model):
-    id = models.CharField(primary_key=True, max_length=64, verbose_name="Telescope Project ID",
+    id = models.CharField(primary_key=True, max_length=125, verbose_name="Telescope Project ID",
                           help_text="The project ID for the telescope used to automatically schedule observations.")
-    password = models.CharField(max_length=256, verbose_name="Telescope Project Password",
+    password = models.CharField(max_length=510, verbose_name="Telescope Project Password",
                                 help_text="The project password for the telescope used to automatically schedule observations.")
     description = models.CharField(
-        max_length=256, help_text="A brief description of the project.")
-    atca_email = models.CharField(blank=True, null=True, max_length=256, verbose_name="ATCA Proposal Email",
+        max_length=5000, help_text="A brief description of the project.")
+    atca_email = models.CharField(blank=True, null=True, max_length=515, verbose_name="ATCA Proposal Email",
                                   help_text="The email address of someone that was on the ATCA observing proposal. This is an authentication step only required for ATCA.")
     telescope = models.ForeignKey(
         Telescope,
@@ -75,7 +75,7 @@ class ProposalSettings(models.Model):
     proposal_id = models.CharField(max_length=16, unique=True, verbose_name="Proposal ID",
                                    help_text="A short identifier of the proposal of maximum lenth 16 charcters.")
     proposal_description = models.CharField(
-        max_length=256, help_text="A brief description of the proposal. Only needs to be enough to distinguish it from the other proposals.")
+        max_length=513, help_text="A brief description of the proposal. Only needs to be enough to distinguish it from the other proposals.")
     priority = models.IntegerField(
         help_text="Set proposal processing priority (lower is better)", default=1)
 
@@ -164,7 +164,7 @@ class ProposalSettings(models.Model):
     mwa_sub_az_SE = models.FloatField(default=219.88, verbose_name="SE az(deg)",
                             help_text="Azimuth in degrees for the South-East sub array")
 
-    mwa_freqspecs = models.CharField(default="144,24", max_length=256, verbose_name="MWA frequency specifications",
+    mwa_freqspecs = models.CharField(default="144,24", max_length=260, verbose_name="MWA frequency specifications",
                                      help_text="The frequency channels IDs for the MWA to observe at.")
     mwa_nobs = models.IntegerField(
         default=1, verbose_name="Number of Observations", help_text="The number of observations to schedule.")
