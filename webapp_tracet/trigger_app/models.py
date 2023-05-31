@@ -38,7 +38,7 @@ class EventTelescope(models.Model):
 class TelescopeProjectID(models.Model):
     id = models.CharField(primary_key=True, max_length=64, verbose_name="Telescope Project ID",
                           help_text="The project ID for the telescope used to automatically schedule observations.")
-    password = models.CharField(max_length=1024, verbose_name="Telescope Project Password",
+    password = models.CharField(max_length=256, verbose_name="Telescope Project Password",
                                 help_text="The project password for the telescope used to automatically schedule observations.")
     description = models.CharField(
         max_length=256, help_text="A brief description of the project.")
@@ -340,7 +340,7 @@ class Event(models.Model):
     lvc_false_alarm_rate = models.CharField(
         max_length=64, blank=True, null=True)
     lvc_significant = models.BooleanField(default=False,  blank=True, null=True)
-    lvc_event_url = models.CharField(max_length=1024, blank=True, null=True)
+    lvc_event_url = models.CharField(max_length=2025, blank=True, null=True)
     lvc_binary_neutron_star_probability = models.FloatField(
         blank=True, null=True)
     lvc_neutron_star_black_hole_probability = models.FloatField(
@@ -352,7 +352,7 @@ class Event(models.Model):
         blank=True, null=True)
     lvc_retraction_message = models.CharField(
         max_length=1000, blank=True, null=True)
-    lvc_skymap_fits = models.CharField(max_length=1024, blank=True, null=True)
+    lvc_skymap_fits = models.CharField(max_length=2026, blank=True, null=True)
     lvc_prob_density_tile = models.FloatField(blank=True, null=True)
     lvc_skymap_file = models.FileField(
         upload_to='skymaps/', blank=True, null=True)
@@ -363,7 +363,7 @@ class Event(models.Model):
 
 class CometLog(models.Model):
     id = models.AutoField(primary_key=True)
-    log = models.CharField(max_length=1024, blank=True, null=True)
+    log = models.CharField(max_length=2027, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
@@ -419,5 +419,5 @@ class Observations(models.Model):
         Telescope, to_field="name", verbose_name="Telescope name", on_delete=models.CASCADE)
     proposal_decision_id = models.ForeignKey(
         ProposalDecision, on_delete=models.SET_NULL, blank=True, null=True)
-    website_link = models.URLField(max_length=1024)
-    reason = models.CharField(max_length=1024, blank=True, null=True)
+    website_link = models.URLField(max_length=2028)
+    reason = models.CharField(max_length=2029, blank=True, null=True)
