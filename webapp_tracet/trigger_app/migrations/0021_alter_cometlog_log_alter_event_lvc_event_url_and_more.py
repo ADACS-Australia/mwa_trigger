@@ -34,10 +34,5 @@ class Migration(migrations.Migration):
             model_name='observations',
             name='website_link',
             field=models.URLField(max_length=2028),
-        ),
-        migrations.AlterField(
-            model_name='telescopeprojectid',
-            name='password',
-            field=models.CharField(help_text='The project password for the telescope used to automatically schedule observations.', max_length=256, verbose_name='Telescope Project Password'),
-        ),
+        )
     ]
