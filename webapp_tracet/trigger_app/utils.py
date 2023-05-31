@@ -5,12 +5,14 @@ from astropy.coordinates import SkyCoord, EarthLocation
 import numpy as np
 from astropy.time import Time
 from yaml import load, Loader, dump
+import pathlib
+filepath = pathlib.Path(__file__).resolve().parent
 
 MWA_LAT = '-26:42:11.95'
 MWA_LONG = '116:40:14.93'
 MWA_HEIGHT = 377.8
-MWA_SPOTS = 'trigger_app/MWA_SPOTS.txt'
-MWA_SPOTS_YAML = 'trigger_app/MWA_SPOTS.yaml'
+MWA_SPOTS = f"{filepath}/MWA_SPOTS.txt"
+# MWA_SPOTS_YAML = './MWA_SPOTS.yaml'
 
 def getMWAPointingsFromSkymapFile(skymap):
     MWA = EarthLocation(lat=MWA_LAT,

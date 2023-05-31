@@ -355,7 +355,7 @@ class parsed_VOEvent:
         self.lvc_skymap_fits = None
         self.lvc_prob_density_tile = None
         self.lvc_skymap_file = None
-        self.lvc_significance = None
+        self.lvc_significant = None
         self.lvc_event_url = None
         self.role = None
 
@@ -551,7 +551,7 @@ class parsed_VOEvent:
                 self.lvc_false_alarm_rate = float(
                     v.find(".//Param[@name='FAR']").attrib["value"])
                 # Not yet live
-                # self.lvc_significance = str(v.find(".//Param[@name='significance']").attrib["value"])
+                self.lvc_significant = bool(v.find(".//Param[@name='Significant']").attrib["value"])
                 self.lvc_event_url = str(
                     v.find(".//Param[@name='EventPage']").attrib["value"])
 
