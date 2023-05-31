@@ -36,7 +36,6 @@
         "minimum_neutron_star_black_hole_probability": 0,
         "minimum_neutron_star_probability": 0.01,
         "minimum_terrestial_probability": 0,
-        "observe_low_significance": true,
         "observe_significant": true,
         "start_observation_at_high_sensitivity": true,
         "maximum_hess_significance": 1,

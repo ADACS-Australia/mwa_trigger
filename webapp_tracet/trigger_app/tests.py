@@ -66,7 +66,7 @@ def create_voevent_wrapper(trig, ra_dec, dec_alter=True):
         lvc_retraction_message = trig.lvc_retraction_message,
         lvc_skymap_fits = trig.lvc_skymap_fits,
         lvc_prob_density_tile = trig.lvc_prob_density_tile,
-        lvc_significance = trig.lvc_significance,
+        lvc_significant = trig.lvc_significant,
         lvc_event_url = trig.lvc_event_url    
         )
 

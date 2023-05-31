@@ -192,7 +192,7 @@ def worth_observing_nu(
 def worth_observing_gw(
         # event values
         telescope=None,
-        lvc_significance=None,
+        lvc_significant=None,
         lvc_binary_neutron_star_probability=None,
         lvc_neutron_star_black_hole_probability=None,
         lvc_binary_black_hole_probability=None,
@@ -209,7 +209,6 @@ def worth_observing_gw(
         maximum_binary_black_hole_probability=None,
         minimum_terrestial_probability=None,
         maximum_terrestial_probability=None,
-        observe_low_significance=None,
         observe_significant=None,
         event_type=None,
         # Other
@@ -222,7 +221,7 @@ def worth_observing_gw(
     ----------
     telescope : `str`, optional
         The telescope used for the event. Default: None.
-    lvc_significance : `str`, optional
+    lvc_significant : `bool`, optional
         The calculated significance of the event. Default: None.
     lvc_binary_neutron_star_probability : `float`, optional
         The terrestial probability of gw event. Default: None.
@@ -247,8 +246,6 @@ def worth_observing_gw(
         The minimum terrestial probability. Default: 0.95.
     maximum_terrestial_probability : `float`, optional
         The maximum terrestial probability. Default: 0.95.
-    observe_low_significance : `bool`, optional
-        Observe events with low significance Default: True.
     observe_significant : `bool`, optional
         Observe significant events. Default: True.
     decision_reason_log : `str`
@@ -308,13 +305,9 @@ def worth_observing_gw(
             debug_bool = True
             decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The PROB_Terre probability ({lvc_terrestial_probability}) is less than {minimum_terrestial_probability} so not triggering. \n"
         
-        elif lvc_significance == "low significance" and not observe_low_significance:
+        elif lvc_significant == True and not observe_significant:
             debug_bool = True
-            decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The GW significance ({lvc_significance}) is not observed because observe_low_significance is {observe_low_significance}. \n"
-        
-        elif lvc_significance == "significant" and not observe_significant:
-            debug_bool = True
-            decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The GW significance ({lvc_significance}) is not observed because observe_significant is {observe_significant}. \n"
+            decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The GW significance ({lvc_significant}) is not observed because observe_significant is {observe_significant}. \n"
             
         else:
             trigger_bool = True

@@ -303,7 +303,6 @@ def proposal_worth_observing(
                     maximum_binary_black_hole_probability=prop_dec.proposal.maximum_binary_black_hole_probability,
                     minimum_terrestial_probability=prop_dec.proposal.minimum_terrestial_probability,
                     maximum_terrestial_probability=prop_dec.proposal.maximum_terrestial_probability,
-                    observe_low_significance=prop_dec.proposal.observe_low_significance,
                     observe_significant=prop_dec.proposal.observe_significant,
                     # Other
                     decision_reason_log=decision_reason_log,
