@@ -11,6 +11,8 @@ def worth_observing_grb(
         fermi_detection_prob=None,
         swift_rate_signif=None,
         hess_significance=None,
+        pos_error=None,
+        dec=None,
         # Thresholds
         event_any_duration=False,
         event_min_duration=0.256,
@@ -23,7 +25,13 @@ def worth_observing_grb(
         swift_min_rate_signif=0.,
         minimum_hess_significance=0.,
         maximum_hess_significance=1.,
+        maximum_position_uncertainty=None,
+        atca_dec_min_1=None,
+        atca_dec_max_1=None,
+        atca_dec_min_2=None,
+        atca_dec_max_2=None,
         # Other
+        proposal_telescope_id=None,
         decision_reason_log="",
         event_id=None,
     ):
@@ -73,6 +81,19 @@ def worth_observing_grb(
     debug_bool = False
     pending_bool = False
 
+
+    if pos_error == 0.0:
+    # Ignore the inaccurate event
+        debug_bool = True
+        decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {event_id}: The Events positions uncertainty is 0.0 which is likely an error so not observing. \n"
+    elif maximum_position_uncertainty and (pos_error > maximum_position_uncertainty):
+        # Ignore the inaccurate event
+        debug_bool = True
+        decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {event_id}: The Events positions uncertainty ({pos_error:.4f} deg) is greater than {maximum_position_uncertainty:.4f} so not observing. \n"
+    elif proposal_telescope_id == "ATCA" and not (dec > atca_dec_min_1 and dec < atca_dec_max_1) and not (dec > atca_dec_min_2 and dec < atca_dec_max_2):
+        # Ignore the inaccurate event
+        debug_bool = True
+        decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {event_id}: The Events declination ({ dec }) is outside limit 1 ({ atca_dec_min_1 } < dec < {atca_dec_max_1}) or limit 2 ({ atca_dec_min_2 } < dec < {atca_dec_max_2}). \n"
     # Check the events likelyhood data
     likely_bool = False
     if fermi_most_likely_index is not None:
