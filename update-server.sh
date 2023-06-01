@@ -26,5 +26,5 @@ uwsgi --ini webapp_tracet_uwsgi.ini
 tmux kill-server
 
 # Reset comet and kafka event handlers
-tmux new -s kafka -d 'until $(python manage.py kafka_gcn); do echo "Kafka died with exit code $?, restarting..." >&2; sleep 1;done'
+tmux new -s kafka -d './kafka_daemon.sh'
 tmux new -s comet -d 'python twistd_comet_wrapper.py'
