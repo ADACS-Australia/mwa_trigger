@@ -293,6 +293,9 @@ def worth_observing_gw(
     if telescope == "LVC" and event_type == "EarlyWarning":
         trigger_bool = True
         decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: Early warning, no information so triggering. \n"
+    elif telescope == "LVC" and event_type == "Retraction":
+        trigger_bool = True
+        decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: Retraction, scheduling no capture observation. \n"
     elif telescope == "LVC":
         # PROB_NS
         if lvc_includes_neutron_star_probability > maximum_neutron_star_probability:
