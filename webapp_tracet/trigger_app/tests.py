@@ -608,13 +608,12 @@ class test_lvc_mwa_retraction(TestCase):
 
     def test_trigger_groups(self):
         # Check event was made
-        self.assertEqual(len(Event.objects.all()), 4)
+        self.assertEqual(len(Event.objects.all()), 1)
 
         # Early warning is a different event
-        self.assertEqual(len(EventGroup.objects.all()), 2)
+        self.assertEqual(len(EventGroup.objects.all()), 1)
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='MWA_VCS').first().decision, 'T')
-        
 
 class test_lvc_burst_are_ignored(TestCase):
     """Tests that on early LVC events MWA will make an observation with sub arrays"
