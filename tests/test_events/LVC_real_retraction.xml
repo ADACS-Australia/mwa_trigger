@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<voe:VOEvent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:voe="http://www.ivoa.net/xml/VOEvent/v2.0" xsi:schemaLocation="http://www.ivoa.net/xml/VOEvent/v2.0 http://www.ivoa.net/xml/VOEvent/VOEvent-v2.0.xsd" version="2.0" role="observation" ivorn="ivo://gwnet/LVC#S230524x-2-Retraction">
+  <Who>
+    <Date>2023-05-24T20:37:50Z</Date>
+    <Author>
+      <contactName>LIGO Scientific Collaboration, Virgo Collaboration, and KAGRA Collaboration</contactName>
+    </Author>
+  </Who>
+  <What>
+    <Param name="Packet_Type" value="164" dataType="int">
+      <Description>The Notice Type number is assigned/used within GCN, eg type=164 is an LVC_RETRACTION notice</Description>
+    </Param>
+    <Param name="internal" value="0" dataType="int">
+      <Description>Indicates whether this event should be distributed to LSC/Virgo/KAGRA members only</Description>
+    </Param>
+    <Param name="Pkt_Ser_Num" value="2" dataType="int">
+      <Description>A number that increments by 1 each time a new revision is issued for this event</Description>
+    </Param>
+    <Param name="GraceID" value="S230524x" ucd="meta.id" dataType="string">
+      <Description>Identifier in GraceDB</Description>
+    </Param>
+    <Param name="AlertType" value="Retraction" ucd="meta.version" dataType="string">
+      <Description>VOEvent alert type</Description>
+    </Param>
+    <Param name="HardwareInj" value="0" ucd="meta.number" dataType="int">
+      <Description>Indicates that this event is a hardware injection if 1, no if 0</Description>
+    </Param>
+    <Param name="OpenAlert" value="1" ucd="meta.number" dataType="int">
+      <Description>Indicates that this event is an open alert if 1, no if 0</Description>
+    </Param>
+    <Param name="EventPage" value="https://gracedb.ligo.org/superevents/S230524x/view/" ucd="meta.ref.url" dataType="string">
+      <Description>Web page for evolving status of this GW candidate</Description>
+    </Param>
+  </What>
+  <WhereWhen>
+    <ObsDataLocation>
+      <ObservatoryLocation id="LIGO Virgo"/>
+      <ObservationLocation>
+        <AstroCoordSystem id="UTC-FK5-GEO"/>
+        <AstroCoords coord_system_id="UTC-FK5-GEO">
+          <Time unit="s">
+            <TimeInstant>
+              <ISOTime>2023-05-24T20:22:41Z</ISOTime>
+            </TimeInstant>
+          </Time>
+        </AstroCoords>
+      </ObservationLocation>
+    </ObsDataLocation>
+  </WhereWhen>
+  <Citations>
+    <EventIVORN cite="retraction">ivo://gwnet/LVC#S230524x-1-EarlyWarning</EventIVORN>
+    <Description>Determined to not be a viable GW event candidate</Description>
+  </Citations>
+</voe:VOEvent> 
