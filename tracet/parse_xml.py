@@ -544,7 +544,14 @@ class parsed_VOEvent:
             self.sequence_num = None
             logger.info("LVC telescope")
 
-            if self.event_type != 'Retraction':
+            # Check if GW event is a burst
+            if v.find(".//Param[@name='Group']") is not None and v.find(".//Param[@name='Group']").attrib["value"] == 'Burst':
+                # Ignore burst events
+                self.is_burst = v.find(".//Param[@name='Group']").attrib["value"]
+                self.ignore = True
+                
+
+            if self.event_type != 'Retraction' and not self.is_burst:
                 # Capture Probabilities of observations for proposals and analysis
                 self.lvc_includes_neutron_star_probability = float(
                     v.find(".//Param[@name='HasNS']").attrib["value"])
