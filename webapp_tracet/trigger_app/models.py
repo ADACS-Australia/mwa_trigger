@@ -135,7 +135,7 @@ class ProposalSettings(models.Model):
 
     # GW custom logic
     observe_significant = models.BooleanField(
-        verbose_name="Observe events with high significance (low FAR)", default=True, help_text="(1/month CBC and 1/year BURST) > FAR")
+        verbose_name="Only observe events with high significance (low FAR)", default=False, help_text="(1/month CBC < FAR")
 
     # HESS settings
     minimum_hess_significance = models.FloatField(

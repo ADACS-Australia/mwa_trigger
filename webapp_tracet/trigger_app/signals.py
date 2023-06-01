@@ -213,111 +213,105 @@ def proposal_worth_observing(
     # Defaults if not worth observing
     trigger_bool = debug_bool = pending_bool = False
     decision_reason_log = prop_dec.decision_reason
-    # Check if event has an accurate enough position
-    if prop_dec.pos_error == 0.0:
-        # Ignore the inaccurate event
-        decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {voevent.id}: The Events positions uncertainty is 0.0 which is likely an error so not observing. \n"
-    elif voevent.pos_error and (voevent.pos_error > prop_dec.proposal.maximum_position_uncertainty):
-        # Ignore the inaccurate event
-        decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {voevent.id}: The Events positions uncertainty ({voevent.pos_error:.4f} deg) is greater than {prop_dec.proposal.maximum_position_uncertainty:.4f} so not observing. \n"
-    elif prop_dec.proposal.telescope_id == "ATCA" and not (prop_dec.dec > prop_dec.proposal.atca_dec_min_1 and prop_dec.dec < prop_dec.proposal.atca_dec_max_1) and not (prop_dec.dec > prop_dec.proposal.atca_dec_min_2 and prop_dec.dec < prop_dec.proposal.atca_dec_max_2):
-        # Ignore the inaccurate event
-        decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {voevent.id}: The Events declination ({ prop_dec.dec }) is outside limit 1 ({ prop_dec.proposal.atca_dec_min_1 } < dec < {prop_dec.proposal.atca_dec_max_1}) or limit 2 ({ prop_dec.proposal.atca_dec_min_2 } < dec < {prop_dec.proposal.atca_dec_max_2}). \n"
+    proj_source_bool = False
+    # Continue to next test
+    if prop_dec.proposal.event_telescope is None or str(prop_dec.proposal.event_telescope).strip() == voevent.telescope.strip():
+    # This project observes events from this telescope
+        # Check if this proposal thinks this event is worth observing
+        if prop_dec.proposal.source_type == "GRB" and prop_dec.event_group_id.source_type == "GRB":
+            print('DEBUG - prop_dec.source_type is GRB')
+                # This proposal wants to observe GRBs so check if it is worth observing
+            trigger_bool, debug_bool, pending_bool, decision_reason_log = worth_observing_grb(
+                # event values
+                event_duration=voevent.duration,
+                fermi_most_likely_index=voevent.fermi_most_likely_index,
+                fermi_detection_prob=voevent.fermi_detection_prob,
+                swift_rate_signif=voevent.swift_rate_signif,
+                hess_significance=voevent.hess_significance,
+                pos_error=voevent.pos_error,
+                dec=prop_dec.dec,
+                # Thresholds
+                event_any_duration=prop_dec.proposal.event_any_duration,
+                event_min_duration=prop_dec.proposal.event_min_duration,
+                event_max_duration=prop_dec.proposal.event_max_duration,
+                pending_min_duration_1=prop_dec.proposal.pending_min_duration_1,
+                pending_max_duration_1=prop_dec.proposal.pending_max_duration_1,
+                pending_min_duration_2=prop_dec.proposal.pending_min_duration_2,
+                pending_max_duration_2=prop_dec.proposal.pending_max_duration_2,
+                fermi_min_detection_prob=prop_dec.proposal.fermi_prob,
+                swift_min_rate_signif=prop_dec.proposal.swift_rate_signf,
+                minimum_hess_significance=prop_dec.proposal.minimum_hess_significance,
+                maximum_hess_significance=prop_dec.proposal.maximum_hess_significance,
+                maximum_position_uncertainty=prop_dec.proposal.maximum_position_uncertainty,
+                atca_dec_min_1=prop_dec.proposal.atca_dec_min_1,
+                atca_dec_max_1=prop_dec.proposal.atca_dec_max_1,
+                atca_dec_min_2=prop_dec.proposal.atca_dec_min_2,
+                atca_dec_max_2=prop_dec.proposal.atca_dec_max_2,
+                # Other
+                proposal_telescope_id=prop_dec.proposal.telescope_id,
+                decision_reason_log=decision_reason_log,
+                event_id=voevent.id,
+            )
+            proj_source_bool = True
+
+        elif prop_dec.proposal.source_type == "FS" and prop_dec.event_group_id.source_type == "FS":
+            # This proposal wants to observe FSs and there is no FS logic so observe
+            trigger_bool = True
+            decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {voevent.id}: Triggering on Flare Star {prop_dec.event_group_id.source_name}. \n"
+            proj_source_bool = True
+        elif prop_dec.proposal.source_type == "NU" and prop_dec.event_group_id.source_type == "NU":
+            # This proposal wants to observe GRBs so check if it is worth observing
+            trigger_bool, debug_bool, pending_bool, decision_reason_log = worth_observing_nu(
+                # event values
+                antares_ranking=voevent.antares_ranking,
+                telescope=voevent.telescope,
+                # Thresholds
+                antares_min_ranking=prop_dec.proposal.antares_min_ranking,
+                # Other
+                decision_reason_log=decision_reason_log,
+                event_id=voevent.id,
+            )
+            proj_source_bool = True
+
+        elif prop_dec.proposal.source_type == "GW" and prop_dec.event_group_id.source_type == "GW":
+            print('DEBUG - prop_dec.source_type is GW')
+
+            print(vars(voevent))
+
+            trigger_bool, debug_bool, pending_bool, decision_reason_log = worth_observing_gw(
+                # Event values
+                lvc_binary_neutron_star_probability=voevent.lvc_binary_neutron_star_probability,
+                lvc_neutron_star_black_hole_probability=voevent.lvc_neutron_star_black_hole_probability,
+                lvc_binary_black_hole_probability=voevent.lvc_binary_black_hole_probability,
+                lvc_terrestial_probability=voevent.lvc_terrestial_probability,
+                lvc_includes_neutron_star_probability=voevent.lvc_includes_neutron_star_probability,
+                telescope=voevent.telescope,
+                # Thresholds
+                minimum_neutron_star_probability=prop_dec.proposal.minimum_neutron_star_probability,
+                maximum_neutron_star_probability=prop_dec.proposal.maximum_neutron_star_probability,
+                minimum_binary_neutron_star_probability=prop_dec.proposal.minimum_binary_neutron_star_probability,
+                maximum_binary_neutron_star_probability=prop_dec.proposal.maximum_binary_neutron_star_probability,
+                minimum_neutron_star_black_hole_probability=prop_dec.proposal.minimum_neutron_star_black_hole_probability,
+                maximum_neutron_star_black_hole_probability=prop_dec.proposal.maximum_neutron_star_black_hole_probability,
+                minimum_binary_black_hole_probability=prop_dec.proposal.minimum_binary_black_hole_probability,
+                maximum_binary_black_hole_probability=prop_dec.proposal.maximum_binary_black_hole_probability,
+                minimum_terrestial_probability=prop_dec.proposal.minimum_terrestial_probability,
+                maximum_terrestial_probability=prop_dec.proposal.maximum_terrestial_probability,
+                observe_significant=prop_dec.proposal.observe_significant,
+                # Other
+                decision_reason_log=decision_reason_log,
+                event_id=voevent.id,
+                event_type=voevent.event_type
+            )
+            proj_source_bool = True
+        # TODO set up other source types here
+
+        if not proj_source_bool:
+            # Proposal does not observe this type of source so update message
+            decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {voevent.id}: This proposal does not observe {prop_dec.event_group_id.source_type}s. \n"
     else:
-        # Continue to next test
-        if prop_dec.proposal.event_telescope is None or str(prop_dec.proposal.event_telescope).strip() == voevent.telescope.strip():
-            # This project observes events from this telescope
-
-            # Check if this proposal thinks this event is worth observing
-            proj_source_bool = False
-            
-            if prop_dec.proposal.source_type == "GRB" and prop_dec.event_group_id.source_type == "GRB":
-                print('DEBUG - prop_dec.source_type is GRB')
-                # This proposal wants to observe GRBs so check if it is worth observing
-                trigger_bool, debug_bool, pending_bool, decision_reason_log = worth_observing_grb(
-                    # event values
-                    event_duration=voevent.duration,
-                    fermi_most_likely_index=voevent.fermi_most_likely_index,
-                    fermi_detection_prob=voevent.fermi_detection_prob,
-                    swift_rate_signif=voevent.swift_rate_signif,
-                    hess_significance=voevent.hess_significance,
-                    # Thresholds
-                    event_any_duration=prop_dec.proposal.event_any_duration,
-                    event_min_duration=prop_dec.proposal.event_min_duration,
-                    event_max_duration=prop_dec.proposal.event_max_duration,
-                    pending_min_duration_1=prop_dec.proposal.pending_min_duration_1,
-                    pending_max_duration_1=prop_dec.proposal.pending_max_duration_1,
-                    pending_min_duration_2=prop_dec.proposal.pending_min_duration_2,
-                    pending_max_duration_2=prop_dec.proposal.pending_max_duration_2,
-                    fermi_min_detection_prob=prop_dec.proposal.fermi_prob,
-                    swift_min_rate_signif=prop_dec.proposal.swift_rate_signf,
-                    minimum_hess_significance=prop_dec.proposal.minimum_hess_significance,
-                    maximum_hess_significance=prop_dec.proposal.maximum_hess_significance,
-                    # Other
-                    decision_reason_log=decision_reason_log,
-                    event_id=voevent.id,
-                )
-                proj_source_bool = True
-
-            elif prop_dec.proposal.source_type == "FS" and prop_dec.event_group_id.source_type == "FS":
-                # This proposal wants to observe FSs and there is no FS logic so observe
-                trigger_bool = True
-                decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {voevent.id}: Triggering on Flare Star {prop_dec.event_group_id.source_name}. \n"
-                proj_source_bool = True
-            elif prop_dec.proposal.source_type == "NU" and prop_dec.event_group_id.source_type == "NU":
-                # This proposal wants to observe GRBs so check if it is worth observing
-                trigger_bool, debug_bool, pending_bool, decision_reason_log = worth_observing_nu(
-                    # event values
-                    antares_ranking=voevent.antares_ranking,
-                    telescope=voevent.telescope,
-                    # Thresholds
-                    antares_min_ranking=prop_dec.proposal.antares_min_ranking,
-                    # Other
-                    decision_reason_log=decision_reason_log,
-                    event_id=voevent.id,
-                )
-                proj_source_bool = True
-
-            elif prop_dec.proposal.source_type == "GW" and prop_dec.event_group_id.source_type == "GW":
-                # This proposal wants to observe GRBs so check if it is worth observing
-                print('DEBUG - prop_dec.source_type is GRB')
-
-                print(vars(voevent))
-
-                trigger_bool, debug_bool, pending_bool, decision_reason_log = worth_observing_gw(
-                    # Event values
-                    lvc_binary_neutron_star_probability=voevent.lvc_binary_neutron_star_probability,
-                    lvc_neutron_star_black_hole_probability=voevent.lvc_neutron_star_black_hole_probability,
-                    lvc_binary_black_hole_probability=voevent.lvc_binary_black_hole_probability,
-                    lvc_terrestial_probability=voevent.lvc_terrestial_probability,
-                    lvc_includes_neutron_star_probability=voevent.lvc_includes_neutron_star_probability,
-                    telescope=voevent.telescope,
-                    # Thresholds
-                    minimum_neutron_star_probability=prop_dec.proposal.minimum_neutron_star_probability,
-                    maximum_neutron_star_probability=prop_dec.proposal.maximum_neutron_star_probability,
-                    minimum_binary_neutron_star_probability=prop_dec.proposal.minimum_binary_neutron_star_probability,
-                    maximum_binary_neutron_star_probability=prop_dec.proposal.maximum_binary_neutron_star_probability,
-                    minimum_neutron_star_black_hole_probability=prop_dec.proposal.minimum_neutron_star_black_hole_probability,
-                    maximum_neutron_star_black_hole_probability=prop_dec.proposal.maximum_neutron_star_black_hole_probability,
-                    minimum_binary_black_hole_probability=prop_dec.proposal.minimum_binary_black_hole_probability,
-                    maximum_binary_black_hole_probability=prop_dec.proposal.maximum_binary_black_hole_probability,
-                    minimum_terrestial_probability=prop_dec.proposal.minimum_terrestial_probability,
-                    maximum_terrestial_probability=prop_dec.proposal.maximum_terrestial_probability,
-                    observe_significant=prop_dec.proposal.observe_significant,
-                    # Other
-                    decision_reason_log=decision_reason_log,
-                    event_id=voevent.id,
-                    event_type=voevent.event_type
-                )
-                proj_source_bool = True
-            # TODO set up other source types here
-
-            if not proj_source_bool:
-                # Proposal does not observe this type of source so update message
-                decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {voevent.id}: This proposal does not observe {prop_dec.event_group_id.source_type}s. \n"
-        else:
-            # Proposal does not observe event from this telescope so update message
-            decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {voevent.id}: This proposal does not trigger on events from {voevent.telescope}. \n"
+        # Proposal does not observe event from this telescope so update message
+        decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {voevent.id}: This proposal does not trigger on events from {voevent.telescope}. \n"
     print(trigger_bool, debug_bool, pending_bool, decision_reason_log)
     if trigger_bool:
         # Check if you can observe and if so send off the observation
