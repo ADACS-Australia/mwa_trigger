@@ -10,6 +10,7 @@ fermi_most_likely_index: null
 grb_ident: null
 hess_significance: null
 ignore: false
+is_burst: null
 lvc_binary_black_hole_probability: 0.0
 lvc_binary_neutron_star_probability: 0.7540149362918832
 lvc_event_url: https://gracedb.ligo.org/superevents/S230524x/view/
