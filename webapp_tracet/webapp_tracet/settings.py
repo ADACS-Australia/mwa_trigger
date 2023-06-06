@@ -31,7 +31,7 @@ VOEVENT_REMOTES = []
 # 196.44.140.214/32 - HESS
 # 68.169.57.253 - GCN
 # 50.116.49.68 - GCN
-VOEVENT_TCP = ["196.44.140.214/32"]
+VOEVENT_TCP = ["41.63.245.86"]
 
 # VOEvent comet filter (XPath 1.0)
 # VOEVENT_COMET_FILTER = ['//*[contains(@ivorn, "HESS")]',
