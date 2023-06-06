@@ -363,7 +363,7 @@ class Event(models.Model):
 
 class CometLog(models.Model):
     id = models.AutoField(primary_key=True)
-    log = models.CharField(max_length=2027, blank=True, null=True)
+    log = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
