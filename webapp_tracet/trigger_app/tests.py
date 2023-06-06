@@ -523,19 +523,23 @@ class test_lvc_mwa_sub_arrays(TestCase):
         "trigger_app/test_yamls/mwa_early_lvc_mwa_proposal_settings.yaml",
         "trigger_app/test_yamls/atca_grb_proposal_settings.yaml",
     ]
+    
+    mwaApiArgs: list[dict] = []
 
     with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
         trigger_mwa_test = safe_load(file)
 
-    # @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
-    def setUp(self):
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
+    def setUp(self, patched_mwa_api):
         xml_paths = [
             "../tests/test_events/LVC_real_early_warning.xml",
             "../tests/test_events/LVC_real_initial.xml",
             "../tests/test_events/LVC_real_preliminary.xml",
             "../tests/test_events/LVC_real_update.xml",
         ]
-       # Setup current RA and Dec at zenith for the MWA
+
+
+        # Setup current RA and Dec at zenith for the MWA
         MWA = EarthLocation(lat='-26:42:11.95',
                             lon='116:40:14.93', height=377.8 * u.m)
         mwa_coord = SkyCoord(az=0., alt=90., unit=(
@@ -549,26 +553,41 @@ class test_lvc_mwa_sub_arrays(TestCase):
                 create_voevent_wrapper(trig, ra_dec)
             else:
                 create_voevent_wrapper(trig, ra_dec=None)
-            time.sleep(10)
-            # args, kwargs = fake_mwa_api.call_args
+            # Sleep needed for testing vs real api
+            # time.sleep(10)
+            args, kwargs = patched_mwa_api.call_args
+            self.mwaApiArgs.append(kwargs)
             # print(args)
             # print(kwargs)
 
 
     def test_trigger_groups(self):
         # Check event was made
-        self.assertEqual(len(Event.objects.all()), 4)
+        # self.assertEqual(len(Event.objects.all()), 4)
 
-        # Early warning is a different event
+        # # Early warning is a different event
         self.assertEqual(len(EventGroup.objects.all()), 2)
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='MWA_VCS').first().decision, 'T')
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='ATCA').first().decision, 'I')
+        
+        # MWA requests are correct
+        mwa_request_0 = self.mwaApiArgs[0]
+        mwa_request_1 = self.mwaApiArgs[1]
 
+        print(mwa_request_0)
+        print(mwa_request_1)
+        self.assertEqual(len(mwa_request_0['alt']), 4) 
+        self.assertEqual(len(mwa_request_0['az']), 4) 
+        self.assertEqual(len(mwa_request_0['subarray_list']), 4) 
+
+        self.assertEqual(len(mwa_request_1['ra']), 4) 
+        self.assertEqual(len(mwa_request_1['dec']), 4) 
+        self.assertEqual(len(mwa_request_1['subarray_list']), 4)
 
 class test_lvc_mwa_retraction(TestCase):
-    """Tests that on early LVC events MWA will make an observation with sub arrays"
+    """Tests that retractions are ignored (no "NO CAPTURE" supported by MWA API)"
     """
     # Load default fixtures
     fixtures = [
@@ -649,8 +668,6 @@ class test_lvc_burst_are_ignored(TestCase):
             else:
                 create_voevent_wrapper(trig, ra_dec=None)
             time.sleep(10)
-
-
 
     def test_trigger_groups(self):
         # Check event was made

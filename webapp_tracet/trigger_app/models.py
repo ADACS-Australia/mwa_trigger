@@ -354,8 +354,6 @@ class Event(models.Model):
         max_length=1000, blank=True, null=True)
     lvc_skymap_fits = models.CharField(max_length=2026, blank=True, null=True)
     lvc_prob_density_tile = models.FloatField(blank=True, null=True)
-    lvc_skymap_file = models.FileField(
-        upload_to='skymaps/', blank=True, null=True)
 
     class Meta:
         ordering = ['-id']

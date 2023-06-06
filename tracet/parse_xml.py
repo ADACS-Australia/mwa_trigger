@@ -359,7 +359,7 @@ class parsed_VOEvent:
         self.lvc_event_url = None
         self.role = None
         self.is_burst = None
-        
+
         if self.trig_pairs is None:
             # use defaults
             self.trig_pairs = [
@@ -577,12 +577,6 @@ class parsed_VOEvent:
                 logger.info("Parsing skymap")
                 # Initial and Update alerts should contain skymap data as URL
                 self.lvc_skymap_fits = str(lvc_skymap_fits.attrib["value"])
-
-                url = self.lvc_skymap_fits
-                with urllib.request.urlopen(url) as response:
-                    body = response.read()
-
-                self.lvc_skymap_file = body
                 
             if self.event_type == 'Retraction':
                 # Capture message that comes with retraction

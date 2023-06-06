@@ -12,17 +12,14 @@ MWA_LAT = '-26:42:11.95'
 MWA_LONG = '116:40:14.93'
 MWA_HEIGHT = 377.8
 MWA_SPOTS = f"{filepath}/MWA_SPOTS.txt"
-# MWA_SPOTS_YAML = './MWA_SPOTS.yaml'
 
 def getMWAPointingsFromSkymapFile(skymap):
+    
     MWA = EarthLocation(lat=MWA_LAT,
                 lon=MWA_LONG, height=MWA_HEIGHT * u.m)
+    
     with open(MWA_SPOTS, 'r') as file:
         lines = file.readlines()
-
-        # Step 2: Extract the relevant data
-        # with open(MWA_SPOTS_YAML, 'r') as stream:
-        #     data = load(stream, Loader=Loader)
 
         data = []
         for line in lines:
@@ -34,8 +31,6 @@ def getMWAPointingsFromSkymapFile(skymap):
             az = float(values[1].strip())
             el = float(values[2].strip())
             data.append((n, az, el))
-        #     with open(MWA_SPOTS_YAML, 'w') as stream:
-        #         dump(data, stream)
 
     results = []
     for entry in data:
@@ -53,5 +48,6 @@ def getMWAPointingsFromSkymapFile(skymap):
         i = np.flatnonzero(ipix == match_ipix)[0]
         
         res = float(skymap[i]['PROBDENSITY'] * (np.pi / 180)**2)
-        results.append((n, az, alt, ra, dec, i, res))
+        results.append((n, az, alt, ra_dec.ra.deg, ra_dec.dec.deg, i, res))
+
     return sorted(results, key=lambda x: -x[5])[:4]
