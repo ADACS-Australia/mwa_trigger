@@ -26,6 +26,7 @@
       <th>Frequency specifications</th>
       <th>Observing time (s)</th>
       <th>Calibraton Observing time (s)</th>
+      <th>Number of Observations</th>
     </tr>
     </thead>
     <!-- Iterate over object_list -->
@@ -52,6 +53,7 @@
       <td>{{ object.mwa_freqspecs }}</td>
       <td>{{ object.mwa_exptime }}</td>
       <td>{{ object.mwa_calexptime }}</td>
+      <td>{{ object.mwa_nobs }}</td>
     </tr>
     {% endif %}
     <!-- If object_list is empty  -->
@@ -84,7 +86,7 @@
       <th>Observing time (s)</th>
       <th>Calibraton Observing time (s)</th>
       <th>Frequency Resolution (kHz)</th>
-      <th>Intergration Time (s)</th>
+      <th>Number of Observations</th>
     </tr>
     </thead>
     <!-- Iterate over object_list -->
@@ -113,6 +115,7 @@
       <td>{{ object.mwa_calexptime }}</td>
       <td>{{ object.mwa_freqres }}</td>
       <td>{{ object.mwa_inttime }}</td>
+      <td>{{ object.mwa_nobs }}</td>
     </tr>
     {% endif %}
     <!-- If object_list is empty  -->

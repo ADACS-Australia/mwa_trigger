@@ -49,11 +49,6 @@
     <Param name="Search" value="EarlyWarning" ucd="meta.code" dataType="string">
       <Description>Specific low-latency search</Description>
     </Param>
-    <Group name="GW_SKYMAP" type="GW_SKYMAP">
-      <Param name="skymap_fits" value="https://gracedb.ligo.org/api/superevents/S230524x/files/bayestar.multiorder.fits,0" ucd="meta.ref.url" dataType="string">
-        <Description>Sky Map FITS</Description>
-      </Param>
-    </Group>
     <Group name="Classification" type="Classification">
       <Param name="BNS" value="0.7540149362918832" ucd="stat.probability" dataType="float">
         <Description>Probability that the source is a binary neutron star merger (both objects lighter than 3 solar masses)</Description>

@@ -144,6 +144,7 @@
             <table>
                 <tr><td>{{ form.mwa_freqspecs.label_tag }}  {% help_wrap form.mwa_freqspecs.help_text %}</td>  <td>{{ form.mwa_freqspecs }}</td></tr>
                 <tr><td>{{ form.mwa_exptime.label_tag }}    {% help_wrap form.mwa_exptime.help_text %}</td>    <td>{{ form.mwa_exptime }}</td></tr>
+                <tr><td>{{ form.mwa_nobs.label_tag }}       {% help_wrap form.mwa_nobs.help_text %}</td>       <td>{{ form.mwa_nobs }}</td></tr>
                 <tr><td>{{ form.mwa_calexptime.label_tag }} {% help_wrap form.mwa_calexptime.help_text %}</td> <td>{{ form.mwa_calexptime }}</td></tr>
                 <tr><td>{{ form.mwa_horizon_limit.label_tag }}  {% help_wrap form.mwa_horizon_limit.help_text %}</td>  <td>{{ form.mwa_horizon_limit }}</td></tr>
                 {% for error in form.mwa_horizon_limit.errors %}<div class="alert alert-danger"><strong>{{ form.mwa_horizon_limit.label_tag }}{{ error|escape }}</strong></div>{% endfor %}
