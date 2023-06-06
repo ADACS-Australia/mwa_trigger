@@ -358,7 +358,8 @@ class parsed_VOEvent:
         self.lvc_significant = None
         self.lvc_event_url = None
         self.role = None
-
+        self.is_burst = None
+        
         if self.trig_pairs is None:
             # use defaults
             self.trig_pairs = [

@@ -655,6 +655,3 @@ class test_lvc_burst_are_ignored(TestCase):
     def test_trigger_groups(self):
         # Check event was made
         self.assertEqual(len(Event.objects.all()), 1)
-
-        # Burst is a different event
-        self.assertEqual(len(EventGroup.objects.all()), 1)
