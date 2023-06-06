@@ -2,7 +2,8 @@
 
 start_kafka () {
 	python manage.py kafka_gcn > >(tee -a logs/kafka_stdout.log) 2> >(tee -a logs/kafka_stderr.log >&2)
-	return $?
+	return 1
+	#return $?
 }
 
 
