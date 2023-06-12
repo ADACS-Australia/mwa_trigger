@@ -4,7 +4,7 @@ from astropy.time import Time
 from datetime import timedelta, datetime
 
 import urllib.request
-from trigger_app.utils import getMWAPointingsFromSkymapFile
+from trigger_app.utils import getMWAPointingsFromSkymapFile, getMWARaDecFromAltAz
 from astropy.table import Table
 import atca_rapid_response_api as arrApi
 
@@ -13,6 +13,9 @@ from .models import Observations, Event
 
 import logging
 logger = logging.getLogger(__name__)
+
+def dump_mwa_buffer():
+    return True
 
 
 def trigger_observation(
@@ -44,9 +47,7 @@ def trigger_observation(
     print("Trigger observation")
     # Check if source is above the horizon
     if not proposal_decision_model.proposal.start_observation_at_high_sensitivity or (proposal_decision_model.ra or proposal_decision_model.dec) and proposal_decision_model.proposal.telescope.name != "ATCA":
-        # ATCA can schedule obs once the source has risen so does
-        # not need to check if it is above the horizon
-        print("Set ATCA variables")
+        print("Set MWA variables")
 
         # Create Earth location for the telescope
         telescope = proposal_decision_model.proposal.telescope
@@ -110,7 +111,7 @@ def trigger_observation(
 
         latestVoevent = voevents[0]
 
-        if proposal_decision_model.proposal.source_type == 'GW' and latestVoevent.lvc_skymap_fits != None:
+        if proposal_decision_model.proposal.source_type == 'GW' and latestVoevent.lvc_skymap_fits != None and latestVoevent.event_type != 'EarlyWarning':
             print(f"DEBUG - skymap_fits_fits: {latestVoevent.lvc_skymap_fits}")
             try:
                 skymap = Table.read(latestVoevent.lvc_skymap_fits)
@@ -137,6 +138,45 @@ def trigger_observation(
                 print(e)
                 logger.error("Error getting MWA pointings from skymap")
                 logger.error(e)
+        elif proposal_decision_model.proposal.source_type == 'GW' and latestVoevent.event_type == 'EarlyWarning':
+            # Dump out the last ~3 mins of MWA buffer to try and catch event
+            print(f"DEBUG - dumping MWA buffer")
+            dump_mwa_buffer()
+
+            ps = proposal_decision_model.proposal
+ 
+            print(f"DEBUG - ps {ps.__dict__}")
+
+            sub1 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_NE, az=ps.mwa_sub_az_NE)
+            sub2 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_NW, az=ps.mwa_sub_az_NW)
+            sub3 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SE, az=ps.mwa_sub_az_SE)
+            sub4 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SW, az=ps.mwa_sub_az_SW)
+            
+            print(f"DEBUG - sub1 {sub1}")
+
+
+            mwa_sub_arrays = {
+                'dec': [
+                    sub1.dec,
+                    sub2.dec,
+                    sub3.dec,
+                    sub4.dec,
+                ],
+                'ra': [
+                    sub1.ra,
+                    sub2.ra,
+                    sub3.ra,
+                    sub4.ra,
+                ]
+            }
+
+            print(f"DEBUG - mwa_sub_arrays {mwa_sub_arrays.__dict__}")
+
+
+            # Only schedule a 15 min obs
+            proposal_decision_model.proposal.mwa_nobs = 1
+            proposal_decision_model.proposal.mwa_exptime = 904
+
 
         # Check if you can observe and if so send off MWA observation
         decision, decision_reason_log, obsids = trigger_mwa_observation(
@@ -155,6 +195,7 @@ def trigger_observation(
                 proposal_decision_id=proposal_decision_model,
                 reason=reason,
                 website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
+                mwa_sub_arrays=mwa_sub_arrays
             )
     elif proposal_decision_model.proposal.telescope.name == "ATCA":
         # Check if you can observe and if so send off mwa observation

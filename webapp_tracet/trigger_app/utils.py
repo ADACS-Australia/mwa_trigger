@@ -13,14 +13,21 @@ MWA_LONG = '116:40:14.93'
 MWA_HEIGHT = 377.8
 MWA_SPOTS = f"{filepath}/MWA_SPOTS.txt"
 
+MWA = EarthLocation(lat=MWA_LAT,
+        lon=MWA_LONG, height=MWA_HEIGHT * u.m)
+
+def getMWARaDecFromAltAz(alt, az):
+    mwa_coord = SkyCoord(az, alt, unit=(u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
+    ra_dec = mwa_coord.icrs
+    ra = ra_dec.ra.deg * u.deg
+    dec = ra_dec.dec.deg * u.deg
+
+    print(ra)
+    return ra, dec, ra_dec
+
 def getMWAPointingsFromSkymapFile(skymap):
-    
-    MWA = EarthLocation(lat=MWA_LAT,
-                lon=MWA_LONG, height=MWA_HEIGHT * u.m)
-    
     with open(MWA_SPOTS, 'r') as file:
         lines = file.readlines()
-
         data = []
         for line in lines:
             line = line.strip()  # Remove leading/trailing whitespace
@@ -35,16 +42,12 @@ def getMWAPointingsFromSkymapFile(skymap):
     results = []
     for entry in data:
         (n, az, alt) = entry
-        mwa_coord = SkyCoord(az, alt, unit=(
-            u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
-        ra_dec = mwa_coord.icrs
-        ra = ra_dec.ra.deg * u.deg
-        dec = ra_dec.dec.deg * u.deg
+        
+        ra, dec, ra_dec = getMWARaDecFromAltAz(alt=alt, az=az)
+        
         level, ipix = ah.uniq_to_level_ipix(skymap['UNIQ'])
         nside = ah.level_to_nside(level)
         match_ipix = ah.lonlat_to_healpix(ra, dec, nside, order='nested')
-
-
         i = np.flatnonzero(ipix == match_ipix)[0]
         
         res = float(skymap[i]['PROBDENSITY'] * (np.pi / 180)**2)
