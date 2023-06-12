@@ -18,13 +18,13 @@ def create_voevent_wrapper(trig, ra_dec, dec_alter=True):
     if dec_alter and ra_dec and trig.ra and trig.dec:
         dec = ra_dec.dec.deg
         dec_dms = ra_dec.dec.to_string(unit=u.deg, sep=':')
-        ra=ra_dec.ra.deg
-        ra_hms=ra_dec.ra.to_string(unit=u.hour, sep=':')
+        ra = ra_dec.ra.deg
+        ra_hms = ra_dec.ra.to_string(unit=u.hour, sep=':')
     elif ra_dec and trig.ra and trig.dec:
         dec = trig.dec
         dec_dms = trig.dec_dms
-        ra=ra_dec.ra.deg
-        ra_hms=ra_dec.ra.to_string(unit=u.hour, sep=':')
+        ra = ra_dec.ra.deg
+        ra_hms = ra_dec.ra.to_string(unit=u.hour, sep=':')
     else:
         ra = None
         dec = None
@@ -58,18 +58,18 @@ def create_voevent_wrapper(trig, ra_dec, dec_alter=True):
         fermi_most_likely_index=trig.fermi_most_likely_index,
         fermi_detection_prob=trig.fermi_detection_prob,
         swift_rate_signif=trig.swift_rate_signif,
-        lvc_false_alarm_rate = trig.lvc_false_alarm_rate,
-        lvc_binary_neutron_star_probability = trig.lvc_binary_neutron_star_probability,
-        lvc_neutron_star_black_hole_probability = trig.lvc_neutron_star_black_hole_probability,
-        lvc_binary_black_hole_probability = trig.lvc_binary_black_hole_probability,
-        lvc_terrestial_probability = trig.lvc_terrestial_probability,
-        lvc_includes_neutron_star_probability = trig.lvc_includes_neutron_star_probability,
-        lvc_retraction_message = trig.lvc_retraction_message,
-        lvc_skymap_fits = trig.lvc_skymap_fits,
-        lvc_prob_density_tile = trig.lvc_prob_density_tile,
-        lvc_significant = trig.lvc_significant,
-        lvc_event_url = trig.lvc_event_url    
-        )
+        lvc_false_alarm_rate=trig.lvc_false_alarm_rate,
+        lvc_binary_neutron_star_probability=trig.lvc_binary_neutron_star_probability,
+        lvc_neutron_star_black_hole_probability=trig.lvc_neutron_star_black_hole_probability,
+        lvc_binary_black_hole_probability=trig.lvc_binary_black_hole_probability,
+        lvc_terrestial_probability=trig.lvc_terrestial_probability,
+        lvc_includes_neutron_star_probability=trig.lvc_includes_neutron_star_probability,
+        lvc_retraction_message=trig.lvc_retraction_message,
+        lvc_skymap_fits=trig.lvc_skymap_fits,
+        lvc_prob_density_tile=trig.lvc_prob_density_tile,
+        lvc_significant=trig.lvc_significant,
+        lvc_event_url=trig.lvc_event_url
+    )
 
 
 class test_grb_group_fermi(TestCase):
@@ -111,7 +111,8 @@ class test_grb_group_fermi(TestCase):
             create_voevent_wrapper(trig, ra_dec)
 
     def test_mwa_proposal_decision(self):
-        proposal_decision = ProposalDecision.objects.all().filter(proposal__telescope__name='MWA_VCS').first()
+        proposal_decision = ProposalDecision.objects.all().filter(
+            proposal__telescope__name='MWA_VCS').first()
 
         # print(
         #     f"\n\ntest_grb_group_01 MWA proposal decison:\n{decision}\n\n")
@@ -243,6 +244,7 @@ class test_grb_group_swift_2(TestCase):
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='ATCA').first().decision, 'T')
 
+
 class test_grb_observation_fail_atca(TestCase):
     """Tests what happens if ATCA fails to schedule an observation
     """
@@ -286,6 +288,7 @@ class test_grb_observation_fail_atca(TestCase):
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='MWA_VCS').first().decision, 'I')
 
+
 class test_grb_observation_fail_mwa(TestCase):
     """Tests what happens if MWA fails to schedule an observation
     """
@@ -324,6 +327,7 @@ class test_grb_observation_fail_mwa(TestCase):
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='MWA_VCS').first().decision, 'E')
 
+
 class test_grb_observation_ignored_mwa(TestCase):
     """Tests ignored observations during an event
     """
@@ -359,6 +363,7 @@ class test_grb_observation_ignored_mwa(TestCase):
 
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='MWA_VCS').first().decision, 'I')
+
 
 class test_nu(TestCase):
     """Tests that a neutrino Event will trigger an observation
@@ -513,6 +518,7 @@ class test_hess_any_dur(TestCase):
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__event_any_duration=False).first().decision, 'I')
 
+
 class test_lvc_mwa_sub_arrays(TestCase):
     """Tests that on early LVC events MWA will make an observation with sub arrays"
     """
@@ -523,7 +529,7 @@ class test_lvc_mwa_sub_arrays(TestCase):
         "trigger_app/test_yamls/mwa_early_lvc_mwa_proposal_settings.yaml",
         "trigger_app/test_yamls/atca_grb_proposal_settings.yaml",
     ]
-    
+
     mwaApiArgs: list[dict] = []
 
     with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
@@ -537,7 +543,6 @@ class test_lvc_mwa_sub_arrays(TestCase):
             "../tests/test_events/LVC_real_preliminary.xml",
             "../tests/test_events/LVC_real_update.xml",
         ]
-
 
         # Setup current RA and Dec at zenith for the MWA
         MWA = EarthLocation(lat='-26:42:11.95',
@@ -554,12 +559,11 @@ class test_lvc_mwa_sub_arrays(TestCase):
             else:
                 create_voevent_wrapper(trig, ra_dec=None)
             # Sleep needed for testing vs real api
-            # time.sleep(10)
+            time.sleep(5)
             args, kwargs = patched_mwa_api.call_args
             self.mwaApiArgs.append(kwargs)
             # print(args)
             # print(kwargs)
-
 
     def test_trigger_groups(self):
         # Check event was made
@@ -571,20 +575,21 @@ class test_lvc_mwa_sub_arrays(TestCase):
             proposal__telescope__name='MWA_VCS').first().decision, 'T')
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='ATCA').first().decision, 'I')
-        
+
         # MWA requests are correct
         mwa_request_0 = self.mwaApiArgs[0]
         mwa_request_1 = self.mwaApiArgs[1]
 
         print(mwa_request_0)
         print(mwa_request_1)
-        self.assertEqual(len(mwa_request_0['alt']), 4) 
-        self.assertEqual(len(mwa_request_0['az']), 4) 
-        self.assertEqual(len(mwa_request_0['subarray_list']), 4) 
+        self.assertEqual(len(mwa_request_0['alt']), 4)
+        self.assertEqual(len(mwa_request_0['az']), 4)
+        self.assertEqual(len(mwa_request_0['subarray_list']), 4)
 
-        self.assertEqual(len(mwa_request_1['ra']), 4) 
-        self.assertEqual(len(mwa_request_1['dec']), 4) 
+        self.assertEqual(len(mwa_request_1['ra']), 4)
+        self.assertEqual(len(mwa_request_1['dec']), 4)
         self.assertEqual(len(mwa_request_1['subarray_list']), 4)
+
 
 class test_lvc_mwa_retraction(TestCase):
     """Tests that retractions are ignored (no "NO CAPTURE" supported by MWA API)"
@@ -623,7 +628,6 @@ class test_lvc_mwa_retraction(TestCase):
             # args, kwargs = fake_mwa_api.call_args
             # print(args)
             # print(kwargs)
-
 
     def test_trigger_groups(self):
         # Check event was made
@@ -687,8 +691,8 @@ class test_early_warning_trigger_buffer_default_pointings(TestCase):
     with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
         trigger_mwa_test = safe_load(file)
 
-    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
-    def setUp(self, fake_mwa_api):
+    # @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
+    def setUp(self):
         xml_paths = [
             "../tests/test_events/LVC_real_early_warning.xml",
         ]
@@ -707,12 +711,13 @@ class test_early_warning_trigger_buffer_default_pointings(TestCase):
             else:
                 create_voevent_wrapper(trig, ra_dec=None)
             time.sleep(10)
-            args, kwargs = fake_mwa_api.call_args
 
-            print(kwargs)
+            # args, kwargs = fake_mwa_api.call_args
+            # print(kwargs)
 
     def test_trigger_groups(self):
         # Check event was made
         self.assertEqual(len(Event.objects.all()), 1)
         self.assertEqual(Event.objects.all().first().ignored, False)
-        print(f"observations: {Observations.objects.all().first()}")
+
+

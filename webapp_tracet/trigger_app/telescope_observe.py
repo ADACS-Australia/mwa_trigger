@@ -4,7 +4,7 @@ from astropy.time import Time
 from datetime import timedelta, datetime
 
 import urllib.request
-from trigger_app.utils import getMWAPointingsFromSkymapFile, getMWARaDecFromAltAz
+from trigger_app.utils import getMWAPointingsFromSkymapFile, getMWARaDecFromAltAz, isClosePosition
 from astropy.table import Table
 import atca_rapid_response_api as arrApi
 
@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 def dump_mwa_buffer():
     return True
-
 
 def trigger_observation(
     proposal_decision_model,
@@ -110,7 +109,65 @@ def trigger_observation(
         obsname = f'{telescopes}_{proposal_decision_model.trig_id}'
 
         latestVoevent = voevents[0]
+        buffered = False
 
+        if proposal_decision_model.proposal.source_type == 'GW' and len(voevents) == 1:
+            # Dump out the last ~3 mins of MWA buffer to try and catch event
+            print(f"DEBUG - dumping MWA buffer")
+            buffered = True
+
+        if proposal_decision_model.proposal.source_type == 'GW' and len(voevents) > 1 and latestVoevent.lvc_skymap_fits != None:
+            print(f"DEBUG - checking to update position")
+            latestObs = Observations.objects.filter(
+                        event_group_id=proposal_decision_model.event_group_id).order_by('-created_at').first()
+            
+            if(latestObs.mwa_sub_arrays != None):
+                print(f"DEBUG - skymap_fits_fits: {latestVoevent.lvc_skymap_fits}")
+                try:
+                    skymap = Table.read(latestVoevent.lvc_skymap_fits)
+                    # alt=[ps.mwa_sub_alt_NE, ps.mwa_sub_alt_NW, ps.mwa_sub_alt_SE, ps.mwa_sub_alt_SW],
+                    # az=[ps.mwa_sub_az_NE, ps.mwa_sub_az_NW, ps.mwa_sub_az_SE, ps.mwa_sub_az_SW],
+                    result = getMWAPointingsFromSkymapFile(skymap)
+                    print(result)
+                    current_arrays_dec = latestObs.mwa_sub_arrays['dec']
+                    current_arrays_ra = latestObs.mwa_sub_arrays['ra']
+
+                    repoint = False
+
+                    for res in result:
+                        repoint = True
+                        for index in enumerate(current_arrays_dec):
+                            
+                            ra1 = current_arrays_ra[index]
+                            dec1 = current_arrays_dec[index]
+                            ra2 = res[3]
+                            dec2 = res[4]
+
+                            if(isClosePosition(ra1,dec1,ra2,dec2)):
+                                repoint = False
+                            
+                    if repoint:
+                        mwa_sub_arrays = {
+                            'dec': [
+                                result[0][4],
+                                result[1][4],
+                                result[2][4],
+                                result[3][4]
+                            ],
+                            'ra': [
+                                result[0][3],
+                                result[1][3],
+                                result[2][3],
+                                result[3][3]
+                            ]
+                        }
+                except Exception as e:
+                    print(e)
+                    logger.error("Error getting MWA pointings from skymap")
+                    logger.error(e)
+            else:
+                print(f"DEBUG - no sub arrays on obs")
+        
         if proposal_decision_model.proposal.source_type == 'GW' and latestVoevent.lvc_skymap_fits != None and latestVoevent.event_type != 'EarlyWarning':
             print(f"DEBUG - skymap_fits_fits: {latestVoevent.lvc_skymap_fits}")
             try:
@@ -139,10 +196,6 @@ def trigger_observation(
                 logger.error("Error getting MWA pointings from skymap")
                 logger.error(e)
         elif proposal_decision_model.proposal.source_type == 'GW' and latestVoevent.event_type == 'EarlyWarning':
-            # Dump out the last ~3 mins of MWA buffer to try and catch event
-            print(f"DEBUG - dumping MWA buffer")
-            dump_mwa_buffer()
-
             ps = proposal_decision_model.proposal
  
             print(f"DEBUG - ps {ps.__dict__}")
@@ -151,33 +204,58 @@ def trigger_observation(
             sub2 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_NW, az=ps.mwa_sub_az_NW)
             sub3 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SE, az=ps.mwa_sub_az_SE)
             sub4 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SW, az=ps.mwa_sub_az_SW)
-            
-            print(f"DEBUG - sub1 {sub1}")
-
+            print(type(sub1[1]))
+            print(f"DEBUG - sub1[1].value { sub1[1].value }")
 
             mwa_sub_arrays = {
                 'dec': [
-                    sub1.dec,
-                    sub2.dec,
-                    sub3.dec,
-                    sub4.dec,
+                    sub1[1].value,
+                    sub2[1].value,
+                    sub3[1].value,
+                    sub4[1].value,
                 ],
                 'ra': [
-                    sub1.ra,
-                    sub2.ra,
-                    sub3.ra,
-                    sub4.ra,
+                    sub1[0].value,
+                    sub2[0].value,
+                    sub3[0].value,
+                    sub4[0].value,
                 ]
             }
-
-            print(f"DEBUG - mwa_sub_arrays {mwa_sub_arrays.__dict__}")
-
-
             # Only schedule a 15 min obs
             proposal_decision_model.proposal.mwa_nobs = 1
             proposal_decision_model.proposal.mwa_exptime = 904
 
+        elif proposal_decision_model.proposal.source_type == 'GW' and latestVoevent.lvc_skymap_fits == None:
+            
+            ps = proposal_decision_model.proposal
+            print(f"DEBUG - ps {ps.__dict__}")
+            sub1 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_NE, az=ps.mwa_sub_az_NE)
+            sub2 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_NW, az=ps.mwa_sub_az_NW)
+            sub3 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SE, az=ps.mwa_sub_az_SE)
+            sub4 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SW, az=ps.mwa_sub_az_SW)
+            print(type(sub1[1]))
+            print(f"DEBUG - sub1[1].value { sub1[1].value }")
 
+            mwa_sub_arrays = {
+                'dec': [
+                    sub1[1].value,
+                    sub2[1].value,
+                    sub3[1].value,
+                    sub4[1].value,
+                ],
+                'ra': [
+                    sub1[0].value,
+                    sub2[0].value,
+                    sub3[0].value,
+                    sub4[0].value,
+                ]
+            }
+            # Only schedule a 60 min obs if no position
+            proposal_decision_model.proposal.mwa_nobs = 1
+            proposal_decision_model.proposal.mwa_exptime = 3600        
+            print(f"DEBUG - mwa_sub_arrays: {str(mwa_sub_arrays)}")
+
+        print(f"vcsmode: {vcsmode}")
         # Check if you can observe and if so send off MWA observation
         decision, decision_reason_log, obsids = trigger_mwa_observation(
             proposal_decision_model,
@@ -185,8 +263,13 @@ def trigger_observation(
             obsname,
             vcsmode=vcsmode,
             event_id=event_id,
-            mwa_sub_arrays=mwa_sub_arrays
+            mwa_sub_arrays=mwa_sub_arrays,
+            buffered=buffered
         )
+
+        print(decision, decision_reason_log, obsids)
+
+    
         for obsid in obsids:
             # Create new obsid model
             Observations.objects.create(
@@ -226,6 +309,7 @@ def trigger_mwa_observation(
     vcsmode=False,
     event_id=None,
     mwa_sub_arrays=None,
+    buffered=False
 ):
     """Check if the MWA can observe then send it off the observation.
 
@@ -257,30 +341,32 @@ def trigger_mwa_observation(
     # Not below horizon limit so observer
     logger.info(f"Triggering MWA at UTC time {Time.now()} ...")
     # Handle early warning events without position using sub arrays
-    if(prop_settings.source_type == 'GW' and mwa_sub_arrays == None):
-        ps=proposal_decision_model.proposal
+    if(prop_settings.source_type == 'GW' and buffered == True and vcsmode == True and mwa_sub_arrays != None):
+        print("DEBUG - Dumping buffer and scheduling an ra/dec sub array observation")
+        print("DEBUG - Using nobs = 1, exptime = 800")
 
-        print("DEBUG - Scheduling an alt/az observation")
         result = trigger(
             project_id=prop_settings.project_id.id,
             secure_key=prop_settings.project_id.password,
             pretend=prop_settings.testing,
+            subarray_list=['all_ne', 'all_nw', 'all_se', 'all_sw'],
+            ra=mwa_sub_arrays['ra'],
+            dec=mwa_sub_arrays['dec'],
             creator='VOEvent_Auto_Trigger',  # TODO grab version
             obsname=obsname,
-            subarray_list=['all_ne', 'all_nw', 'all_se', 'all_sw'],
-            alt=[ps.mwa_sub_alt_NE, ps.mwa_sub_alt_NW, ps.mwa_sub_alt_SE, ps.mwa_sub_alt_SW],
-            az=[ps.mwa_sub_az_NE, ps.mwa_sub_az_NW, ps.mwa_sub_az_SE, ps.mwa_sub_az_SW],
-            nobs=prop_settings.mwa_nobs,
+            nobs=1,
             # Assume always using 24 contiguous coarse frequency channels
             freqspecs=prop_settings.mwa_freqspecs,
             avoidsun=True,
             inttime=prop_settings.mwa_inttime,
             freqres=prop_settings.mwa_freqres,
-            exptime=prop_settings.mwa_exptime,
+            exptime=800,
             calibrator=True,
-            calexptime=prop_settings.mwa_calexptime,
+            calexptime=120,
             vcsmode=vcsmode,
+            buffered=buffered
         )
+    
     elif (mwa_sub_arrays != None):
         print("DEBUG - Scheduling an ra/dec sub array observation")
 

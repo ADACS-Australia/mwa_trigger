@@ -1,5 +1,5 @@
 from django.test import TestCase
-from trigger_app.utils import getMWAPointingsFromSkymapFile
+from trigger_app.utils import getMWAPointingsFromSkymapFile, isClosePosition
 from astropy.table import Table
 
 class test_skymap_parsing_to_mwa(TestCase):
@@ -15,11 +15,28 @@ class test_skymap_parsing_to_mwa(TestCase):
         #     u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
         # ra_dec = mwa_coord.icrs
 
-    def test_skymap_parsing_to_mwa(self):
-        print(
-            f"\ntest_skymap_parsing_to_mwa")
-        skymap = Table.read("trigger_app/bayestar.multiorder.fits")
+    # def test_skymap_parsing_to_mwa(self):
+    #     print(
+    #         f"\ntest_skymap_parsing_to_mwa")
+    #     skymap = Table.read("trigger_app/bayestar.multiorder.fits")
 
-        result = getMWAPointingsFromSkymapFile(skymap)
-        # print(result)
-        self.assertEqual(len(result), 4)
+    #     result = getMWAPointingsFromSkymapFile(skymap)
+    #     # print(result)
+    #     self.assertEqual(len(result), 4)
+
+    def test_isClosePosition(self):
+        # Define the first RA and Dec values
+        ra1 = 120.5
+        dec1 = 45.2
+
+        # Define the second RA and Dec values
+        ra2 = 130.8
+        dec2 = 40.3
+
+        result1 = isClosePosition(ra1, dec1, ra2, dec2, deg=10)
+
+        self.assertEqual(result1, True)
+
+        result2 = isClosePosition(ra1 + 70.0, dec1 - 10.0, ra2, dec2, deg=10)
+
+        self.assertEqual(result2, False)

@@ -356,7 +356,8 @@ class Event(models.Model):
     lvc_prob_density_tile = models.FloatField(blank=True, null=True)
     lvc_skymap_file = models.FileField(
         upload_to='skymaps/', blank=True, null=True)
-
+    lvc_instruments = models.CharField(
+        max_length=64, blank=True, null=True)
     class Meta:
         ordering = ['-id']
 
@@ -422,3 +423,4 @@ class Observations(models.Model):
     website_link = models.URLField(max_length=2028)
     reason = models.CharField(max_length=2029, blank=True, null=True)
     mwa_sub_arrays=models.JSONField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)

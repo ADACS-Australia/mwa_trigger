@@ -25,6 +25,26 @@ def getMWARaDecFromAltAz(alt, az):
     print(ra)
     return ra, dec, ra_dec
 
+def isClosePosition(ra1, dec1, ra2, dec2, deg=10):
+    # Create SkyCoord objects for the two positions
+    coord1 = SkyCoord(ra=ra1*u.deg, dec=dec1*u.deg, frame='icrs')
+    coord2 = SkyCoord(ra=ra2*u.deg, dec=dec2*u.deg, frame='icrs')
+
+    # Calculate the angular separation between the two positions
+    angular_sep = coord1.separation(coord2)
+
+    print(angular_sep *u.deg)
+
+    print(deg*u.deg)
+    # Check if the angular separation is within 10 degrees
+    if angular_sep < deg*u.deg:
+        print("The positions are within 10 degrees.")
+        return True
+    else:
+        print("The positions are more than 10 degrees apart.")
+        return False
+
+
 def getMWAPointingsFromSkymapFile(skymap):
     with open(MWA_SPOTS, 'r') as file:
         lines = file.readlines()
@@ -51,6 +71,18 @@ def getMWAPointingsFromSkymapFile(skymap):
         i = np.flatnonzero(ipix == match_ipix)[0]
         
         res = float(skymap[i]['PROBDENSITY'] * (np.pi / 180)**2)
-        results.append((n, az, alt, ra_dec.ra.deg, ra_dec.dec.deg, i, res))
+        results.append((n, az, alt, ra, dec, i, res))
+        results = sorted(results, key=lambda x: -x[5])
 
-    return sorted(results, key=lambda x: -x[5])[:4]
+    pointings = []
+    for index, result in enumerate(results):
+        if(index == 0):
+            pointings.append(result)
+        
+        elif(len(pointings) < 4):
+            for index, point in enumerate(pointings):
+                if(not isClosePosition(result[3], result[4], point[3], point[4])):
+                    pointings.append(point)  
+                    return
+
+    return pointings
