@@ -235,7 +235,8 @@ def worth_observing_gw(
         # Other
         decision_reason_log="",
         event_observed=datetime.datetime.now(),
-        event_id=None, 
+        event_id=None,
+        lvc_instruments=None
     ):
     """Decide if a Gravity Wave Event is worth observing.
 
@@ -294,22 +295,14 @@ def worth_observing_gw(
     pending_bool = False
 
     print(f"\nLogic event_type: {event_type}")
-    all_variables = dir()
-  
-    # Iterate over the whole list where dir( )
-    # is stored.
-    for name in all_variables:
-        
-        # Print the item if it doesn't start with '__'
-        if not name.startswith('__'):
-            myvalue = eval(name)
-            print(name, "is", type(myvalue), "and is equal to ", myvalue)
-
-        # Check alert is less than 3 hours from the event time
-        three_hours_ago = datetime.datetime.now() - datetime.timedelta(hours=3)
+    # Check alert is less than 3 hours from the event time
+    three_hours_ago = datetime.datetime.now() - datetime.timedelta(hours=3)
     if(event_observed < three_hours_ago):
         debug_bool = True
         decision_reason_log += f'{datetime.datetime.utcnow()}: Event ID {event_id}: The event time {event_observed.strftime("%Y-%m-%dT%H:%M:%S+0000")} is more than 3 hours ago {three_hours_ago.strftime("%Y-%m-%dT%H:%M:%S+0000")} so not triggering. \n'
+    elif(lvc_instruments != None and len(lvc_instruments.split(',')) < 2):
+        debug_bool = True
+        decision_reason_log += f'{datetime.datetime.utcnow()}: Event ID {event_id}: The event has only {lvc_instruments} so not triggering. \n'
     elif telescope == "LVC" and event_type == "EarlyWarning":
         trigger_bool = True
         decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: Early warning, no information so triggering. \n"

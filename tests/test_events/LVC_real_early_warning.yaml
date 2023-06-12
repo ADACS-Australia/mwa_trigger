@@ -16,6 +16,7 @@ lvc_binary_neutron_star_probability: 0.7540149362918832
 lvc_event_url: https://gracedb.ligo.org/superevents/S230524x/view/
 lvc_false_alarm_rate: 7.224443905955801e-08
 lvc_includes_neutron_star_probability: 1.0
+lvc_instruments: H1,L1
 lvc_neutron_star_black_hole_probability: 0.0
 lvc_prob_density_tile: null
 lvc_retraction_message: null

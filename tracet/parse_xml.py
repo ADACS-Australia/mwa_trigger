@@ -571,7 +571,10 @@ class parsed_VOEvent:
                     v.find(".//Param[@name='BBH']").attrib["value"])
                 self.lvc_terrestial_probability = float(
                     v.find(".//Param[@name='Terrestrial']").attrib["value"])
+                self.lvc_instruments = str(
+                    v.find(".//Param[@name='Instruments']").attrib["value"])
             
+
             lvc_skymap_fits = v.find(".//Param[@name='skymap_fits']")
 
             if lvc_skymap_fits is not None:

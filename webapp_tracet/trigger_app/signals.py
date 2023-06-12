@@ -285,6 +285,7 @@ def proposal_worth_observing(
                 lvc_binary_black_hole_probability=voevent.lvc_binary_black_hole_probability,
                 lvc_terrestial_probability=voevent.lvc_terrestial_probability,
                 lvc_includes_neutron_star_probability=voevent.lvc_includes_neutron_star_probability,
+                lvc_instruments=voevent.lvc_instruments,
                 telescope=voevent.telescope,
                 # Thresholds
                 minimum_neutron_star_probability=prop_dec.proposal.minimum_neutron_star_probability,
@@ -301,7 +302,8 @@ def proposal_worth_observing(
                 # Other
                 decision_reason_log=decision_reason_log,
                 event_id=voevent.id,
-                event_type=voevent.event_type
+                event_type=voevent.event_type,
+                
             )
             proj_source_bool = True
         # TODO set up other source types here
@@ -326,6 +328,7 @@ def proposal_worth_observing(
                 event_id=voevent.id,
             )
         except Exception as e:
+            print(e)
             logger.info(e)
             decision = 'E'
         print("DEBUG - trigger_observation result")
