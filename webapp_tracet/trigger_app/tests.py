@@ -635,7 +635,7 @@ class test_lvc_mwa_retraction(TestCase):
             proposal__telescope__name='MWA_VCS').first().decision, 'T')
 
 class test_lvc_burst_are_ignored(TestCase):
-    """Tests that on early LVC events MWA will make an observation with sub arrays"
+    """Tests that lvc burst events are ignored"
     """
     # Load default fixtures
     fixtures = [
@@ -672,3 +672,47 @@ class test_lvc_burst_are_ignored(TestCase):
     def test_trigger_groups(self):
         # Check event was made
         self.assertEqual(len(Event.objects.all()), 1)
+        self.assertEqual(Event.objects.all().first().ignored, True)
+
+class test_early_warning_trigger_buffer_default_pointings(TestCase):
+    """Tests that on early LVC events MWA will 1. Dump MWA buffer, 2. Make an observation with sub arrays at scheduled position for 15 mins."
+    """
+    # Load default fixtures
+    fixtures = [
+        "default_data.yaml",
+        # Mwa proposal that has subarrays
+        "trigger_app/test_yamls/mwa_early_lvc_mwa_proposal_settings.yaml",
+    ]
+
+    with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
+        trigger_mwa_test = safe_load(file)
+
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
+    def setUp(self, fake_mwa_api):
+        xml_paths = [
+            "../tests/test_events/LVC_real_early_warning.xml",
+        ]
+       # Setup current RA and Dec at zenith for the MWA
+        MWA = EarthLocation(lat='-26:42:11.95',
+                            lon='116:40:14.93', height=377.8 * u.m)
+        mwa_coord = SkyCoord(az=0., alt=90., unit=(
+            u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
+        ra_dec = mwa_coord.icrs
+        # Parse and upload the xml file group
+        for xml in xml_paths:
+            trig = parsed_VOEvent(xml)
+            print(trig)
+            if(trig.ra and trig.dec):
+                create_voevent_wrapper(trig, ra_dec)
+            else:
+                create_voevent_wrapper(trig, ra_dec=None)
+            time.sleep(10)
+            args, kwargs = fake_mwa_api.call_args
+
+            print(kwargs)
+
+    def test_trigger_groups(self):
+        # Check event was made
+        self.assertEqual(len(Event.objects.all()), 1)
+        self.assertEqual(Event.objects.all().first().ignored, False)
+        print(f"observations: {Observations.objects.all().first()}")

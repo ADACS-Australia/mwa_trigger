@@ -1,12 +1,14 @@
 """Tests the parse_xml.py script
 """
+import datetime
 import os
 from yaml import load, dump, Loader
 from numpy.testing import assert_equal
 
 from tracet.parse_xml import parsed_VOEvent
-from tracet.trigger_logic import worth_observing_grb, worth_observing_nu
+from tracet.trigger_logic import worth_observing_grb, worth_observing_nu, worth_observing_gw
 import voeventparse
+
 
 import logging
 logger = logging.getLogger(__name__)
@@ -107,6 +109,59 @@ def test_trigger_nu_event():
         assert_equal(debug_bool, exp_debug_bool)
         assert_equal(pending_bool, exp_pending_bool)
         assert_equal(decision_reason_log, exp_decision_reason_log)
+
+def test_trigger_gw_event(): 
+    # Open the preparsed file
+    yaml_loc = os.path.join('tests/test_events', 'LVC_real_early_warning.yaml')
+    # Read in expected class and do the same
+    with open(yaml_loc, 'r') as stream:
+        exp_trigger_bool = True
+        exp_debug_bool = False
+        exp_pending_bool = False
+        one_hour_ago = datetime.datetime.now() - datetime.timedelta(hours=1)
+
+        trig = load(stream, Loader=Loader)
+        trig['event_observed'] = one_hour_ago
+        
+        # Send it through trigger logic
+        trigger_bool, debug_bool, pending_bool, decision_reason_log = worth_observing_gw(
+            event_id= trig["trig_id"],
+            event_type=trig["event_type"],
+            event_observed=trig["event_observed"],
+            telescope=trig["telescope"]
+        )
+        print(f"{trigger_bool}, {debug_bool}, {pending_bool}, {decision_reason_log}")
+        print(f"{decision_reason_log}")
+        # Compare to expected
+        assert_equal(trigger_bool, exp_trigger_bool)
+        assert_equal(debug_bool, exp_debug_bool)
+        assert_equal(pending_bool, exp_pending_bool)
+
+    # Open the preparsed file
+    yaml_loc = os.path.join('tests/test_events', 'LVC_real_early_warning.yaml')
+    # Read in expected class and do the same
+    with open(yaml_loc, 'r') as stream:
+        exp_trigger_bool = False
+        exp_debug_bool = True
+        exp_pending_bool = False
+        four_hours_ago = datetime.datetime.now() - datetime.timedelta(hours=4)
+
+        trig = load(stream, Loader=Loader)
+        trig['event_observed'] = four_hours_ago
+        
+        # Send it through trigger logic
+        trigger_bool, debug_bool, pending_bool, decision_reason_log = worth_observing_gw(
+            event_id= trig["trig_id"],
+            event_type=trig["event_type"],
+            event_observed=trig["event_observed"],
+            telescope=trig["telescope"]
+        )
+        print(f"{trigger_bool}, {debug_bool}, {pending_bool}, {decision_reason_log}")
+        print(f"{decision_reason_log}")
+        # Compare to expected
+        assert_equal(trigger_bool, exp_trigger_bool)
+        assert_equal(debug_bool, exp_debug_bool)
+        assert_equal(pending_bool, exp_pending_bool)
 
 
 if __name__ == "__main__":
