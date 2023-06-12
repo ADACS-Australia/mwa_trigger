@@ -185,7 +185,8 @@ def grab_decisions_for_event_groups(event_groups):
         telescope_list.append(
             ' '.join(set(event_group_events.values_list('telescope', flat=True)))
         )
-        event_with_source_name = list(filter(lambda x: x.source_name is not None, list(event_group_events)))
+        event_with_source_name = list(
+            filter(lambda x: x.source_name is not None, list(event_group_events)))
         if(len(event_with_source_name) > 0):
             source_name_list.append(event_with_source_name[0].source_name)
         else:
@@ -237,7 +238,6 @@ def EventGroupList(request):
 
     f = EventGroupFilter(req, queryset=models.EventGroup.objects.distinct())
     eventgroups = f.qs
-
 
     prop_settings = models.ProposalSettings.objects.all()
     # Paginate
@@ -557,6 +557,7 @@ def voevent_view(request, id):
     v = vp.loads(event.xml_packet.encode())
     xml_pretty_str = vp.prettystr(v)
     return HttpResponse(xml_pretty_str, content_type='text/xml')
+
 
 @transaction.atomic
 def parse_and_save_xml(xml):
