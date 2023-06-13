@@ -295,6 +295,7 @@ def worth_observing_gw(
     pending_bool = False
 
     print(f"\nLogic event_type: {event_type}")
+    print(f"\nLogic lvc_instruments: {lvc_instruments}")
     # Check alert is less than 3 hours from the event time
     three_hours_ago = datetime.datetime.now() - datetime.timedelta(hours=3)
     if(event_observed < three_hours_ago):
