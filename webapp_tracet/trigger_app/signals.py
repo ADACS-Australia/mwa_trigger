@@ -167,6 +167,9 @@ def group_trigger(sender, instance, **kwargs):
             'First unignored event so create proposal decisions objects')
         # Loop over settings
         proposal_settings = ProposalSettings.objects.all().order_by("priority")
+        print(vars(instance))
+
+        # print(instance)
 
         for prop_set in proposal_settings:
             # Create a ProposalDecision object to record what each proposal does
@@ -276,7 +279,7 @@ def proposal_worth_observing(
         elif prop_dec.proposal.source_type == "GW" and prop_dec.event_group_id.source_type == "GW":
             print('DEBUG - prop_dec.source_type is GW')
 
-            print(vars(voevent))
+            # print(vars(voevent))
 
             trigger_bool, debug_bool, pending_bool, decision_reason_log = worth_observing_gw(
                 # Event values

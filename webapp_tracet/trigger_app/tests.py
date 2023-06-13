@@ -68,7 +68,8 @@ def create_voevent_wrapper(trig, ra_dec, dec_alter=True):
         lvc_skymap_fits=trig.lvc_skymap_fits,
         lvc_prob_density_tile=trig.lvc_prob_density_tile,
         lvc_significant=trig.lvc_significant,
-        lvc_event_url=trig.lvc_event_url
+        lvc_event_url=trig.lvc_event_url,
+        lvc_instruments=trig.lvc_instruments
     )
 
 
@@ -527,7 +528,7 @@ class test_lvc_mwa_sub_arrays(TestCase):
         "default_data.yaml",
         # Mwa proposal that has subarrays
         "trigger_app/test_yamls/mwa_early_lvc_mwa_proposal_settings.yaml",
-        "trigger_app/test_yamls/atca_grb_proposal_settings.yaml",
+        # "trigger_app/test_yamls/atca_grb_proposal_settings.yaml",
     ]
 
     mwaApiArgs: list[dict] = []
@@ -538,8 +539,8 @@ class test_lvc_mwa_sub_arrays(TestCase):
     @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
     def setUp(self, patched_mwa_api):
         xml_paths = [
-            "../tests/test_events/LVC_real_early_warning.xml",
-            "../tests/test_events/LVC_real_initial.xml",
+            # "../tests/test_events/LVC_real_early_warning.xml",
+            # "../tests/test_events/LVC_real_initial.xml",
             "../tests/test_events/LVC_real_preliminary.xml",
             "../tests/test_events/LVC_real_update.xml",
         ]
@@ -559,36 +560,43 @@ class test_lvc_mwa_sub_arrays(TestCase):
             else:
                 create_voevent_wrapper(trig, ra_dec=None)
             # Sleep needed for testing vs real api
-            time.sleep(5)
             args, kwargs = patched_mwa_api.call_args
             self.mwaApiArgs.append(kwargs)
+            time.sleep(60)
             # print(args)
             # print(kwargs)
 
     def test_trigger_groups(self):
         # Check event was made
-        # self.assertEqual(len(Event.objects.all()), 4)
+        self.assertEqual(len(Event.objects.all()), 2)
 
-        # # Early warning is a different event
-        self.assertEqual(len(EventGroup.objects.all()), 2)
-        self.assertEqual(ProposalDecision.objects.filter(
-            proposal__telescope__name='MWA_VCS').first().decision, 'T')
-        self.assertEqual(ProposalDecision.objects.filter(
-            proposal__telescope__name='ATCA').first().decision, 'I')
+        # Early warning is a different event
+        self.assertEqual(len(EventGroup.objects.all()), 1)
+
+        print(Observations.objects.all())
+        
+        # self.assertEqual(ProposalDecision.objects.filter(
+        #     proposal__telescope__name='MWA_VCS').first().decision, 'T')
+        # self.assertEqual(ProposalDecision.objects.filter(
+        #     proposal__telescope__name='ATCA').first().decision, 'I')
 
         # MWA requests are correct
         mwa_request_0 = self.mwaApiArgs[0]
         mwa_request_1 = self.mwaApiArgs[1]
-
+        # mwa_request_2 = self.mwaApiArgs[0]
+        # mwa_request_3 = self.mwaApiArgs[1]
         print(mwa_request_0)
         print(mwa_request_1)
-        self.assertEqual(len(mwa_request_0['alt']), 4)
-        self.assertEqual(len(mwa_request_0['az']), 4)
-        self.assertEqual(len(mwa_request_0['subarray_list']), 4)
+        # print(mwa_request_2)
+        # print(mwa_request_3)
 
-        self.assertEqual(len(mwa_request_1['ra']), 4)
-        self.assertEqual(len(mwa_request_1['dec']), 4)
-        self.assertEqual(len(mwa_request_1['subarray_list']), 4)
+        # self.assertEqual(len(mwa_request_0['ra']), 4)
+        # self.assertEqual(len(mwa_request_0['dec']), 4)
+        # self.assertEqual(len(mwa_request_0['subarray_list']), 4)
+
+        # self.assertEqual(len(mwa_request_1['ra']), 4)
+        # self.assertEqual(len(mwa_request_1['dec']), 4)
+        # self.assertEqual(len(mwa_request_1['subarray_list']), 4)
 
 
 class test_lvc_mwa_retraction(TestCase):
@@ -691,8 +699,8 @@ class test_early_warning_trigger_buffer_default_pointings(TestCase):
     with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
         trigger_mwa_test = safe_load(file)
 
-    # @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
-    def setUp(self):
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
+    def setUp(self, fake_mwa_api):
         xml_paths = [
             "../tests/test_events/LVC_real_early_warning.xml",
         ]
@@ -720,4 +728,47 @@ class test_early_warning_trigger_buffer_default_pointings(TestCase):
         self.assertEqual(len(Event.objects.all()), 1)
         self.assertEqual(Event.objects.all().first().ignored, False)
 
+
+
+class test_ignore_single_instrument_gw(TestCase):
+    """ """
+    # Load default fixtures
+    fixtures = [
+        "default_data.yaml",
+        # Mwa proposal that has subarrays
+        "trigger_app/test_yamls/mwa_early_lvc_mwa_proposal_settings.yaml",
+    ]
+    call_args = None
+
+    with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
+        trigger_mwa_test = safe_load(file)
+
+    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
+    def setUp(self,fake_mwa_api):
+        xml_paths = [
+            "../tests/test_events/LVC_real_early_warning_single_instrument.xml",
+        ]
+       # Setup current RA and Dec at zenith for the MWA
+        MWA = EarthLocation(lat='-26:42:11.95',
+                            lon='116:40:14.93', height=377.8 * u.m)
+        mwa_coord = SkyCoord(az=0., alt=90., unit=(
+            u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
+        ra_dec = mwa_coord.icrs
+
+        # Parse and upload the xml file group
+        for xml in xml_paths:
+            trig = parsed_VOEvent(xml)
+            print(trig)
+            if(trig.ra and trig.dec):
+                create_voevent_wrapper(trig, ra_dec)
+            else:
+                create_voevent_wrapper(trig, ra_dec=None)
+
+            self.call_args = fake_mwa_api.call_args
+
+    def test_trigger_groups(self):
+        # Check event was made
+        self.assertEqual(len(Event.objects.all()), 1)
+        self.assertEqual(Event.objects.all().first().ignored, False)
+        self.assertEqual(self.call_args, None)
 

@@ -573,7 +573,7 @@ class parsed_VOEvent:
                     v.find(".//Param[@name='Terrestrial']").attrib["value"])
                 self.lvc_instruments = str(
                     v.find(".//Param[@name='Instruments']").attrib["value"])
-            
+                print(v.find(".//Param[@name='Instruments']").attrib["value"])
 
             lvc_skymap_fits = v.find(".//Param[@name='skymap_fits']")
 

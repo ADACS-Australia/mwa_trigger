@@ -7,7 +7,7 @@ import urllib.request
 from trigger_app.utils import getMWAPointingsFromSkymapFile, getMWARaDecFromAltAz, isClosePosition
 from astropy.table import Table
 import atca_rapid_response_api as arrApi
-
+from astropy.utils.data import download_file
 from tracet.triggerservice import trigger
 from .models import Observations, Event
 
@@ -100,8 +100,10 @@ def trigger_observation(
         # Create an observation name
         # Collect event telescopes
         voevents = Event.objects.filter(
-            event_group_id=proposal_decision_model.event_group_id).order_by('-recieved_data')
+            trig_id=proposal_decision_model.trig_id).order_by('-recieved_data')
         telescopes = []
+        print(proposal_decision_model.trig_id)
+
         for voevent in voevents:
             telescopes.append(voevent.telescope)
         # Make sure they are unique and seperate with a _
@@ -125,8 +127,7 @@ def trigger_observation(
                 print(f"DEBUG - skymap_fits_fits: {latestVoevent.lvc_skymap_fits}")
                 try:
                     skymap = Table.read(latestVoevent.lvc_skymap_fits)
-                    # alt=[ps.mwa_sub_alt_NE, ps.mwa_sub_alt_NW, ps.mwa_sub_alt_SE, ps.mwa_sub_alt_SW],
-                    # az=[ps.mwa_sub_az_NE, ps.mwa_sub_az_NW, ps.mwa_sub_az_SE, ps.mwa_sub_az_SW],
+                    
                     result = getMWAPointingsFromSkymapFile(skymap)
                     print(result)
                     current_arrays_dec = latestObs.mwa_sub_arrays['dec']
@@ -149,16 +150,16 @@ def trigger_observation(
                     if repoint:
                         mwa_sub_arrays = {
                             'dec': [
-                                result[0][4],
-                                result[1][4],
-                                result[2][4],
-                                result[3][4]
+                                result[0][4].value,
+                                result[1][4].value,
+                                result[2][4].value,
+                                result[3][4].value,
                             ],
                             'ra': [
-                                result[0][3],
-                                result[1][3],
-                                result[2][3],
-                                result[3][3]
+                                result[0][3].value,
+                                result[1][3].value,
+                                result[2][3].value,
+                                result[3][3].value,
                             ]
                         }
                 except Exception as e:
@@ -171,7 +172,9 @@ def trigger_observation(
         if proposal_decision_model.proposal.source_type == 'GW' and latestVoevent.lvc_skymap_fits != None and latestVoevent.event_type != 'EarlyWarning':
             print(f"DEBUG - skymap_fits_fits: {latestVoevent.lvc_skymap_fits}")
             try:
-                skymap = Table.read(latestVoevent.lvc_skymap_fits)
+                event_filename = download_file(latestVoevent.lvc_skymap_fits, 
+                               cache=True)
+                skymap = Table.read(event_filename)
                 # alt=[ps.mwa_sub_alt_NE, ps.mwa_sub_alt_NW, ps.mwa_sub_alt_SE, ps.mwa_sub_alt_SW],
                 # az=[ps.mwa_sub_az_NE, ps.mwa_sub_az_NW, ps.mwa_sub_az_SE, ps.mwa_sub_az_SW],
                 result = getMWAPointingsFromSkymapFile(skymap)
@@ -179,16 +182,16 @@ def trigger_observation(
 
                 mwa_sub_arrays = {
                     'dec': [
-                        result[0][4],
-                        result[1][4],
-                        result[2][4],
-                        result[3][4]
+                        result[0][4].value,
+                        result[1][4].value,
+                        result[2][4].value,
+                        result[3][4].value,
                     ],
                     'ra': [
-                        result[0][3],
-                        result[1][3],
-                        result[2][3],
-                        result[3][3]
+                        result[0][3].value,
+                        result[1][3].value,
+                        result[2][3].value,
+                        result[3][3].value,
                     ]
                 }
             except Exception as e:
@@ -204,7 +207,7 @@ def trigger_observation(
             sub2 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_NW, az=ps.mwa_sub_az_NW)
             sub3 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SE, az=ps.mwa_sub_az_SE)
             sub4 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SW, az=ps.mwa_sub_az_SW)
-            print(type(sub1[1]))
+
             print(f"DEBUG - sub1[1].value { sub1[1].value }")
 
             mwa_sub_arrays = {
@@ -267,10 +270,11 @@ def trigger_observation(
             buffered=buffered
         )
 
-        print(decision, decision_reason_log, obsids)
+        # print(decision, decision_reason_log, obsids)
 
     
         for obsid in obsids:
+            print(f"obsid: {obsid}")
             # Create new obsid model
             Observations.objects.create(
                 obsid=obsid,

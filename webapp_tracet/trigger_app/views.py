@@ -593,6 +593,7 @@ def parse_and_save_xml(xml):
         'lvc_binary_black_hole_probability': trig.lvc_binary_black_hole_probability,
         'lvc_terrestial_probability': trig.lvc_terrestial_probability,
         'lvc_includes_neutron_star_probability': trig.lvc_includes_neutron_star_probability,
+        'lvc_instruments': trig.lvc_instruments,
         'lvc_skymap_fits': trig.lvc_skymap_fits
     }
 

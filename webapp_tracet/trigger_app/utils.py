@@ -22,20 +22,17 @@ def getMWARaDecFromAltAz(alt, az):
     ra = ra_dec.ra.deg * u.deg
     dec = ra_dec.dec.deg * u.deg
 
-    print(ra)
     return ra, dec, ra_dec
 
 def isClosePosition(ra1, dec1, ra2, dec2, deg=10):
     # Create SkyCoord objects for the two positions
-    coord1 = SkyCoord(ra=ra1*u.deg, dec=dec1*u.deg, frame='icrs')
-    coord2 = SkyCoord(ra=ra2*u.deg, dec=dec2*u.deg, frame='icrs')
+
+    coord1 = SkyCoord(ra=ra1, dec=dec1, frame='icrs')
+    coord2 = SkyCoord(ra=ra2, dec=dec2, frame='icrs')
 
     # Calculate the angular separation between the two positions
     angular_sep = coord1.separation(coord2)
 
-    print(angular_sep *u.deg)
-
-    print(deg*u.deg)
     # Check if the angular separation is within 10 degrees
     if angular_sep < deg*u.deg:
         print("The positions are within 10 degrees.")
@@ -75,14 +72,17 @@ def getMWAPointingsFromSkymapFile(skymap):
         results = sorted(results, key=lambda x: -x[5])
 
     pointings = []
-    for index, result in enumerate(results):
-        if(index == 0):
-            pointings.append(result)
+    for result in results:
+        if len(pointings) >= 4:
+            break
         
-        elif(len(pointings) < 4):
-            for index, point in enumerate(pointings):
-                if(not isClosePosition(result[3], result[4], point[3], point[4])):
-                    pointings.append(point)  
-                    return
+        hasClosePositionAlready = False
+        for point in pointings:
+            if isClosePosition(result[3], result[4], point[3], point[4]):
+                hasClosePositionAlready = True
+
+
+        if len(pointings) == 0 or not hasClosePositionAlready:
+            pointings.append(result)
 
     return pointings
