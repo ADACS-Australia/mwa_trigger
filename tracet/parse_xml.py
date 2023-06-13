@@ -357,6 +357,7 @@ class parsed_VOEvent:
         self.lvc_skymap_file = None
         self.lvc_significant = None
         self.lvc_event_url = None
+        self.lvc_instruments = None
         self.role = None
         self.is_burst = None
 

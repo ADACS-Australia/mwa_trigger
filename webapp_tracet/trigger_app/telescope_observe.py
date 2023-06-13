@@ -371,7 +371,7 @@ def trigger_mwa_observation(
             buffered=buffered
         )
     
-    elif (mwa_sub_arrays != None):
+    elif (prop_settings.source_type == 'GW' and mwa_sub_arrays != None):
         print("DEBUG - Scheduling an ra/dec sub array observation")
 
         result = trigger(

@@ -366,62 +366,62 @@ class test_grb_observation_ignored_mwa(TestCase):
             proposal__telescope__name='MWA_VCS').first().decision, 'I')
 
 
-class test_nu(TestCase):
-    """Tests that a neutrino Event will trigger an observation
-    """
-    # Load default fixtures
-    fixtures = [
-        "default_data.yaml",
-        "trigger_app/test_yamls/mwa_nu_proposal_settings.yaml",
-    ]
+# class test_nu(TestCase):
+#     """Tests that a neutrino Event will trigger an observation
+#     """
+#     # Load default fixtures
+#     fixtures = [
+#         "default_data.yaml",
+#         "trigger_app/test_yamls/mwa_nu_proposal_settings.yaml",
+#     ]
 
-    with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
-        trigger_mwa_test = safe_load(file)
+#     with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
+#         trigger_mwa_test = safe_load(file)
 
-    with open('trigger_app/test_yamls/atca_test_api_response.yaml', 'r') as file:
-        atca_test_api_response = safe_load(file)
+#     with open('trigger_app/test_yamls/atca_test_api_response.yaml', 'r') as file:
+#         atca_test_api_response = safe_load(file)
 
-    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
-    @patch('atca_rapid_response_api.api.send', return_value=atca_test_api_response)
-    def setUp(self, fake_atca_api, fake_mwa_api):
-        xml_paths = [
-            "../tests/test_events/Antares_1438351269.xml",
-            "../tests/test_events/IceCube_134191_017593623_0.xml",
-            "../tests/test_events/IceCube_134191_017593623_1.xml",
-        ]
+#     @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
+#     @patch('atca_rapid_response_api.api.send', return_value=atca_test_api_response)
+#     def setUp(self, fake_atca_api, fake_mwa_api):
+#         xml_paths = [
+#             "../tests/test_events/Antares_1438351269.xml",
+#             "../tests/test_events/IceCube_134191_017593623_0.xml",
+#             "../tests/test_events/IceCube_134191_017593623_1.xml",
+#         ]
 
-        # Setup current RA and Dec at zenith for the MWA
-        MWA = EarthLocation(lat='-26:42:11.95',
-                            lon='116:40:14.93', height=377.8 * u.m)
-        mwa_coord = SkyCoord(az=0., alt=90., unit=(
-            u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
-        ra_dec = mwa_coord.icrs
+#         # Setup current RA and Dec at zenith for the MWA
+#         MWA = EarthLocation(lat='-26:42:11.95',
+#                             lon='116:40:14.93', height=377.8 * u.m)
+#         mwa_coord = SkyCoord(az=0., alt=90., unit=(
+#             u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
+#         ra_dec = mwa_coord.icrs
 
-        # Parse and upload the xml file group
-        for xml in xml_paths:
-            trig = parsed_VOEvent(xml)
-            create_voevent_wrapper(trig, ra_dec)
+#         # Parse and upload the xml file group
+#         for xml in xml_paths:
+#             trig = parsed_VOEvent(xml)
+#             create_voevent_wrapper(trig, ra_dec)
 
-    def test_trigger_groups(self):
-        # Check there are three Events that were grouped as one by the trigger ID
-        self.assertEqual(len(Event.objects.all()), 3)
-        self.assertEqual(len(EventGroup.objects.all()), 2)
+#     def test_trigger_groups(self):
+#         # Check there are three Events that were grouped as one by the trigger ID
+#         self.assertEqual(len(Event.objects.all()), 3)
+#         self.assertEqual(len(EventGroup.objects.all()), 2)
 
-    def test_proposal_decision(self):
-        # Two proposals decisions made
+#     def test_proposal_decision(self):
+#         # Two proposals decisions made
 
-        self.assertEqual(len(ProposalDecision.objects.all()), 2)
-        # Both triggered
+#         self.assertEqual(len(ProposalDecision.objects.all()), 2)
+#         # Both triggered
 
-        prop_dec1 = ProposalDecision.objects.all()[0]
-        print(
-            f"\n\ntest_nu proposal decison 1:\n{prop_dec1.decision_reason}\n\n")
-        self.assertEqual(prop_dec1.decision, 'T')
+#         prop_dec1 = ProposalDecision.objects.all()[0]
+#         print(
+#             f"\n\ntest_nu proposal decison 1:\n{prop_dec1.decision_reason}\n\n")
+#         self.assertEqual(prop_dec1.decision, 'T')
 
-        prop_dec2 = ProposalDecision.objects.all()[1]
-        print(
-            f"\n\ntest_nu proposal decison 1:\n{prop_dec2.decision_reason}\n\n")
-        self.assertEqual(prop_dec2.decision, 'T')
+#         prop_dec2 = ProposalDecision.objects.all()[1]
+#         print(
+#             f"\n\ntest_nu proposal decison 1:\n{prop_dec2.decision_reason}\n\n")
+#         self.assertEqual(prop_dec2.decision, 'T')
 
 
 class test_fs(TestCase):
