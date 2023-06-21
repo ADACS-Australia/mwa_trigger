@@ -219,6 +219,7 @@ def worth_observing_gw(
         lvc_binary_black_hole_probability=None,
         lvc_terrestial_probability=None,
         lvc_includes_neutron_star_probability=None,
+        lvc_false_alarm_rate=None,
         # Thresholds
         minimum_neutron_star_probability=None,
         maximum_neutron_star_probability=None,
@@ -232,6 +233,7 @@ def worth_observing_gw(
         maximum_terrestial_probability=None,
         observe_significant=None,
         event_type=None,
+        minimum_false_alarm_rate=None,
         # Other
         decision_reason_log="",
         event_observed=datetime.datetime.now(),
@@ -294,6 +296,16 @@ def worth_observing_gw(
     debug_bool = False
     pending_bool = False
 
+    # Get exponent
+    # lvc_false_alarm_rate = None | "3.218261352069347-10" | "0.0001"
+    if(lvc_false_alarm_rate and minimum_false_alarm_rate):
+        try:
+            FAR = float(lvc_false_alarm_rate)
+            FARThreshold = float(minimum_false_alarm_rate)
+        except Exception as e:
+            debug_bool = True
+            decision_reason_log += f'{datetime.datetime.utcnow()}: Event ID {event_id}: The event FAR ({lvc_false_alarm_rate}) or proposal FAR ({minimum_false_alarm_rate}) could not be processed so not triggering. \n'
+       
     print(f"\nLogic event_type: {event_type}")
     print(f"\nLogic lvc_instruments: {lvc_instruments}")
     # Check alert is less than 3 hours from the event time
@@ -313,7 +325,10 @@ def worth_observing_gw(
     elif telescope == "LVC":
 
         # PROB_NS
-        if lvc_includes_neutron_star_probability > maximum_neutron_star_probability:
+        if FAR < FARThreshold:
+            debug_bool = True
+            decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The FAR is {lvc_false_alarm_rate} which is less than {minimum_false_alarm_rate} so not triggering. \n"
+        elif lvc_includes_neutron_star_probability > maximum_neutron_star_probability:
             debug_bool = True
             decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The PROB_NS probability ({lvc_includes_neutron_star_probability}) is greater than {maximum_neutron_star_probability} so not triggering. \n"
         elif lvc_includes_neutron_star_probability < minimum_neutron_star_probability:

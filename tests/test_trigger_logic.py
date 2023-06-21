@@ -111,7 +111,7 @@ def test_trigger_nu_event():
         assert_equal(decision_reason_log, exp_decision_reason_log)
 
 def test_trigger_gw_event(): 
-    # Open the preparsed file
+    # Test early warning parsing
     yaml_loc = os.path.join('tests/test_events', 'LVC_real_early_warning.yaml')
     # Read in expected class and do the same
     with open(yaml_loc, 'r') as stream:
@@ -162,7 +162,35 @@ def test_trigger_gw_event():
         assert_equal(trigger_bool, exp_trigger_bool)
         assert_equal(debug_bool, exp_debug_bool)
         assert_equal(pending_bool, exp_pending_bool)
+        # Open the preparsed file
+    
+    yaml_loc = os.path.join('tests/test_events', 'LVC_real_update.yaml')
+    # Read in expected class and do the same
+    with open(yaml_loc, 'r') as stream:
+        exp_trigger_bool = False
+        exp_debug_bool = True
+        exp_pending_bool = False
+        one_hour_ago = datetime.datetime.now() - datetime.timedelta(hours=1)
 
+        trig = load(stream, Loader=Loader)
+        trig['event_observed'] = one_hour_ago
+        
+        # Send it through trigger logic
+        trigger_bool, debug_bool, pending_bool, decision_reason_log = worth_observing_gw(
+            event_id= trig["trig_id"],
+            event_type=trig["event_type"],
+            event_observed=trig["event_observed"],
+            telescope=trig["telescope"],
+            lvc_false_alarm_rate="3.218261352069347e-10",
+            minimum_false_alarm_rate='1.00e-8'
+        )
+        print(f"{trigger_bool}, {debug_bool}, {pending_bool}, {decision_reason_log}")
+        print(f"{decision_reason_log}")
+        # Compare to expected
+        # assert_equal(trigger_bool, exp_trigger_bool)
+        # assert_equal(debug_bool, exp_debug_bool)
+        # assert_equal(pending_bool, exp_pending_bool)
+    
 
 if __name__ == "__main__":
     """

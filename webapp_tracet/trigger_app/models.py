@@ -132,6 +132,8 @@ class ProposalSettings(models.Model):
                                                        help_text="Limit on the probability that the source is terrestrial (i.e., a background noise fluctuation or a glitch)", default=0.00)
     maximum_terrestial_probability = models.FloatField(verbose_name="Maximum probability for event to be terrestial",
                                                        help_text="Limit on the probability that the source is terrestrial (i.e., a background noise fluctuation or a glitch)", default=0.95)
+    minimum_false_alarm_rate = models.CharField(default="1.00e-10", max_length=260, verbose_name="Minimum false alarm rate (FAR) to trigger",
+                                     help_text="Can be 0.000001 or 1.0e-8 formats")
 
     # GW custom logic
     observe_significant = models.BooleanField(
@@ -358,6 +360,8 @@ class Event(models.Model):
         upload_to='skymaps/', blank=True, null=True)
     lvc_instruments = models.CharField(
         max_length=64, blank=True, null=True)
+    lvc_false_alarm_rate = models.CharField(
+        max_length=128, blank=True, null=True)
     class Meta:
         ordering = ['-id']
 

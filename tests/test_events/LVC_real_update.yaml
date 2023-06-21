@@ -14,7 +14,7 @@ is_burst: null
 lvc_binary_black_hole_probability: 0.036717034905487424
 lvc_binary_neutron_star_probability: 0.0
 lvc_event_url: https://gracedb.ligo.org/superevents/S230518h/view/
-lvc_false_alarm_rate: 3.218261352069347e-10
+lvc_false_alarm_rate: '3.218261352069347e-10'
 lvc_includes_neutron_star_probability: 0.9956840182648402
 lvc_instruments: H1,L1
 lvc_neutron_star_black_hole_probability: 0.8642645059209272
