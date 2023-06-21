@@ -358,6 +358,7 @@ class parsed_VOEvent:
         self.lvc_significant = None
         self.lvc_event_url = None
         self.lvc_instruments = None
+        self.lvc_false_alarm_rate = None
         self.role = None
         self.is_burst = None
 
@@ -545,6 +546,7 @@ class parsed_VOEvent:
             self.event_duration = None
             self.sequence_num = None
             logger.info("LVC telescope")
+        
 
             # Check if GW event is a burst
             if v.find(".//Param[@name='Group']") is not None and v.find(".//Param[@name='Group']").attrib["value"] == 'Burst':
@@ -563,7 +565,9 @@ class parsed_VOEvent:
                 self.lvc_significant = bool(v.find(".//Param[@name='Significant']").attrib["value"])
                 self.lvc_event_url = str(
                     v.find(".//Param[@name='EventPage']").attrib["value"])
-
+                
+                self.lvc_false_alarm_rate = v.find(".//Param[@name='FAR']").attrib["value"]
+            
                 self.lvc_binary_neutron_star_probability = float(
                     v.find(".//Param[@name='BNS']").attrib["value"])
                 self.lvc_neutron_star_black_hole_probability = float(

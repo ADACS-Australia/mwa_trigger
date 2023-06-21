@@ -93,7 +93,7 @@ def test_parse_fs_event():
 # GCN alerts that we want to trigger MWA. Include skymap for initial, update. Include retracted information.
 
 
-def test_parse_lvk_early_event():
+def test_parse_lvk_event():
     xml_tests = [
         ('LVC_real_early_warning.xml', None, ),
         ('LVC_real_preliminary.xml', None, ),

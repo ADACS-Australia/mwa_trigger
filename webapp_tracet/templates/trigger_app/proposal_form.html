@@ -88,6 +88,7 @@
             <table>
                 <tr><td>Trigger on probability event includes a neutron star (% range)  {% help_wrap 'PROB_NS - probability that at least one object in the binary has a mass that is less than 3 solar masses' %}</td><td>{{ form.minimum_neutron_star_probability }}</td><td>{{ form.maximum_neutron_star_probability }}</td></tr>
                 <tr><td>Only trigger on significant events {% help_wrap form.observe_significant.help_text %}</td><td>{{ form.observe_significant }}</td></tr>
+                <tr><td>{{ form.minimum_false_alarm_rate.label_tag }}      {% help_wrap form.minimum_false_alarm_rate.help_text %}</td><td>{{ form.minimum_false_alarm_rate }}</td></tr>
 
             </table>
             <h4>Event type</h4>
