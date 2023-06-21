@@ -181,7 +181,7 @@ def test_trigger_gw_event():
             event_type=trig["event_type"],
             event_observed=trig["event_observed"],
             telescope=trig["telescope"],
-            lvc_false_alarm_rate="3.218261352069347e-10",
+            lvc_false_alarm_rate="3.218261352069347e-7",
             minimum_false_alarm_rate='1.00e-8'
         )
         print(f"{trigger_bool}, {debug_bool}, {pending_bool}, {decision_reason_log}")
