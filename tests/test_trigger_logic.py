@@ -181,15 +181,15 @@ def test_trigger_gw_event():
             event_type=trig["event_type"],
             event_observed=trig["event_observed"],
             telescope=trig["telescope"],
-            lvc_false_alarm_rate="3.218261352069347e-7",
+            lvc_false_alarm_rate="3.218261352069347e-9",
             minimum_false_alarm_rate='1.00e-8'
         )
         print(f"{trigger_bool}, {debug_bool}, {pending_bool}, {decision_reason_log}")
         print(f"{decision_reason_log}")
         # Compare to expected
-        # assert_equal(trigger_bool, exp_trigger_bool)
-        # assert_equal(debug_bool, exp_debug_bool)
-        # assert_equal(pending_bool, exp_pending_bool)
+        assert_equal(trigger_bool, exp_trigger_bool)
+        assert_equal(debug_bool, exp_debug_bool)
+        assert_equal(pending_bool, exp_pending_bool)
     
 
 if __name__ == "__main__":
