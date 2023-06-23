@@ -297,6 +297,12 @@ def worth_observing_gw(
     debug_bool = False
     pending_bool = False
 
+    # For debugging timezone aware
+    # def is_timezone_aware(dt):
+    #     # Checks if a given datetime object is timezone aware.
+    #     # Returns True if the datetime object is timezone aware, False otherwise.
+    #     return dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None
+
     # Get exponent
     # lvc_false_alarm_rate = None | "3.218261352069347-10" | "0.0001"
     if lvc_false_alarm_rate and maximum_false_alarm_rate:
@@ -309,9 +315,12 @@ def worth_observing_gw(
        
     print(f"\nLogic event_type: {event_type}")
     print(f"\nLogic lvc_instruments: {lvc_instruments}")
+
+ 
     # Check alert is less than 3 hours from the event time
     three_hours_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=3)
-    if(event_observed.replace(tzinfo=datetime.timezone.utc) < three_hours_ago):
+    
+    if(event_observed < three_hours_ago):
         debug_bool = True
         decision_reason_log += f'{datetime.datetime.utcnow()}: Event ID {event_id}: The event time {event_observed.strftime("%Y-%m-%dT%H:%M:%S+0000")} is more than 3 hours ago {three_hours_ago.strftime("%Y-%m-%dT%H:%M:%S+0000")} so not triggering. \n'
     elif(lvc_instruments != None and len(lvc_instruments.split(',')) < 2):

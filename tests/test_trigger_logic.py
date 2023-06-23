@@ -118,7 +118,7 @@ def test_trigger_gw_event():
         exp_trigger_bool = True
         exp_debug_bool = False
         exp_pending_bool = False
-        one_hour_ago = datetime.datetime.now() - datetime.timedelta(hours=1)
+        one_hour_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=1)
 
         trig = load(stream, Loader=Loader)
         trig['event_observed'] = one_hour_ago
@@ -139,7 +139,7 @@ def test_trigger_gw_event():
 
     # Open the preparsed file
     yaml_loc = os.path.join('tests/test_events', 'LVC_real_early_warning.yaml')
-    # Read in expected class and do the same
+    # Test Time limit
     with open(yaml_loc, 'r') as stream:
         exp_trigger_bool = False
         exp_debug_bool = True
@@ -148,7 +148,7 @@ def test_trigger_gw_event():
 
         trig = load(stream, Loader=Loader)
         trig['event_observed'] = four_hours_ago
-        
+
         # Send it through trigger logic
         trigger_bool, debug_bool, pending_bool, decision_reason_log = worth_observing_gw(
             event_id= trig["trig_id"],
@@ -165,12 +165,12 @@ def test_trigger_gw_event():
         # Open the preparsed file
     
     yaml_loc = os.path.join('tests/test_events', 'LVC_real_update.yaml')
-    # Read in expected class and do the same
+    # Test FAR threshold
     with open(yaml_loc, 'r') as stream:
         exp_trigger_bool = False
         exp_debug_bool = True
         exp_pending_bool = False
-        one_hour_ago = datetime.datetime.now() - datetime.timedelta(hours=1)
+        one_hour_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=1)
 
         trig = load(stream, Loader=Loader)
         trig['event_observed'] = one_hour_ago
