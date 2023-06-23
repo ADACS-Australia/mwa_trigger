@@ -325,7 +325,7 @@ def worth_observing_gw(
     elif telescope == "LVC":
 
         # PROB_NS
-        if lvc_false_alarm_rate and minimum_false_alarm_rate and FAR > FARThreshold:
+        if lvc_false_alarm_rate and minimum_false_alarm_rate and FAR < FARThreshold:
             debug_bool = True
             decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The FAR is {lvc_false_alarm_rate} which is less than {minimum_false_alarm_rate} so not triggering. \n"
         elif lvc_includes_neutron_star_probability > maximum_neutron_star_probability:
