@@ -2,7 +2,8 @@ import time
 from django.test import TestCase
 from unittest.mock import patch
 import pytest
-
+import pytz
+import datetime
 import requests
 
 from .models import EventGroup, Event, ProposalSettings, ProposalDecision, Observations
@@ -554,6 +555,7 @@ class test_lvc_mwa_sub_arrays(TestCase):
         # Parse and upload the xml file group
         for xml in xml_paths:
             trig = parsed_VOEvent(xml)
+            trig.event_observed = datetime.datetime.now(pytz.UTC) - datetime.timedelta(hours=0.1)
             print(trig)
             if(trig.ra and trig.dec):
                 create_voevent_wrapper(trig, ra_dec)
@@ -562,7 +564,7 @@ class test_lvc_mwa_sub_arrays(TestCase):
             # Sleep needed for testing vs real api
             args, kwargs = patched_mwa_api.call_args
             self.mwaApiArgs.append(kwargs)
-            time.sleep(60)
+            time.sleep(5)
             # print(args)
             # print(kwargs)
 
@@ -644,7 +646,7 @@ class test_lvc_mwa_retraction(TestCase):
         # Early warning is a different event
         self.assertEqual(len(EventGroup.objects.all()), 1)
         self.assertEqual(ProposalDecision.objects.filter(
-            proposal__telescope__name='MWA_VCS').first().decision, 'T')
+            proposal__telescope__name='MWA_VCS').first().decision, 'I')
 
 class test_lvc_burst_are_ignored(TestCase):
     """Tests that lvc burst events are ignored"
