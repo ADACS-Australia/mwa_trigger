@@ -302,6 +302,7 @@ def proposal_worth_observing(
                 minimum_terrestial_probability=prop_dec.proposal.minimum_terrestial_probability,
                 maximum_terrestial_probability=prop_dec.proposal.maximum_terrestial_probability,
                 observe_significant=prop_dec.proposal.observe_significant,
+                event_observed=voevent.event_observed,
                 # Other
                 decision_reason_log=decision_reason_log,
                 event_id=voevent.id,
