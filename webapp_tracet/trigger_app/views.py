@@ -4,7 +4,6 @@ from trigger_app.signals import startup_signal
 from django.views.generic.list import ListView
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect, QueryDict
-from django.db import transaction
 from django.db import models as dj_model
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
@@ -202,7 +201,7 @@ def grab_decisions_for_event_groups(event_groups):
                     this_decision.first().get_decision_display())
                 decision_id_list.append(this_decision.first().id)
             else:
-                decision_list.append("")
+                decision_list.append("") 
                 decision_id_list.append("")
         proposal_decision_list.append(decision_list)
         proposal_decision_id_list.append(decision_id_list)
@@ -558,8 +557,6 @@ def voevent_view(request, id):
     xml_pretty_str = vp.prettystr(v)
     return HttpResponse(xml_pretty_str, content_type='text/xml')
 
-
-@transaction.atomic
 def parse_and_save_xml(xml):
     logger.info(f'Attempting to parse xml {xml}')
     trig = parse_xml.parsed_VOEvent(None, packet=xml)
