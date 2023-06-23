@@ -144,7 +144,7 @@ def test_trigger_gw_event():
         exp_trigger_bool = False
         exp_debug_bool = True
         exp_pending_bool = False
-        four_hours_ago = datetime.datetime.now() - datetime.timedelta(hours=4)
+        four_hours_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=4)
 
         trig = load(stream, Loader=Loader)
         trig['event_observed'] = four_hours_ago
