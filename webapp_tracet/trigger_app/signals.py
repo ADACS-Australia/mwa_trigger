@@ -288,6 +288,7 @@ def proposal_worth_observing(
                 lvc_binary_black_hole_probability=voevent.lvc_binary_black_hole_probability,
                 lvc_terrestial_probability=voevent.lvc_terrestial_probability,
                 lvc_includes_neutron_star_probability=voevent.lvc_includes_neutron_star_probability,
+                lvc_false_alarm_rate=voevent.lvc_false_alarm_rate,
                 lvc_instruments=voevent.lvc_instruments,
                 telescope=voevent.telescope,
                 # Thresholds
@@ -302,8 +303,9 @@ def proposal_worth_observing(
                 minimum_terrestial_probability=prop_dec.proposal.minimum_terrestial_probability,
                 maximum_terrestial_probability=prop_dec.proposal.maximum_terrestial_probability,
                 observe_significant=prop_dec.proposal.observe_significant,
-                event_observed=voevent.event_observed,
+                minimum_false_alarm_rate=prop_dec.proposal.minimum_false_alarm_rate,
                 # Other
+                event_observed=voevent.event_observed,
                 decision_reason_log=decision_reason_log,
                 event_id=voevent.id,
                 event_type=voevent.event_type,

@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pytz
 
 logger = logging.getLogger(__name__)
 
@@ -309,7 +310,7 @@ def worth_observing_gw(
     print(f"\nLogic event_type: {event_type}")
     print(f"\nLogic lvc_instruments: {lvc_instruments}")
     # Check alert is less than 3 hours from the event time
-    three_hours_ago = datetime.datetime.now() - datetime.timedelta(hours=3)
+    three_hours_ago = datetime.datetime.now(pytz.UTC) - datetime.timedelta(hours=3)
     if(event_observed < three_hours_ago):
         debug_bool = True
         decision_reason_log += f'{datetime.datetime.utcnow()}: Event ID {event_id}: The event time {event_observed.strftime("%Y-%m-%dT%H:%M:%S+0000")} is more than 3 hours ago {three_hours_ago.strftime("%Y-%m-%dT%H:%M:%S+0000")} so not triggering. \n'
