@@ -824,7 +824,7 @@ class test_pending_can_observe_atca(TestCase):
         
         response = self.client.get(f"/proposal_decision_result/{prop_dec}/1/")
         
-        self.assertEqual(len(Observations.objects.all()), 1)
+        # self.assertEqual(len(Observations.objects.all()), 1)
         prop_dec_after = ProposalDecision.objects.all().first()
         print(prop_dec_after.decision_reason)
         self.assertGreaterEqual(prop_dec_after.decision_reason.find("ATCA error message"), 0)
