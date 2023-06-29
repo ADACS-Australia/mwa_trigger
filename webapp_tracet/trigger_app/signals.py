@@ -422,22 +422,33 @@ def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_mo
                     proposal_decision_id=proposal_decision_model)
                 for ob in obs:
                     message_type_text += f"{ob.website_link}\n"
-                send_alert_type(ua.type, ua.address, subject, message_type_text,
+                try:
+                    send_alert_type(ua.type, ua.address, subject, message_type_text,
                                 proposal_decision_model, telescopes, set_time_utc)
-
+                except Exception as e:
+                    logger.error(f"Twillio error message: {e}")
+            
             # Debug Alert
             if ap.debug and ua.debug and debug_bool:
                 subject = f"TraceT {proposal_decision_model.proposal.proposal_id}: {proposal_decision_model.proposal.telescope_id} INFO on {telescopes} {proposal_decision_model.event_group_id.source_type}"
                 message_type_text = f"This is a debug notification from TraceT."
-                send_alert_type(ua.type, ua.address, subject, message_type_text,
-                                proposal_decision_model, telescopes, set_time_utc)
-
+                try:
+                    send_alert_type(ua.type, ua.address, subject, message_type_text,
+                                    proposal_decision_model, telescopes, set_time_utc)
+                except Exception as e:
+                    logger.error(f"Twillio error message: {e}")
+      
             # Pending Alert
             if ap.approval and ua.approval and pending_bool:
                 subject = f"TraceT {proposal_decision_model.proposal.proposal_id}: {proposal_decision_model.proposal.telescope_id} PENDING on {telescopes} {proposal_decision_model.event_group_id.source_type}"
                 message_type_text = f"HUMAN INTERVENTION REQUIRED! TraceT is unsure about the following event."
-                send_alert_type(ua.type, ua.address, subject, message_type_text,
-                                proposal_decision_model, telescopes, set_time_utc)
+                try:
+                    send_alert_type(ua.type, ua.address, subject, message_type_text,
+                                    proposal_decision_model, telescopes, set_time_utc)
+                except Exception as e:
+                    logger.error(f"Twillio error message: {e}")
+      
+
 
 
 def send_alert_type(alert_type, address, subject, message_type_text, proposal_decision_model, telescopes, set_time_utc):
