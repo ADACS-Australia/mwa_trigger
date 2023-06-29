@@ -520,7 +520,6 @@ class test_hess_any_dur(TestCase):
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__event_any_duration=False).first().decision, 'I')
 
-
 class test_lvc_mwa_sub_arrays(TestCase):
     """Tests that on early LVC events MWA will make an observation with sub arrays"
     """
@@ -731,7 +730,6 @@ class test_early_warning_trigger_buffer_default_pointings(TestCase):
         self.assertEqual(Event.objects.all().first().ignored, False)
 
 
-
 class test_ignore_single_instrument_gw(TestCase):
     """ """
     # Load default fixtures
@@ -774,3 +772,59 @@ class test_ignore_single_instrument_gw(TestCase):
         self.assertEqual(Event.objects.all().first().ignored, False)
         self.assertEqual(self.call_args, None)
 
+
+class test_pending_can_observe_atca(TestCase):
+    """ """
+    # Load default fixtures
+    # "event_min_duration": 0.256
+    # "event_max_duration": 1.024
+    # "pending_min_duration_1": 1.025
+    # "pending_max_duration_1": 2.056
+    # "pending_min_duration_2": 0.128
+    # "pending_max_duration_2": 0.255
+    fixtures = [
+        "default_data.yaml",
+        "trigger_app/test_yamls/atca_grb_proposal_settings.yaml",
+    ]
+    call_args = None
+
+    with open('trigger_app/test_yamls/atca_test_api_response.yaml', 'r') as file:
+        atca_test_api_response = safe_load(file)
+
+    @patch('atca_rapid_response_api.api.send', return_value=atca_test_api_response)
+    def setUp(self, fake_atca_api):
+    # def setUp(self):
+        xml_paths = [
+            "../tests/test_events/group_02_SWIFT_01_BAT_GRB_Pos.xml",
+        ]
+
+        # Setup current RA and Dec at zenith for the MWA
+        MWA = EarthLocation(lat='-26:42:11.95',
+                            lon='116:40:14.93', height=377.8 * u.m)
+        mwa_coord = SkyCoord(az=0., alt=90., unit=(
+            u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
+        ra_dec = mwa_coord.icrs
+
+        # Parse and upload the xml file group
+        for xml in xml_paths:
+            trig = parsed_VOEvent(xml)
+            trig.event_duration = 1.026
+            print(trig.source_type)
+            create_voevent_wrapper(trig, ra_dec)
+            # self.call_args = fake_atca_api.call_args
+
+    def test_set_pending_then_approve(self):
+        # Check event was made
+        event = Event.objects.all().first()
+        prop_dec = ProposalDecision.objects.all().first()
+
+        self.assertEqual(event.ignored, False)
+        self.assertEqual(prop_dec.decision, "P")
+        self.assertEqual(self.call_args, None)
+        
+        response = self.client.get(f"/proposal_decision_result/{prop_dec}/1/")
+        
+        self.assertEqual(len(Observations.objects.all()), 1)
+        prop_dec_after = ProposalDecision.objects.all().first()
+        print(prop_dec_after.decision_reason)
+        self.assertGreaterEqual(prop_dec_after.decision_reason.find("ATCA error message"), 0)

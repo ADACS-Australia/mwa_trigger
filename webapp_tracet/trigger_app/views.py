@@ -406,14 +406,14 @@ def ProposalDecision_result(request, id, decision):
 
         prop_dec.decision_reason = decision_reason_log
         prop_dec.decision = obs_decision
-
+        prop_dec.save()
         # send off alert messages to users and admins
         signals.send_all_alerts(trigger_bool, debug_bool, False, prop_dec)
     else:
         # False (0) so just update decision
         prop_dec.decision_reason += "User decided not to trigger. "
         prop_dec.decision = "I"
-    prop_dec.save()
+        prop_dec.save()
 
     return HttpResponseRedirect(f'/proposal_decision_details/{id}/')
 
