@@ -47,7 +47,6 @@ def trigger_observation(
     # Check if source is above the horizon
     if not proposal_decision_model.proposal.start_observation_at_high_sensitivity or (proposal_decision_model.ra or proposal_decision_model.dec) and proposal_decision_model.proposal.telescope.name != "ATCA":
         print("Set MWA variables")
-
         # Create Earth location for the telescope
         telescope = proposal_decision_model.proposal.telescope
         location = EarthLocation(
@@ -116,10 +115,12 @@ def trigger_observation(
         if proposal_decision_model.proposal.source_type == 'GW' and len(voevents) == 1:
             # Dump out the last ~3 mins of MWA buffer to try and catch event
             print(f"DEBUG - dumping MWA buffer")
+            reason = f"{latestVoevent.trig_id} - First event so dumping MWA buffer "
             buffered = True
 
         if proposal_decision_model.proposal.source_type == 'GW' and len(voevents) > 1 and latestVoevent.lvc_skymap_fits != None:
             print(f"DEBUG - checking to update position")
+
             latestObs = Observations.objects.filter(
                         event_group_id=proposal_decision_model.event_group_id).order_by('-created_at').first()
             
@@ -148,6 +149,7 @@ def trigger_observation(
                                 repoint = False
                             
                     if repoint:
+                        reason = f"{latestVoevent.trig_id} - Updating observation positions based on event."
                         mwa_sub_arrays = {
                             'dec': [
                                 result[0][4].value,
@@ -169,7 +171,8 @@ def trigger_observation(
             else:
                 print(f"DEBUG - no sub arrays on obs")
         
-        if proposal_decision_model.proposal.source_type == 'GW' and latestVoevent.lvc_skymap_fits != None and latestVoevent.event_type != 'EarlyWarning':
+
+        elif proposal_decision_model.proposal.source_type == 'GW' and latestVoevent.lvc_skymap_fits != None and latestVoevent.event_type != 'EarlyWarning':
             print(f"DEBUG - skymap_fits_fits: {latestVoevent.lvc_skymap_fits}")
             try:
                 event_filename = download_file(latestVoevent.lvc_skymap_fits, 
@@ -179,7 +182,7 @@ def trigger_observation(
                 # az=[ps.mwa_sub_az_NE, ps.mwa_sub_az_NW, ps.mwa_sub_az_SE, ps.mwa_sub_az_SW],
                 result = getMWAPointingsFromSkymapFile(skymap)
                 print(result)
-
+                
                 mwa_sub_arrays = {
                     'dec': [
                         result[0][4].value,
@@ -194,10 +197,13 @@ def trigger_observation(
                         result[3][3].value,
                     ]
                 }
+                reason = f"{latestVoevent.trig_id} - Event has position so using skymap pointings"
+
             except Exception as e:
                 print(e)
                 logger.error("Error getting MWA pointings from skymap")
                 logger.error(e)
+
         elif proposal_decision_model.proposal.source_type == 'GW' and latestVoevent.event_type == 'EarlyWarning':
             ps = proposal_decision_model.proposal
  
@@ -224,6 +230,9 @@ def trigger_observation(
                     sub4[0].value,
                 ]
             }
+
+            reason = f"{latestVoevent.trig_id} - Event is an early warning so using default sub arrays"
+
             # Only schedule a 15 min obs
             proposal_decision_model.proposal.mwa_nobs = 1
             proposal_decision_model.proposal.mwa_exptime = 904
@@ -253,6 +262,9 @@ def trigger_observation(
                     sub4[0].value,
                 ]
             }
+
+            reason = f"{latestVoevent.trig_id} - Event has no positional data so using default sub arrays"
+
             # Only schedule a 60 min obs if no position
             proposal_decision_model.proposal.mwa_nobs = 1
             proposal_decision_model.proposal.mwa_exptime = 3600        

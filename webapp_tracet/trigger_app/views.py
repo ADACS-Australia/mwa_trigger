@@ -300,8 +300,11 @@ def home_page(request):
     recent_event_group_info, _ = grab_decisions_for_event_groups(
         recent_event_groups)
 
-    recent_event_group_info = filter(
+    recent_event_group_info_swift = filter(
         lambda x: x[1] == "SWIFT", recent_event_group_info)
+
+    recent_event_group_info_lvc = filter(
+        lambda x: x[1] == "LVC", recent_event_group_info)
 
     context = {
         'twistd_comet_status': comet_status,
@@ -309,18 +312,20 @@ def home_page(request):
         'settings': prop_settings,
         'remotes': ", ".join(settings.VOEVENT_REMOTES),
         'tcps': ", ".join(settings.VOEVENT_TCP),
-        "recent_event_groups": list(recent_event_group_info)[:10]
+        "recent_event_groups_swift": list(recent_event_group_info_swift)[:10],
+        "recent_event_groups_lvc": list(recent_event_group_info_lvc)[:10]
     }
     return render(request, 'trigger_app/home_page.html', context)
 
 
 def strip_time_stamp(prop_decs):
     for prop_dec in prop_decs:
-        prop_dec_lines = prop_dec.decision_reason.split("\n")
-        stripped_lines = []
-        for line in prop_dec_lines:
-            stripped_lines.append(line[28:])
-        prop_dec.decision_reason = "\n".join(stripped_lines)
+        if prop_dec.decision_reason: 
+            prop_dec_lines = prop_dec.decision_reason.split("\n")
+            stripped_lines = []
+            for line in prop_dec_lines:
+                stripped_lines.append(line[28:])
+            prop_dec.decision_reason = "\n".join(stripped_lines)
 
 
 def EventGroup_details(request, tid):
@@ -393,7 +398,7 @@ def ProposalDecision_result(request, id, decision):
         obs_decision, decision_reason_log = trigger_observation(
             prop_dec,
             f"{prop_dec.decision_reason}User decided to trigger. ",
-            reason="First Observation",
+            reason="User triggered observation",
         )
         if obs_decision == 'E':
             # Error observing so send off debug

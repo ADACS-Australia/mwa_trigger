@@ -629,6 +629,7 @@ class test_lvc_mwa_retraction(TestCase):
         for xml in xml_paths:
             trig = parsed_VOEvent(xml)
             print(trig)
+            trig.event_observed = datetime.datetime.now(pytz.UTC) - datetime.timedelta(hours=0.1)
             if(trig.ra and trig.dec):
                 create_voevent_wrapper(trig, ra_dec)
             else:
