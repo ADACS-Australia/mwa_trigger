@@ -330,7 +330,7 @@ def worth_observing_gw(
         trigger_bool = True
         decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: Early warning, no information so triggering. \n"
     elif telescope == "LVC" and event_type == "Retraction":
-        trigger_bool = True
+        debug_bool = True
         decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: Retraction, scheduling no capture observation (WIP, ignoring for now). \n"
     elif telescope == "LVC":
 
