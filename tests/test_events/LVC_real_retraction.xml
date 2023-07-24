@@ -47,8 +47,4 @@
       </ObservationLocation>
     </ObsDataLocation>
   </WhereWhen>
-  <Citations>
-    <EventIVORN cite="retraction">ivo://gwnet/LVC#S230524x-1-EarlyWarning</EventIVORN>
-    <Description>Determined to not be a viable GW event candidate</Description>
-  </Citations>
 </voe:VOEvent> 

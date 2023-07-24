@@ -587,7 +587,7 @@ class parsed_VOEvent:
                 # Initial and Update alerts should contain skymap data as URL
                 self.lvc_skymap_fits = str(lvc_skymap_fits.attrib["value"])
                 
-            if self.event_type == 'Retraction':
+            if self.event_type == 'Retraction' and 'Citations' in v:
                 # Capture message that comes with retraction
                 self.lvc_retraction_message = str(v.Citations.Description)
 
