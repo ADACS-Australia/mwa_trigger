@@ -13,7 +13,7 @@ ignore: false
 is_burst: null
 lvc_binary_black_hole_probability: 0.0
 lvc_binary_neutron_star_probability: 0.7540149362918832
-lvc_event_url: https://gracedb.ligo.org/superevents/S230524x/view/
+lvc_event_url: https://gracedb.ligo.org/superevents/S230518h/view/
 lvc_false_alarm_rate: '7.224443905955801e-08'
 lvc_includes_neutron_star_probability: 1.0
 lvc_instruments: H1,L1
@@ -26,7 +26,7 @@ lvc_skymap_fits: null
 lvc_terrestial_probability: 0.24598506370811693
 packet: "<VOEvent xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"\
   http://www.ivoa.net/xml/VOEvent/v2.0 http://www.ivoa.net/xml/VOEvent/VOEvent-v2.0.xsd\"\
-  \ version=\"2.0\" role=\"observation\" ivorn=\"ivo://gwnet/LVC#S230524x-1-EarlyWarning\"\
+  \ version=\"2.0\" role=\"observation\" ivorn=\"ivo://gwnet/LVC#S230518h-1-EarlyWarning\"\
   >\n  <Who>\n    <Date>2023-05-24T20:22:33Z</Date>\n    <Author>\n      <contactName>LIGO\
   \ Scientific Collaboration, Virgo Collaboration, and KAGRA Collaboration</contactName>\n\
   \    </Author>\n  </Who>\n  <What>\n    <Param name=\"Packet_Type\" value=\"163\"\
@@ -37,7 +37,7 @@ packet: "<VOEvent xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:sc
   \    </Param>\n    <Param name=\"Pkt_Ser_Num\" value=\"1\" dataType=\"int\">\n \
   \     <Description>A number that increments by 1 each time a new revision is issued\
   \ for this event</Description>\n    </Param>\n    <Param name=\"GraceID\" value=\"\
-  S230524x\" ucd=\"meta.id\" dataType=\"string\">\n      <Description>Identifier in\
+  S230518h\" ucd=\"meta.id\" dataType=\"string\">\n      <Description>Identifier in\
   \ GraceDB</Description>\n    </Param>\n    <Param name=\"AlertType\" value=\"EarlyWarning\"\
   \ ucd=\"meta.version\" dataType=\"string\">\n      <Description>VOEvent alert type</Description>\n\
   \    </Param>\n    <Param name=\"HardwareInj\" value=\"0\" ucd=\"meta.number\" dataType=\"\
@@ -45,7 +45,7 @@ packet: "<VOEvent xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:sc
   \ 1, no if 0</Description>\n    </Param>\n    <Param name=\"OpenAlert\" value=\"\
   1\" ucd=\"meta.number\" dataType=\"int\">\n      <Description>Indicates that this\
   \ event is an open alert if 1, no if 0</Description>\n    </Param>\n    <Param name=\"\
-  EventPage\" value=\"https://gracedb.ligo.org/superevents/S230524x/view/\" ucd=\"\
+  EventPage\" value=\"https://gracedb.ligo.org/superevents/S230518h/view/\" ucd=\"\
   meta.ref.url\" dataType=\"string\">\n      <Description>Web page for evolving status\
   \ of this GW candidate</Description>\n    </Param>\n    <Param name=\"Instruments\"\
   \ value=\"H1,L1\" ucd=\"meta.code\" dataType=\"string\">\n      <Description>List\
@@ -107,7 +107,7 @@ source_name: null
 source_type: GW
 swift_rate_signif: null
 telescope: LVC
-trig_id: S230524x
+trig_id: S230518h
 trig_pairs:
 - SWIFT_BAT_GRB_Pos
 - SWIFT_BAT_GRB_POS_ACK

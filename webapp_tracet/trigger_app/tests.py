@@ -236,7 +236,7 @@ class test_grb_group_swift_2(TestCase):
     def test_mwa_proposal_decision(self):
         print(ProposalDecision.objects.all())
         print(
-            f"\n\ntest_grb_group_03 MWA proposal decison:\n{ProposalDecision.objects.filter(proposal__telescope__name='MWA_VCS').first().decision_reason}\n\n")
+            f"\n\ntest_grb_group_03 MWA proposal dgecison:\n{ProposalDecision.objects.filter(proposal__telescope__name='MWA_VCS').first().decision_reason}\n\n")
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='MWA_VCS').first().decision, 'T')
 
@@ -533,14 +533,17 @@ class test_lvc_mwa_sub_arrays(TestCase):
 
     mwaApiArgs: list[dict] = []
 
+    with open('trigger_app/test_yamls/trigger_mwa_test_buffer.yaml', 'r') as file:
+        trigger_mwa_test_buffer = safe_load(file)
+
     with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
         trigger_mwa_test = safe_load(file)
 
-    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
+    @patch('trigger_app.telescope_observe.trigger', side_effect=[trigger_mwa_test_buffer, trigger_mwa_test, trigger_mwa_test])
     def setUp(self, patched_mwa_api):
         xml_paths = [
-            # "../tests/test_events/LVC_real_early_warning.xml",
-            # "../tests/test_events/LVC_real_initial.xml",
+            "../tests/test_events/LVC_real_early_warning.xml",
+            "../tests/test_events/LVC_real_initial.xml",
             "../tests/test_events/LVC_real_preliminary.xml",
             "../tests/test_events/LVC_real_update.xml",
         ]
@@ -555,26 +558,28 @@ class test_lvc_mwa_sub_arrays(TestCase):
         for xml in xml_paths:
             trig = parsed_VOEvent(xml)
             trig.event_observed = datetime.datetime.now(pytz.UTC) - datetime.timedelta(hours=0.1)
-            print(trig)
+            print(trig.trig_id)
+            time.sleep(10)
             if(trig.ra and trig.dec):
                 create_voevent_wrapper(trig, ra_dec)
             else:
+                print("CREATE VOEVENT")
                 create_voevent_wrapper(trig, ra_dec=None)
             # Sleep needed for testing vs real api
             args, kwargs = patched_mwa_api.call_args
             self.mwaApiArgs.append(kwargs)
-            time.sleep(5)
+            time.sleep(10)
             # print(args)
             # print(kwargs)
 
     def test_trigger_groups(self):
         # Check event was made
-        self.assertEqual(len(Event.objects.all()), 2)
+        self.assertEqual(len(Event.objects.all()), 4)
 
         # Early warning is a different event
         self.assertEqual(len(EventGroup.objects.all()), 1)
 
-        print(Observations.objects.all())
+        # print(Observations.objects.all())
         
         # self.assertEqual(ProposalDecision.objects.filter(
         #     proposal__telescope__name='MWA_VCS').first().decision, 'T')
@@ -677,6 +682,7 @@ class test_lvc_burst_are_ignored(TestCase):
         for xml in xml_paths:
             trig = parsed_VOEvent(xml)
             print(trig)
+            trig.event_observed = datetime.datetime.now(pytz.UTC) - datetime.timedelta(hours=0.1)
             if(trig.ra and trig.dec):
                 create_voevent_wrapper(trig, ra_dec)
             else:
@@ -698,10 +704,13 @@ class test_early_warning_trigger_buffer_default_pointings(TestCase):
         "trigger_app/test_yamls/mwa_early_lvc_mwa_proposal_settings.yaml",
     ]
 
+    with open('trigger_app/test_yamls/trigger_mwa_test_buffer.yaml', 'r') as file:
+        trigger_mwa_test_buffer = safe_load(file)
+
     with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
         trigger_mwa_test = safe_load(file)
 
-    @patch('trigger_app.telescope_observe.trigger', return_value=trigger_mwa_test)
+    @patch('trigger_app.telescope_observe.trigger', side_effect=[trigger_mwa_test_buffer, trigger_mwa_test])
     def setUp(self, fake_mwa_api):
         xml_paths = [
             "../tests/test_events/LVC_real_early_warning.xml",
@@ -715,7 +724,9 @@ class test_early_warning_trigger_buffer_default_pointings(TestCase):
         # Parse and upload the xml file group
         for xml in xml_paths:
             trig = parsed_VOEvent(xml)
+            time.sleep(10)
             print(trig)
+            trig.event_observed = datetime.datetime.now(pytz.UTC) - datetime.timedelta(hours=0.1)
             if(trig.ra and trig.dec):
                 create_voevent_wrapper(trig, ra_dec)
             else:
@@ -729,6 +740,7 @@ class test_early_warning_trigger_buffer_default_pointings(TestCase):
         # Check event was made
         self.assertEqual(len(Event.objects.all()), 1)
         self.assertEqual(Event.objects.all().first().ignored, False)
+        self.assertEqual(len(Observations.objects.all()), 2)
 
 
 class test_ignore_single_instrument_gw(TestCase):
