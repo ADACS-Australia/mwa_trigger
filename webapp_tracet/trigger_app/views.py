@@ -394,7 +394,7 @@ def ProposalDecision_details(request, id):
     }
     return render(request, 'trigger_app/proposal_decision_details.html', content)
 
-
+@login_required
 def ProposalDecision_result(request, id, decision):
     prop_dec = models.ProposalDecision.objects.get(id=id)
 
