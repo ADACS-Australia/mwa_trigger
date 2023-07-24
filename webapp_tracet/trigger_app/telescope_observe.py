@@ -375,8 +375,8 @@ def trigger_mwa_observation(
     logger.info(f"Triggering MWA at UTC time {Time.now()} ...")
     # Handle early warning events without position using sub arrays
     if(prop_settings.source_type == 'GW' and buffered == True and vcsmode == True and mwa_sub_arrays != None):
-        print("DEBUG - Dumping buffer and scheduling an ra/dec sub array observation")
-        print("DEBUG - Using nobs = 1, exptime = 800")
+        print("DEBUG - Dumping buffer")
+        print("DEBUG - Using nobs = 1, exptime = 8")
 
         result = trigger(
             project_id=prop_settings.project_id.id,
@@ -393,9 +393,7 @@ def trigger_mwa_observation(
             avoidsun=True,
             inttime=prop_settings.mwa_inttime,
             freqres=prop_settings.mwa_freqres,
-            exptime=800,
-            calibrator=True,
-            calexptime=120,
+            exptime=8,
             vcsmode=vcsmode,
             buffered=buffered
         )
