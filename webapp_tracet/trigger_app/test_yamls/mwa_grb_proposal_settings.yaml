@@ -38,6 +38,7 @@
         "mwa_freqres": 40.0,
         "mwa_inttime": 0.5,
         "start_observation_at_high_sensitivity": true,
+        "maximum_position_uncertainty": 15.0,
     }
 },
 ]
