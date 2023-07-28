@@ -46,6 +46,7 @@
         "atca_dec_min_1": -90,
         "atca_dec_max_2": 5,
         "atca_dec_min_2": -5,
+        "maximum_position_uncertainty": 15.0,
     }
 },
 ]

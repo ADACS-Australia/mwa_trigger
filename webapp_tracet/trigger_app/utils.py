@@ -69,7 +69,7 @@ def getMWAPointingsFromSkymapFile(skymap):
         
         res = float(skymap[i]['PROBDENSITY'] * (np.pi / 180)**2)
         results.append((n, az, alt, ra, dec, i, res))
-        results = sorted(results, key=lambda x: -x[5])
+        results = sorted(results, key=lambda x: -x[6])
 
     pointings = []
     for result in results:

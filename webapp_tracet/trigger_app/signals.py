@@ -224,6 +224,8 @@ def proposal_worth_observing(
         if prop_dec.proposal.source_type == "GRB" and prop_dec.event_group_id.source_type == "GRB":
             print('DEBUG - prop_dec.source_type is GRB')
                 # This proposal wants to observe GRBs so check if it is worth observing
+            print(f'DEBUG - maximum_position_uncertainty: {prop_dec.proposal.maximum_position_uncertainty}')
+
             trigger_bool, debug_bool, pending_bool, decision_reason_log = worth_observing_grb(
                 # event values
                 event_duration=voevent.duration,

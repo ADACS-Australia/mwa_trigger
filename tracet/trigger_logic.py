@@ -134,13 +134,13 @@ def worth_observing_grb(
         likely_bool = True
         decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: No probability metric given so assume it is a GRB. \n"
     # Check the duration of the event
-    if event_any_duration and likely_bool:
+    if event_any_duration and likely_bool and not debug_bool:
         trigger_bool = True
         decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: Accepting any event duration so triggering. \n"
-    elif not event_any_duration and event_duration is None:
+    elif not event_any_duration and event_duration is None and not debug_bool:
         debug_bool = True
         decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: No event duration (None) so not triggering. \n"
-    elif event_duration is not None and likely_bool:
+    elif event_duration is not None and likely_bool and not debug_bool:
         if event_min_duration <= event_duration <= event_max_duration:
             trigger_bool = True
             decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: Event duration between {event_min_duration} and {event_max_duration} s so triggering. \n"

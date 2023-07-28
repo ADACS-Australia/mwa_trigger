@@ -6,7 +6,7 @@ import pytz
 import datetime
 import requests
 
-from .models import EventGroup, Event, ProposalSettings, ProposalDecision, Observations
+from .models import EventGroup, Event, ProposalSettings, ProposalDecision, Observations, User
 from yaml import load, Loader, safe_load
 
 from tracet.parse_xml import parsed_VOEvent
@@ -49,7 +49,7 @@ def create_voevent_wrapper(trig, ra_dec, dec_alter=True):
         # Sent event up so it's always pointing at zenith
         ra=ra,
         dec=dec,
-        ra_hms=ra_hms,
+        ra_hms=ra_hms,        
         dec_dms=dec_dms,
         pos_error=trig.err,
         ignored=trig.ignore,
@@ -81,7 +81,6 @@ class test_grb_group_fermi(TestCase):
     fixtures = [
         "default_data.yaml",
         "trigger_app/test_yamls/mwa_grb_proposal_settings.yaml",
-        # "trigger_app/test_yamls/mwa_early_lvc_mwa_proposal_settings.yaml",
         "trigger_app/test_yamls/atca_grb_proposal_settings.yaml",
     ]
 
@@ -189,6 +188,77 @@ class test_grb_group_swift(TestCase):
             f"\n\ntest_grb_group_02 ATCA proposal decison:\n{ProposalDecision.objects.filter(proposal__telescope__name='ATCA').first().decision_reason}\n\n")
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='ATCA').first().decision, 'T')
+
+class test_atca_no_pending_on_dec_limit(TestCase):
+    """Tests that events with the same Trigger ID will be grouped and trigger an observation
+    """
+    # Load default fixtures
+    fixtures = [
+        "default_data.yaml",
+        "trigger_app/test_yamls/atca_grb_proposal_settings.yaml",
+    ]
+
+    with open('trigger_app/test_yamls/atca_test_api_response.yaml', 'r') as file:
+        atca_test_api_response = safe_load(file)
+
+    @patch('atca_rapid_response_api.api.send', return_value=atca_test_api_response)
+    def setUp(self, fake_atca_api):
+        xml_paths = [
+            "../tests/test_events/group_02_SWIFT_01_BAT_GRB_Pos.xml",
+        ]
+
+        # Setup current RA and Dec at zenith for the MWA
+        MWA = EarthLocation(lat='-26:42:11.95',
+                            lon='116:40:14.93', height=377.8 * u.m)
+        mwa_coord = SkyCoord(az=0., alt=90., unit=(
+            u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
+        ra_dec = mwa_coord.icrs
+
+        # Parse and upload the xml file group
+        for xml in xml_paths:
+            trig = parsed_VOEvent(xml)
+            trig.dec = 20
+            Event.objects.create(
+                telescope=trig.telescope,
+                xml_packet=trig.packet,
+                duration=trig.event_duration,
+                trig_id=trig.trig_id,
+                self_generated_trig_id=trig.self_generated_trig_id,
+                sequence_num=trig.sequence_num,
+                event_type=trig.event_type,
+                antares_ranking=trig.antares_ranking,
+                # Sent event up so it's always pointing at zenith
+                ra=trig.ra,
+                dec=trig.dec,
+                ra_hms=None,
+                dec_dms=None,
+                pos_error=trig.err,
+                ignored=trig.ignore,
+                source_name=trig.source_name,
+                source_type=trig.source_type,
+                event_observed=trig.event_observed,
+                fermi_most_likely_index=trig.fermi_most_likely_index,
+                fermi_detection_prob=trig.fermi_detection_prob,
+                swift_rate_signif=trig.swift_rate_signif,
+                lvc_false_alarm_rate=trig.lvc_false_alarm_rate,
+                lvc_binary_neutron_star_probability=trig.lvc_binary_neutron_star_probability,
+                lvc_neutron_star_black_hole_probability=trig.lvc_neutron_star_black_hole_probability,
+                lvc_binary_black_hole_probability=trig.lvc_binary_black_hole_probability,
+                lvc_terrestial_probability=trig.lvc_terrestial_probability,
+                lvc_includes_neutron_star_probability=trig.lvc_includes_neutron_star_probability,
+                lvc_retraction_message=trig.lvc_retraction_message,
+                lvc_skymap_fits=trig.lvc_skymap_fits,
+                lvc_prob_density_tile=trig.lvc_prob_density_tile,
+                lvc_significant=trig.lvc_significant,
+                lvc_event_url=trig.lvc_event_url,
+                lvc_instruments=trig.lvc_instruments
+            )
+
+    def test_atca_proposal_decision(self):
+        print(
+            f"\n\ntest_grb_group_02 ATCA proposal decison:\n{ProposalDecision.objects.filter(proposal__telescope__name='ATCA').first().decision_reason}\n\n")
+        self.assertEqual(ProposalDecision.objects.filter(
+            proposal__telescope__name='ATCA').first().decision, 'I')
 
 
 class test_grb_group_swift_2(TestCase):
@@ -825,6 +895,9 @@ class test_pending_can_observe_atca(TestCase):
             print(trig.source_type)
             create_voevent_wrapper(trig, ra_dec)
             # self.call_args = fake_atca_api.call_args
+
+        #setting pending to observe requires authentication
+        self.client.force_login(User.objects.get_or_create(username='testuser')[0])
 
     def test_set_pending_then_approve(self):
         # Check event was made
