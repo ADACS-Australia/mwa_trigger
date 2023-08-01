@@ -173,4 +173,14 @@
         <tr><td>No observations yet.</td></tr>
       {% endfor %}
     </table>
+    {% for ob in obs %}
+    {% if ob.mwa_sky_map_pointings %}
+    <div style="display: flex; justify-content: center;">
+      <b>{{ob.obsid}}</b>
+      <img src="/media/{{ob.mwa_sky_map_pointings}}" style="object-fit: cover; width: 640px; height: 360px" width="640px"/>
+    </div>
+
+    {% endif %}
+    
+  {% endfor %}
 {% endblock %}

@@ -24,7 +24,7 @@ class test_skymap_parsing_to_mwa(TestCase):
         skymap = Table.read("trigger_app/bayestar.multiorder.fits")
 
         result = getMWAPointingsFromSkymapFile(skymap)
-        # print(result)
+        print(result)
         self.assertEqual(len(result), 4)
 
     def test_isClosePosition(self):

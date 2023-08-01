@@ -181,6 +181,8 @@ class ProposalSettings(models.Model):
     mwa_horizon_limit = models.FloatField(
         verbose_name="Horizon limit (deg)", help_text="The minimum elevation of the source to observe (in degrees).", default=10.)
 
+
+
     # ATCA setting
     atca_band_3mm = models.BooleanField(
         default=False, verbose_name="Use 3mm Band (83-105 GHz)?")
@@ -417,7 +419,6 @@ class UserAlerts(models.Model):
     debug = models.BooleanField(default=True)
     approval = models.BooleanField(default=True)
 
-
 class Observations(models.Model):
     obsid = models.CharField(max_length=128, primary_key=True)
     telescope = models.ForeignKey(
@@ -428,3 +429,5 @@ class Observations(models.Model):
     reason = models.CharField(max_length=2029, blank=True, null=True)
     mwa_sub_arrays=models.JSONField(null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    mwa_sky_map_pointings = models.ImageField(
+        upload_to='mwa_pointings', blank=True, null=True)

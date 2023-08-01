@@ -1,11 +1,18 @@
-from astropy.table import QTable
+import io
+import os
 from astropy import units as u
 import astropy_healpix as ah
+from matplotlib import pyplot as plt
+from ligo.skymap.plot.marker import reticle
+import ligo.skymap
+from mhealpy import HealpixMap
+from astropy.time import Time
 from astropy.coordinates import SkyCoord, EarthLocation
 import numpy as np
-from astropy.time import Time
-from yaml import load, Loader, dump
 import pathlib
+from matplotlib import pyplot as plt
+from typing  import Tuple, TypeVar, List
+
 filepath = pathlib.Path(__file__).resolve().parent
 
 MWA_LAT = '-26:42:11.95'
@@ -15,9 +22,10 @@ MWA_SPOTS = f"{filepath}/MWA_SPOTS.txt"
 
 MWA = EarthLocation(lat=MWA_LAT,
         lon=MWA_LONG, height=MWA_HEIGHT * u.m)
+PointingVar = TypeVar('PointingVar')
 
-def getMWARaDecFromAltAz(alt, az):
-    mwa_coord = SkyCoord(az, alt, unit=(u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
+def getMWARaDecFromAltAz(alt, az, time):
+    mwa_coord = SkyCoord(az, alt, unit=(u.deg, u.deg), frame='altaz', obstime=time, location=MWA)
     ra_dec = mwa_coord.icrs
     ra = ra_dec.ra.deg * u.deg
     dec = ra_dec.dec.deg * u.deg
@@ -55,12 +63,13 @@ def getMWAPointingsFromSkymapFile(skymap):
             az = float(values[1].strip())
             el = float(values[2].strip())
             data.append((n, az, el))
+    time = Time('2010-01-01T00:00:00')
 
     results = []
     for entry in data:
         (n, az, alt) = entry
         
-        ra, dec, ra_dec = getMWARaDecFromAltAz(alt=alt, az=az)
+        ra, dec, ra_dec = getMWARaDecFromAltAz(alt=alt, az=az, time=time)
         
         level, ipix = ah.uniq_to_level_ipix(skymap['UNIQ'])
         nside = ah.level_to_nside(level)
@@ -85,4 +94,60 @@ def getMWAPointingsFromSkymapFile(skymap):
         if len(pointings) == 0 or not hasClosePositionAlready:
             pointings.append(result)
 
-    return pointings
+    return (skymap, time, pointings)
+
+
+def drawMWAPointings(skymap, time, name, pointings: List[PointingVar]):
+    with open(MWA_SPOTS, 'r') as file:
+        lines = file.readlines()
+        data = []
+        for line in lines:
+            line = line.strip()  # Remove leading/trailing whitespace
+            if line.startswith(('---', 'N')) or not line:  # Skip header and empty lines
+                continue
+            values = line.split('|')
+            n = int(values[0].strip())
+            az = float(values[1].strip())
+            el = float(values[2].strip())
+            data.append((n, az, el))
+    fig = plt.figure(figsize=(12, 12), dpi=100)
+
+    # Create a HealpixMap object from the skymap data
+    m = HealpixMap(skymap['PROBDENSITY'], skymap['UNIQ'], density=True)
+
+    # Create an axes object with a Mollweide projection
+    ax = plt.axes(projection='astro mollweide')
+
+    # Plot the HealpixMap on the axes object
+    m.plot(ax=ax, cmap='cylon', alpha=0.9)
+
+    # Plot the grid on the axes object
+    # m.plot_grid(ax = plt.gca(), color = 'white', linewidth = 1);
+    ax.grid()
+
+    # Add an annotation to the axes object
+    tr = ax.get_transform('world')
+    ax.annotate("MWA", xy=(MWA.lon.degree, MWA.lat.degree), xycoords=tr)
+
+
+    for (n, az, el) in data:
+      ( ra, dec, ra_dec ) = getMWARaDecFromAltAz(el,az, time)
+      ax.plot(ra.value, dec.value, color='green', marker='o', linestyle='dashed', linewidth=2, markersize=5, transform=tr)
+
+    for (n, az, alt, ra, dec, i, res) in pointings:
+      ax.plot(ra, dec, color='blue', marker='o', linestyle='dashed', linewidth=2, markersize=10, transform=tr)
+      sub_array1 = plt.Circle((ra.value, dec.value), 17, color='blue', fill=False, transform=tr)
+      ax.add_patch(sub_array1)
+
+    # Show the plot
+    filepath = os.path.join(pathlib.Path(__file__).resolve().parent.parent, 'media', 'mwa_pointings', f"{name}.png")
+    
+    plt.savefig(filepath)
+    return f"{name}.png"
+
+def singleMWAPointing(skymap, time, name, pointing: PointingVar):
+    return drawMWAPointings(skymap, time, name, [pointing])
+
+def subArrayMWAPointings(skymap, time, name, pointings: Tuple[PointingVar, PointingVar, PointingVar, PointingVar]):
+    return drawMWAPointings(skymap, time, name, list(pointings))
+

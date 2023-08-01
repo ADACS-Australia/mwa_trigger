@@ -3,13 +3,15 @@ from astropy.coordinates import SkyCoord, EarthLocation, AltAz
 from astropy.time import Time
 from datetime import timedelta, datetime
 
+import random
 import urllib.request
-from trigger_app.utils import getMWAPointingsFromSkymapFile, getMWARaDecFromAltAz, isClosePosition
+from trigger_app.utils import getMWAPointingsFromSkymapFile, getMWARaDecFromAltAz, isClosePosition, subArrayMWAPointings
 from astropy.table import Table
 import atca_rapid_response_api as arrApi
 from astropy.utils.data import download_file
 from tracet.triggerservice import trigger
 from .models import Observations, Event
+from django.core.files import File 
 
 import logging
 logger = logging.getLogger(__name__)
@@ -113,6 +115,7 @@ def trigger_observation(
                 mwa_sub_arrays=mwa_sub_arrays,
                 buffered=buffered
             )
+            print(f"obsids_buffer: {obsids_buffer}")
 
         if proposal_decision_model.proposal.source_type == 'GW' and len(voevents) > 1 and latestVoevent.lvc_skymap_fits != None:
             print(f"DEBUG - checking to update position")
@@ -125,14 +128,14 @@ def trigger_observation(
                 try:
                     skymap = Table.read(latestVoevent.lvc_skymap_fits)
                     
-                    result = getMWAPointingsFromSkymapFile(skymap)
-                    print(result)
+                    (skymap, time, pointings) = getMWAPointingsFromSkymapFile(skymap)
+                    print(pointings)
                     current_arrays_dec = latestObs.mwa_sub_arrays['dec']
                     current_arrays_ra = latestObs.mwa_sub_arrays['ra']
 
                     repoint = False
 
-                    for res in result:
+                    for res in pointings:
                         repoint = True
                         for index in enumerate(current_arrays_dec):
                             
@@ -148,16 +151,16 @@ def trigger_observation(
                         reason = f"{latestVoevent.trig_id} - Updating observation positions based on event."
                         mwa_sub_arrays = {
                             'dec': [
-                                result[0][4].value,
-                                result[1][4].value,
-                                result[2][4].value,
-                                result[3][4].value,
+                                pointings[0][4].value,
+                                pointings[1][4].value,
+                                pointings[2][4].value,
+                                pointings[3][4].value,
                             ],
                             'ra': [
-                                result[0][3].value,
-                                result[1][3].value,
-                                result[2][3].value,
-                                result[3][3].value,
+                                pointings[0][3].value,
+                                pointings[1][3].value,
+                                pointings[2][3].value,
+                                pointings[3][3].value,
                             ]
                         }
                 except Exception as e:
@@ -176,21 +179,21 @@ def trigger_observation(
                 skymap = Table.read(event_filename)
                 # alt=[ps.mwa_sub_alt_NE, ps.mwa_sub_alt_NW, ps.mwa_sub_alt_SE, ps.mwa_sub_alt_SW],
                 # az=[ps.mwa_sub_az_NE, ps.mwa_sub_az_NW, ps.mwa_sub_az_SE, ps.mwa_sub_az_SW],
-                result = getMWAPointingsFromSkymapFile(skymap)
-                print(result)
+                (skymap, time, pointings) = getMWAPointingsFromSkymapFile(skymap)
+                print(pointings)
                 
                 mwa_sub_arrays = {
                     'dec': [
-                        result[0][4].value,
-                        result[1][4].value,
-                        result[2][4].value,
-                        result[3][4].value,
+                        pointings[0][4].value,
+                        pointings[1][4].value,
+                        pointings[2][4].value,
+                        pointings[3][4].value,
                     ],
                     'ra': [
-                        result[0][3].value,
-                        result[1][3].value,
-                        result[2][3].value,
-                        result[3][3].value,
+                        pointings[0][3].value,
+                        pointings[1][3].value,
+                        pointings[2][3].value,
+                        pointings[3][3].value,
                     ]
                 }
                 reason = f"{latestVoevent.trig_id} - Event has position so using skymap pointings"
@@ -205,10 +208,10 @@ def trigger_observation(
  
             print(f"DEBUG - ps {ps.__dict__}")
 
-            sub1 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_NE, az=ps.mwa_sub_az_NE)
-            sub2 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_NW, az=ps.mwa_sub_az_NW)
-            sub3 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SE, az=ps.mwa_sub_az_SE)
-            sub4 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SW, az=ps.mwa_sub_az_SW)
+            sub1 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_NE, az=ps.mwa_sub_az_NE, time = Time.now())
+            sub2 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_NW, az=ps.mwa_sub_az_NW, time = Time.now())
+            sub3 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SE, az=ps.mwa_sub_az_SE, time = Time.now())
+            sub4 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SW, az=ps.mwa_sub_az_SW, time = Time.now())
 
             print(f"DEBUG - sub1[1].value { sub1[1].value }")
 
@@ -237,10 +240,10 @@ def trigger_observation(
             
             ps = proposal_decision_model.proposal
             print(f"DEBUG - ps {ps.__dict__}")
-            sub1 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_NE, az=ps.mwa_sub_az_NE)
-            sub2 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_NW, az=ps.mwa_sub_az_NW)
-            sub3 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SE, az=ps.mwa_sub_az_SE)
-            sub4 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SW, az=ps.mwa_sub_az_SW)
+            sub1 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_NE, az=ps.mwa_sub_az_NE, time = Time.now() )
+            sub2 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_NW, az=ps.mwa_sub_az_NW, time = Time.now())
+            sub3 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SE, az=ps.mwa_sub_az_SE, time = Time.now())
+            sub4 = getMWARaDecFromAltAz(alt=ps.mwa_sub_alt_SW, az=ps.mwa_sub_az_SW, time = Time.now())
             print(type(sub1[1]))
             print(f"DEBUG - sub1[1].value { sub1[1].value }")
 
@@ -268,6 +271,7 @@ def trigger_observation(
 
         print(f"vcsmode: {vcsmode}")
         # Check if you can observe and if so send off MWA observation
+
         decision, decision_reason_log, obsids = trigger_mwa_observation(
             proposal_decision_model,
             decision_reason_log,
@@ -279,27 +283,48 @@ def trigger_observation(
 
         # print(decision, decision_reason_log, obsids)
         # decision_buffer, decision_reason_log_buffer, obsids_buffer
-        if buffered:
-            print(f"obsids_buffer: {obsids_buffer}")
-            print(f"obsids: {obsids}")
+   
 
+        print(f"obsids_full: {obsids}")
+
+        if decision_buffer:
             decision=f"{decision_buffer}{decision}"
             decision_reason_log=f"{decision_reason_log_buffer}{decision_reason_log}"
             obsids=obsids_buffer + obsids
 
-        print(f"obsids_full: {obsids}")
-
         for obsid in obsids:
             print(f"obsid: {obsid}")
+            if len(obsids_buffer) > 0 and obsid == obsids_buffer[0] and mwa_sub_arrays != None:
+                Observations.objects.create(
+                    obsid=obsid,
+                    telescope=proposal_decision_model.proposal.telescope,
+                    proposal_decision_id=proposal_decision_model,
+                    reason=f"This is a buffer observation ID: {obsid}",
+                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
+                    mwa_sub_arrays=mwa_sub_arrays
+                )
+            elif skymap != None and time != None and pointings != None and mwa_sub_arrays != None:
+                filepath = subArrayMWAPointings(skymap=skymap, time=time, name=latestVoevent.trig_id, pointings=pointings)
+                Observations.objects.create(
+                    obsid=obsid,
+                    telescope=proposal_decision_model.proposal.telescope,
+                    proposal_decision_id=proposal_decision_model,
+                    reason=reason,
+                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
+                    mwa_sub_arrays=mwa_sub_arrays,
+                    mwa_sky_map_pointings=f"mwa_pointings/{filepath}"
+                )
+                    
             # Create new obsid model
-            Observations.objects.create(
-                obsid=obsid,
-                telescope=proposal_decision_model.proposal.telescope,
-                proposal_decision_id=proposal_decision_model,
-                reason=reason,
-                website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
-                mwa_sub_arrays=mwa_sub_arrays
-            )
+            else: 
+                Observations.objects.create(
+                    obsid=obsid,
+                    telescope=proposal_decision_model.proposal.telescope,
+                    proposal_decision_id=proposal_decision_model,
+                    reason=reason,
+                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
+                    mwa_sub_arrays=mwa_sub_arrays
+                )
     elif proposal_decision_model.proposal.telescope.name == "ATCA":
         # Check if you can observe and if so send off mwa observation
         obsname = f'{proposal_decision_model.trig_id}'
@@ -460,7 +485,8 @@ def trigger_mwa_observation(
     for r in result['schedule']['stderr'].split("\n"):
         if r.startswith("INFO:Schedule metadata for"):
             obsids.append(r.split(" for ")[1][:-1])
-
+        elif(r.startswith('Pretending: commands not run')):
+            obsids.append(f"P{random.randint(1000,9999)}")
     return 'T', decision_reason_log, obsids
 
 
