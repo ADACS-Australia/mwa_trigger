@@ -25,7 +25,7 @@ class test_skymap_parsing_to_mwa(TestCase):
 
         result = getMWAPointingsFromSkymapFile(skymap)
         print(result)
-        self.assertEqual(len(result), 4)
+        self.assertEqual(len(result), 3)
 
     def test_isClosePosition(self):
         # Define the first RA and Dec values

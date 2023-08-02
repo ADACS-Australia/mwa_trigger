@@ -49,8 +49,8 @@ def trigger_observation(
     
 
     # Check if source is above the horizon for MWA
-    if proposal_decision_model.proposal.telescope.name.startswith("MWA"):
-        print("Set MWA variables")
+    if proposal_decision_model.proposal.telescope.name.startswith("MWA") and proposal_decision_model.ra and proposal_decision_model.dec:
+        print("Checking if is above the horizon for MWA")
         # Create Earth location for the telescope
         telescope = proposal_decision_model.proposal.telescope
         location = EarthLocation(
@@ -58,6 +58,7 @@ def trigger_observation(
             lat=telescope.lat * u.deg,
             height=telescope.height * u.m
         )
+        print('obtained earth location')
 
         obs_source = SkyCoord(
             proposal_decision_model.ra,
@@ -65,6 +66,7 @@ def trigger_observation(
             # equinox='J2000',
             unit=(u.deg, u.deg)
         )
+        print('obtained earth location')
         # Convert from RA/Dec to Alt/Az
         obs_source_altaz_beg = obs_source.transform_to(
             AltAz(obstime=Time.now(), location=location))
@@ -74,7 +76,9 @@ def trigger_observation(
         obs_source_altaz_end = obs_source.transform_to(
             AltAz(obstime=end_time, location=location))
         alt_end = obs_source_altaz_end.alt.deg
-        
+
+        print('converted obs for horizon')
+
         if alt_beg < proposal_decision_model.proposal.mwa_horizon_limit and alt_end < proposal_decision_model.proposal.mwa_horizon_limit:
             horizon_message = f"{datetime.utcnow()}: Event ID {event_id}: Not triggering due to horizon limit: alt_beg {alt_beg:.4f} < {proposal_decision_model.proposal.mwa_horizon_limit:.4f} and alt_end {alt_end:.4f} < {proposal_decision_model.proposal.mwa_horizon_limit:.4f}. "
             logger.debug(horizon_message)
@@ -102,7 +106,6 @@ def trigger_observation(
         # If telescope ends in VCS then this proposal is for observing in VCS mode
         vcsmode = proposal_decision_model.proposal.telescope.name.endswith(
             "VCS")
-        print("Set MWA variables")
         if(vcsmode):
             print("VCS Mode")
 
@@ -308,14 +311,14 @@ def trigger_observation(
 
         print(f"obsids_full: {obsids}")
 
-        if decision_buffer:
+        if buffered:
             decision=f"{decision_buffer}{decision}"
             decision_reason_log=f"{decision_reason_log_buffer}{decision_reason_log}"
             obsids=obsids_buffer + obsids
 
         for obsid in obsids:
             print(f"obsid: {obsid}")
-            if len(obsids_buffer) > 0 and obsid == obsids_buffer[0] and mwa_sub_arrays != None:
+            if buffered and len(obsids_buffer) > 0 and obsid == obsids_buffer[0] and mwa_sub_arrays != None:
                 Observations.objects.create(
                     obsid=obsid,
                     telescope=proposal_decision_model.proposal.telescope,
@@ -324,7 +327,7 @@ def trigger_observation(
                     website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
                     mwa_sub_arrays=mwa_sub_arrays
                 )
-            elif skymap != None and time != None and pointings != None and mwa_sub_arrays != None:
+            elif latestVoevent.lvc_skymap_fits != None and mwa_sub_arrays != None:
                 filepath = subArrayMWAPointings(skymap=skymap, time=time, name=latestVoevent.trig_id, pointings=pointings)
                 Observations.objects.create(
                     obsid=obsid,
