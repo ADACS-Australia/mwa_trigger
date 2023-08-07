@@ -14,6 +14,11 @@ SOURCE_CHOICES = (
     (GW, 'Gravitational wave'),
 )
 
+TRIGGER_ON = (
+    ('PRETEND_REAL', 'Real events only (Pretend Obs)'),
+    ('BOTH', 'Real events (Real Obs) and test events (Pretend Obs)'),
+    ('REAL_ONLY', 'Real events only (Real Obs)')
+)
 
 class Telescope(models.Model):
     name = models.CharField(max_length=64, verbose_name="Telescope name",
@@ -103,8 +108,9 @@ class ProposalSettings(models.Model):
         help_text="The minimum rating (1 is best) to observe for Antares sources.", default=2)
     repointing_limit = models.FloatField(verbose_name="Repointing Limit (deg)",
                                          help_text="An updated position must be at least this far away from a current observation before repointing (in degrees).", default=10.)
-    testing = models.BooleanField(
-        default=False, help_text="If testing, will not schedule any observations.")
+    testing = models.CharField(
+        default=TRIGGER_ON[2][0], choices=TRIGGER_ON, verbose_name="What events will this proposal trigger on?", null=False, max_length=128)
+    
     source_type = models.CharField(
         max_length=3, choices=SOURCE_CHOICES, verbose_name="What type of source will you trigger on?")
 
@@ -431,3 +437,6 @@ class Observations(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     mwa_sky_map_pointings = models.ImageField(
         upload_to='mwa_pointings', blank=True, null=True)
+    event = models.ForeignKey(
+        Event, on_delete=models.SET_NULL, blank=True, null=True)
+    mwa_response = models.JSONField(blank=True, null=True)

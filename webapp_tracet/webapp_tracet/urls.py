@@ -17,9 +17,14 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic.base import TemplateView
 from trigger_app import views
 
 urlpatterns = [
+    path(
+        "robots.txt",
+        TemplateView.as_view(template_name="robots.txt", content_type="text/plain"),
+    ),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
     path('', views.home_page),
@@ -31,6 +36,7 @@ urlpatterns = [
     path('event_log/', views.EventList),
     path('comet_log/', views.comet_log),
     path('proposal_settings/', views.ProposalSettingsList.as_view()),
+    path('observation_mwa_response/<str:id>/', views.MWAResponseView.as_view()),
     path('proposal_create/', views.proposal_form),
     path('proposal_edit/<int:id>/', views.proposal_form),
     path('proposal_decision_details/<int:id>/', views.ProposalDecision_details),

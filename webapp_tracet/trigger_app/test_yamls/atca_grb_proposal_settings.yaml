@@ -29,7 +29,7 @@
         "swift_rate_signf": 0.0,
         "repointing_limit": 0.0001,
         "mwa_horizon_limit": 10.0,
-        "testing": true,
+        "testing": "PRETEND_REAL",
         "source_type": "GRB",
         "atca_band_4cm": true,
         "atca_band_4cm_exptime": 20,
