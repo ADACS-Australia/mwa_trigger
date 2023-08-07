@@ -10,7 +10,7 @@ from astropy.table import Table
 import atca_rapid_response_api as arrApi
 from astropy.utils.data import download_file
 from tracet.triggerservice import trigger
-from .models import Observations, Event
+from .models import Observations, Event, TRIGGER_ON
 from django.core.files import File 
 
 import logging
@@ -47,7 +47,10 @@ def trigger_observation(
     """
     print("Trigger observation")
     
-
+    voevents = Event.objects.filter(
+        trig_id=proposal_decision_model.trig_id).order_by('-recieved_data')
+    telescopes = []
+    latestVoevent = voevents[0]
     # Check if source is above the horizon for MWA
     if proposal_decision_model.proposal.telescope.name.startswith("MWA") and proposal_decision_model.ra and proposal_decision_model.dec:
         print("Checking if is above the horizon for MWA")
@@ -66,7 +69,7 @@ def trigger_observation(
             # equinox='J2000',
             unit=(u.deg, u.deg)
         )
-        print('obtained earth location')
+        print('obtained obs source location')
         # Convert from RA/Dec to Alt/Az
         obs_source_altaz_beg = obs_source.transform_to(
             AltAz(obstime=Time.now(), location=location))
@@ -102,7 +105,7 @@ def trigger_observation(
 
     if proposal_decision_model.proposal.telescope.name.startswith("MWA"):
 
-        
+   
         # If telescope ends in VCS then this proposal is for observing in VCS mode
         vcsmode = proposal_decision_model.proposal.telescope.name.endswith(
             "VCS")
@@ -111,9 +114,8 @@ def trigger_observation(
 
         # Create an observation name
         # Collect event telescopes
-        voevents = Event.objects.filter(
-            trig_id=proposal_decision_model.trig_id).order_by('-recieved_data')
-        telescopes = []
+  
+
         print(proposal_decision_model.trig_id)
 
         for voevent in voevents:
@@ -122,22 +124,38 @@ def trigger_observation(
         telescopes = "_".join(list(set(telescopes)))
         obsname = f'{telescopes}_{proposal_decision_model.trig_id}'
 
-        latestVoevent = voevents[0]
         buffered = False
 
+        pretend = True
+        trigger_real_pretend = TRIGGER_ON[0][0]
+        trigger_both = TRIGGER_ON[1][0]
+        trigger_real = TRIGGER_ON[2][0]
+        print(f"proposal_decision_model.proposal.testing {proposal_decision_model.proposal.testing}")
+        print(f"latestVoevent {latestVoevent.__dict__}")
+        if(latestVoevent.role == 'test' and proposal_decision_model.proposal.testing != trigger_both):
+            raise Exception("Invalid event observation and proposal setting")
+                
+        if proposal_decision_model.proposal.testing == trigger_both and latestVoevent.role != 'test':
+            pretend = False
+        if proposal_decision_model.proposal.testing == trigger_real and latestVoevent.role != 'test':
+            pretend = False
+        print(f"pretend: {pretend}")
+
+     
         if proposal_decision_model.proposal.source_type == 'GW' and len(voevents) == 1:
             # Dump out the last ~3 mins of MWA buffer to try and catch event
             print(f"DEBUG - dumping MWA buffer")
             reason = f"{latestVoevent.trig_id} - First event so dumping MWA buffer "
             buffered = True
-            decision_buffer, decision_reason_log_buffer, obsids_buffer = trigger_mwa_observation(
+            decision_buffer, decision_reason_log_buffer, obsids_buffer, result = trigger_mwa_observation(
                 proposal_decision_model,
                 decision_reason_log,
                 obsname="buffered"+obsname,
                 vcsmode=vcsmode,
                 event_id=event_id,
                 mwa_sub_arrays=mwa_sub_arrays,
-                buffered=buffered
+                buffered=buffered,
+                pretend=pretend
             )
             print(f"obsids_buffer: {obsids_buffer}")
 
@@ -145,7 +163,7 @@ def trigger_observation(
             print(f"DEBUG - checking to update position")
 
             latestObs = Observations.objects.filter(
-                        event_group_id=proposal_decision_model.event_group_id).order_by('-created_at').first()
+                        event_group_id=proposal_decision_model.event_group_id_id).order_by('-created_at').first()
             
             if(latestObs.mwa_sub_arrays != None):
                 print(f"DEBUG - skymap_fits_fits: {latestVoevent.lvc_skymap_fits}")
@@ -296,25 +314,26 @@ def trigger_observation(
         print(f"vcsmode: {vcsmode}")
         # Check if you can observe and if so send off MWA observation
 
-        decision, decision_reason_log, obsids = trigger_mwa_observation(
+        decision, decision_reason_log, obsids, result = trigger_mwa_observation(
             proposal_decision_model,
             decision_reason_log,
             obsname,
             vcsmode=vcsmode,
             event_id=event_id,
             mwa_sub_arrays=mwa_sub_arrays,
+            pretend=pretend
         )
 
         # print(decision, decision_reason_log, obsids)
         # decision_buffer, decision_reason_log_buffer, obsids_buffer
    
 
-        print(f"obsids_full: {obsids}")
 
         if buffered:
             decision=f"{decision_buffer}{decision}"
             decision_reason_log=f"{decision_reason_log_buffer}{decision_reason_log}"
             obsids=obsids_buffer + obsids
+        print(f"obsids_full: {obsids}")
 
         for obsid in obsids:
             print(f"obsid: {obsid}")
@@ -325,7 +344,9 @@ def trigger_observation(
                     proposal_decision_id=proposal_decision_model,
                     reason=f"This is a buffer observation ID: {obsid}",
                     website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
-                    mwa_sub_arrays=mwa_sub_arrays
+                    mwa_sub_arrays=mwa_sub_arrays,
+                    event=latestVoevent,
+                    mwa_response=result
                 )
             elif latestVoevent.lvc_skymap_fits != None and mwa_sub_arrays != None:
                 filepath = subArrayMWAPointings(skymap=skymap, time=time, name=latestVoevent.trig_id, pointings=pointings)
@@ -336,7 +357,9 @@ def trigger_observation(
                     reason=reason,
                     website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
                     mwa_sub_arrays=mwa_sub_arrays,
-                    mwa_sky_map_pointings=f"mwa_pointings/{filepath}"
+                    mwa_sky_map_pointings=f"mwa_pointings/{filepath}",
+                    event=latestVoevent,
+                    mwa_response=result
                 )
                     
             # Create new obsid model
@@ -347,7 +370,9 @@ def trigger_observation(
                     proposal_decision_id=proposal_decision_model,
                     reason=reason,
                     website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
-                    mwa_sub_arrays=mwa_sub_arrays
+                    mwa_sub_arrays=mwa_sub_arrays,
+                    event=latestVoevent,
+                    mwa_response=result
                 )
     elif proposal_decision_model.proposal.telescope.name == "ATCA":
         # Check if you can observe and if so send off mwa observation
@@ -365,6 +390,7 @@ def trigger_observation(
                 telescope=proposal_decision_model.proposal.telescope,
                 proposal_decision_id=proposal_decision_model,
                 reason=reason,
+                event=latestVoevent
                 # TODO see if atca has a nice observation details webpage
                 # website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
             )
@@ -378,7 +404,8 @@ def trigger_mwa_observation(
     vcsmode=False,
     event_id=None,
     mwa_sub_arrays=None,
-    buffered=False
+    buffered=False,
+    pretend=False
 ):
     """Check if the MWA can observe then send it off the observation.
 
@@ -403,6 +430,8 @@ def trigger_mwa_observation(
         The updated trigger message to include an observation specific logs.
     observations : `list`
         A list of observations that were scheduled by MWA.
+    result : `object`
+        Result from mwa
     """
     prop_settings = proposal_decision_model.proposal
     print("DEBUG - triggering MWA")
@@ -410,17 +439,14 @@ def trigger_mwa_observation(
     # Not below horizon limit so observer
     logger.info(f"Triggering MWA at UTC time {Time.now()} ...")
     # Handle early warning events without position using sub arrays
-    if(prop_settings.source_type == 'GW' and buffered == True and vcsmode == True and mwa_sub_arrays != None):
+    if(prop_settings.source_type == 'GW' and buffered == True and vcsmode == True):
         print("DEBUG - Dumping buffer")
         print("DEBUG - Using nobs = 1, exptime = 8")
 
         result = trigger(
             project_id=prop_settings.project_id.id,
             secure_key=prop_settings.project_id.password,
-            pretend=prop_settings.testing,
-            subarray_list=['all_ne', 'all_nw', 'all_se', 'all_sw'],
-            ra=mwa_sub_arrays['ra'],
-            dec=mwa_sub_arrays['dec'],
+            pretend=pretend,
             creator='VOEvent_Auto_Trigger',  # TODO grab version
             obsname=obsname,
             nobs=1,
@@ -435,12 +461,12 @@ def trigger_mwa_observation(
         )
     
     elif (prop_settings.source_type == 'GW' and mwa_sub_arrays != None):
-        print("DEBUG - Scheduling an ra/dec sub array observation")
+        print("DEBUG - Scheduling an ra/dec sub array observation using defaults")
 
         result = trigger(
             project_id=prop_settings.project_id.id,
             secure_key=prop_settings.project_id.password,
-            pretend=prop_settings.testing,
+            pretend=pretend,
             subarray_list=['all_ne', 'all_nw', 'all_se', 'all_sw'],
             ra=mwa_sub_arrays['ra'],
             dec=mwa_sub_arrays['dec'],
@@ -463,7 +489,7 @@ def trigger_mwa_observation(
         result = trigger(
             project_id=prop_settings.project_id.id,
             secure_key=prop_settings.project_id.password,
-            pretend=prop_settings.testing,
+            pretend=pretend,
             ra=proposal_decision_model.ra,
             dec=proposal_decision_model.dec,
             alt=proposal_decision_model.alt,
@@ -506,12 +532,17 @@ def trigger_mwa_observation(
 
     # Grab the obsids (sometimes we will send of several observations)
     obsids = []
-    for r in result['schedule']['stderr'].split("\n"):
-        if r.startswith("INFO:Schedule metadata for"):
-            obsids.append(r.split(" for ")[1][:-1])
-        elif(r.startswith('Pretending: commands not run')):
-            obsids.append(f"P{random.randint(1000,9999)}")
-    return 'T', decision_reason_log, obsids
+    if 'obsid_list' in result.keys() and len(result['obsid_list']) > 0:
+        for obs in result['obsid_list'][0]:
+            obsids.append(obs[0])
+    else:
+        for r in result['schedule']['stderr'].split("\n"):
+            if r.startswith("INFO:Schedule metadata for"):
+                obsids.append(r.split(" for ")[1][:-1])
+            elif(r.startswith('Pretending: commands not run')):
+                obsids.append(f"P{random.randint(1000,9999)}")
+
+    return 'T', decision_reason_log, obsids, result
 
 
 def trigger_atca_observation(

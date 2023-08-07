@@ -113,6 +113,10 @@
         <tr>
           <th>Observation ID</th>
           <th>Telescope</th>
+          <th>Event Type</th>
+          <th>Trig Source</th>
+          <th>Alert Time (UTC)</th>
+          <th>Duration</th>
           <th>Proposal Decision ID</th>
           <th>Proposal</th>
           <th>Proposal ID</th>
@@ -131,6 +135,28 @@
           <td><a href="{{ ob.website_link }}" style="text-decoration:None">{{ ob.obsid }}</a></td>
         {% endif %}
         <td>{{ ob.telescope.name }}</td>
+        {% if ob.event is not None %}
+        <td>{{ ob.event.event_type }}</td>
+        {% else %}
+        <td>Not Avail</td>
+        {% endif %}
+        {% if ob.event is not None %}
+        <td>{{ ob.event.trig_id }}</td>
+        {% else %}
+        <td>Not Avail</td>
+        {% endif %}
+        {% if ob.event is not None %}
+        <td>{{ ob.event.event_observed|date:"Y-m-d H:i:s" }}</td>
+        {% else %}
+        <td>Not Avail</td>
+        {% endif %}
+        {% if ob.mwa_response is not None and  ob.mwa_response.params.exptime is not None %}
+        <td>{{ ob.mwa_response.params.nobs }} * {{ ob.mwa_response.params.exptime }}s</td>
+        {% elif ob.mwa_response is not None and ob.mwa_response.params.obstime is not None %}
+        <td>{{ ob.mwa_response.params.obstime }}</td>
+        {% else %}
+        <td>Not Avail</td>
+        {% endif %}
         <td><a href="/proposal_decision_details/{{ ob.proposal_decision_id.id }}" style="text-decoration:None">{{ ob.proposal_decision_id.id }}</a</td>
         <td><a href="/proposal_edit/{{ ob.proposal_decision_id.proposal.id }}" style="text-decoration:None">{{ ob.proposal_decision_id.proposal.id }}</a</td>
         <td>{{ ob.proposal_decision_id.proposal.proposal_id }}</td>
@@ -144,14 +170,13 @@
       </tr>
       <!-- If object_list is empty  -->
       {% empty %}
-      <p>No observations yet.</p>
-
+        <tr><td>No observations yet.</td></tr>
       {% endfor %}
     </table>
     {% for ob in obs %}
       {% if ob.mwa_sky_map_pointings %}
       <div style="display: flex; justify-content: center;">
-        <b>{{ob.obsid}}</b>
+        <b>MWA OBSID: {{ob.obsid}}</b>
         <img src="/media/{{ob.mwa_sky_map_pointings}}" style="object-fit: cover; width: 640px; height: 360px" width="640px"/>
       </div>
 

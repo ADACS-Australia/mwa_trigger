@@ -44,7 +44,7 @@
         "swift_rate_signf": 0.0,
         "repointing_limit": 10.0,
         "mwa_horizon_limit": 10.0,
-        "testing": "PRETEND_REAL",
+        "testing": "REAL_ONLY",
         "source_type": "GW",
         "mwa_freqspecs": "121,24",
         "mwa_nobs": 1,

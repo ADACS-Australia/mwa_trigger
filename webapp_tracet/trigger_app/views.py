@@ -19,10 +19,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
-
+from django.http import JsonResponse
 from . import models, serializers, forms, signals
 from .telescope_observe import trigger_observation
-
+from django.views.generic import View
 import sys
 import voeventparse as vp
 from astropy.coordinates import SkyCoord
@@ -142,6 +142,14 @@ class ProposalDecisionFilter(django_filters.FilterSet):
         model = models.ProposalDecision
         fields = '__all__'
 
+class MWAResponseView(View):
+    def get(self, request, id):
+        observation = models.Observations.objects.get(obsid=id)
+        if observation.mwa_response:
+            return JsonResponse(observation.mwa_response, safe=False)
+        else:
+            # Return a 404 if the data is not found
+            return JsonResponse({"error": "Data not found"}, status=404)
 
 def ProposalDecisionList(request):
     # Apply filters
@@ -659,6 +667,7 @@ def proposal_form(request, id=None):
             return redirect(proposal_decision_path, id=saved.id)
     else:
         form = forms.ProjectSettingsForm(instance=proposal)
+    form.fields['testing'].choices = models.TRIGGER_ON
     return render(request, 'trigger_app/proposal_form.html', {'form': form, "src_tele": src_tele, "title": title})
 
 
@@ -678,7 +687,7 @@ def test_upload_xml(request):
         form = forms.TestEvent()
     return render(request, 'trigger_app/test_upload_xml_form.html', {'form': form, "proposals": proposals})
 
-
+@login_required
 def cancel_atca_observation(request, id=None):
     # Grab obs and proposal data
     obs = models.Observations.objects.filter(obsid=id).first()

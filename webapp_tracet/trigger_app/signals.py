@@ -68,6 +68,7 @@ def group_trigger(sender, instance, **kwargs):
         # Event ignored so do nothing
         logger.info('Event ignored so do nothing')
         return
+    
     if (instance.ra and instance.dec):
         print("DEBUG - Has ra and dec so getting sky coordinates")
         logger.info(f'Getting sky coordinates {instance.ra} {instance.dec}')

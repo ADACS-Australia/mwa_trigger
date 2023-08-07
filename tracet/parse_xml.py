@@ -9,6 +9,7 @@ import numpy as np
 import urllib.request
 import os
 import uuid
+import pytz
 
 import logging
 import datetime
@@ -593,12 +594,10 @@ class parsed_VOEvent:
 
         # Check the voevent role (normally observation or test)
         self.role = v.attrib["role"]
-        if self.role == "test":
-            # Just a test observation so ignore it
-            self.ignore = True
-            print('Just a test observation so ignore it')
-
-            # Antares has a flag for real alerts that is worth checking
+        if self.role == 'test':
+            self.event_observed = datetime.datetime.now(
+                pytz.UTC) - datetime.timedelta(hours=0.1)
+        # Antares has a flag for real alerts that is worth checking
         if v.find(".//Param[@name='isRealAlert']") is not None:
             if not v.find(".//Param[@name='isRealAlert']").attrib["value"]:
                 # Not a real alert so ignore

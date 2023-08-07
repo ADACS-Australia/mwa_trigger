@@ -29,7 +29,7 @@
         "swift_rate_signf": 0.0,
         "repointing_limit": 10.0,
         "mwa_horizon_limit": 10.0,
-        "testing": true,
+        "testing": "PRETEND_REAL",
         "source_type": "GRB",
         "mwa_freqspecs": "121,24",
         "mwa_nobs": 1,
