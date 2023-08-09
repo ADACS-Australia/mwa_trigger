@@ -5,7 +5,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from pyparsing import MutableMapping
 
-from .models import UserAlerts, AlertPermission, Event, Status, ProposalSettings, ProposalDecision, Observations, EventGroup
+from .models import TRIGGER_ON, UserAlerts, AlertPermission, Event, Status, ProposalSettings, ProposalDecision, Observations, EventGroup
 from .telescope_observe import trigger_observation
 from operator import itemgetter
 from tracet.trigger_logic import worth_observing_grb, worth_observing_nu, worth_observing_gw
@@ -218,6 +218,23 @@ def proposal_worth_observing(
     trigger_bool = debug_bool = pending_bool = False
     decision_reason_log = prop_dec.decision_reason
     proj_source_bool = False
+
+    pretend_real = TRIGGER_ON[0][0]
+    both = TRIGGER_ON[1][0]
+    real_only = TRIGGER_ON[2][0]
+
+    print(prop_dec.proposal.testing)
+    print(voevent.role)
+
+    if prop_dec.proposal.testing == pretend_real and voevent.role == 'test' or prop_dec.proposal.testing == real_only and voevent.role == 'test':
+        decision = 'I'
+        decision_reason_log = decision_reason_log + f"Proposal setting {prop_dec.proposal.testing} does not trigger on event role {voevent.role}"
+        # Update proposal decision and log
+        prop_dec.decision = decision
+        prop_dec.decision_reason = decision_reason_log
+        prop_dec.save()
+        return
+
     # Continue to next test
     if prop_dec.proposal.event_telescope is None or str(prop_dec.proposal.event_telescope).strip() == voevent.telescope.strip():
     # This project observes events from this telescope

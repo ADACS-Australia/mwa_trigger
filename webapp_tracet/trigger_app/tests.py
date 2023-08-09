@@ -935,7 +935,7 @@ class test_pending_can_observe_atca(TestCase):
         self.assertGreaterEqual(
             prop_dec_after.decision_reason.find("ATCA error message"), 0)
 
-class test_obs_testing_option_pretend_real(TestCase):
+class test_obs_testing_option_pretend_real_realevent(TestCase):
     """Tests the testing options; PRETEND_REAL
     """
     # Load default fixtures
@@ -985,8 +985,55 @@ class test_obs_testing_option_pretend_real(TestCase):
         for call in self.mwaApiArgs:
             args, kwargs = call
             self.assertEqual(kwargs['pretend'],True)
- 
-class test_obs_testing_option_both(TestCase):
+
+class test_obs_testing_option_pretend_real_testevent(TestCase):
+    """Tests the testing options; PRETEND_REAL
+    """
+    # Load default fixtures
+    fixtures = [
+        "default_data.yaml",
+        "trigger_app/test_yamls/mwa_early_lvc_mwa_proposal_settings.yaml",
+    ]
+
+    with open('trigger_app/test_yamls/trigger_mwa_test_buffer.yaml', 'r') as file:
+        trigger_mwa_test_buffer = safe_load(file)
+
+    with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
+        trigger_mwa_test = safe_load(file)
+
+    # 1st event = buffer obs + normal obs w/ default pointings
+    # 2nd event = normal obs using skymap
+
+    @patch('trigger_app.telescope_observe.trigger', side_effect=[trigger_mwa_test_buffer, trigger_mwa_test])
+    def setUp(self, fake_mwa_api):
+        xml_paths = [
+            "../tests/test_events/LVC_real_early_warning.xml",
+        ]
+
+        MWA = EarthLocation(lat='-26:42:11.95',
+                            lon='116:40:14.93', height=377.8 * u.m)
+        mwa_coord = SkyCoord(az=0., alt=90., unit=(
+            u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
+        ra_dec = mwa_coord.icrs
+        self.mwaApiArgs = []
+        # Parse and upload the xml file group
+        for xml in xml_paths:
+            trig = parsed_VOEvent(xml)
+            trig.event_observed = datetime.datetime.now(
+                pytz.UTC) - datetime.timedelta(hours=0.1)
+            trig.role = "test"
+            try:
+                create_voevent_wrapper(trig, ra_dec, False)
+            except Exception:
+                pass
+            self.mwaApiArgs = fake_mwa_api.call_args_list
+
+    def test_trigger_groups(self):
+        events = Event.objects.all()
+        self.assertEqual(len(events), 1)
+        self.assertEqual(len(Observations.objects.all()), 0)
+
+class test_obs_testing_option_both_real(TestCase):
     """Tests the testing options; BOTH
     """
     # Load default fixtures
@@ -1035,7 +1082,57 @@ class test_obs_testing_option_both(TestCase):
             args, kwargs = call
             self.assertEqual(kwargs['pretend'],False)
 
-class test_obs_testing_option_real_only(TestCase):
+class test_obs_testing_option_both_test(TestCase):
+    """Tests the testing options; BOTH
+    """
+    # Load default fixtures
+    fixtures = [
+        "default_data.yaml",
+        "trigger_app/test_yamls/mwa_early_lvc_mwa_proposal_settings_both.yaml",
+    ]
+
+    with open('trigger_app/test_yamls/trigger_mwa_test_buffer.yaml', 'r') as file:
+        trigger_mwa_test_buffer = safe_load(file)
+
+    with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
+        trigger_mwa_test = safe_load(file)
+
+    # 1st event = buffer obs + normal obs w/ default pointings
+    # 2nd event = normal obs using skymap
+
+    @patch('trigger_app.telescope_observe.trigger', side_effect=[trigger_mwa_test_buffer, trigger_mwa_test])
+    def setUp(self, fake_mwa_api):
+        xml_paths = [
+            "../tests/test_events/LVC_real_early_warning.xml",
+        ]
+
+        MWA = EarthLocation(lat='-26:42:11.95',
+                            lon='116:40:14.93', height=377.8 * u.m)
+        mwa_coord = SkyCoord(az=0., alt=90., unit=(
+            u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
+        ra_dec = mwa_coord.icrs
+        self.mwaApiArgs = []
+        # Parse and upload the xml file group
+        for xml in xml_paths:
+            trig = parsed_VOEvent(xml)
+            trig.event_observed = datetime.datetime.now(
+                pytz.UTC) - datetime.timedelta(hours=0.1)
+            trig.role = "test"
+            try:
+                create_voevent_wrapper(trig, ra_dec, False)
+            except Exception:
+                pass
+            self.mwaApiArgs = fake_mwa_api.call_args_list
+        
+    def test_trigger_groups(self):
+        events = Event.objects.all()
+        self.assertEqual(len(events), 1)
+        self.assertEqual(len(Observations.objects.all()), 2)
+        for call in self.mwaApiArgs:
+            args, kwargs = call
+            self.assertEqual(kwargs['pretend'],True)
+
+class test_obs_testing_option_real_only_realevent(TestCase):
     """Tests the testing options; REAL_ONLY
     """
     # Load default fixtures
@@ -1070,6 +1167,56 @@ class test_obs_testing_option_real_only(TestCase):
             trig = parsed_VOEvent(xml)
             trig.event_observed = datetime.datetime.now(
                 pytz.UTC) - datetime.timedelta(hours=0.1)
+            try:
+                create_voevent_wrapper(trig, ra_dec, False)
+            except Exception:
+                pass
+            self.mwaApiArgs = fake_mwa_api.call_args_list
+        
+    def test_trigger_groups(self):
+        events = Event.objects.all()
+        self.assertEqual(len(events), 1)
+        self.assertEqual(len(Observations.objects.all()), 2)
+        for call in self.mwaApiArgs:
+            args, kwargs = call
+            self.assertEqual(kwargs['pretend'],False)
+
+class test_obs_testing_option_real_only_testevent(TestCase):
+    """Tests the testing options; REAL_ONLY
+    """
+    # Load default fixtures
+    fixtures = [
+        "default_data.yaml",
+        "trigger_app/test_yamls/mwa_early_lvc_mwa_proposal_settings_real_only.yaml",
+    ]
+
+    with open('trigger_app/test_yamls/trigger_mwa_test_buffer.yaml', 'r') as file:
+        trigger_mwa_test_buffer = safe_load(file)
+
+    with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
+        trigger_mwa_test = safe_load(file)
+
+    # 1st event = buffer obs + normal obs w/ default pointings
+    # 2nd event = normal obs using skymap
+
+    @patch('trigger_app.telescope_observe.trigger', side_effect=[trigger_mwa_test_buffer, trigger_mwa_test])
+    def setUp(self, fake_mwa_api):
+        xml_paths = [
+            "../tests/test_events/LVC_real_early_warning.xml",
+        ]
+
+        MWA = EarthLocation(lat='-26:42:11.95',
+                            lon='116:40:14.93', height=377.8 * u.m)
+        mwa_coord = SkyCoord(az=0., alt=90., unit=(
+            u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
+        ra_dec = mwa_coord.icrs
+        self.mwaApiArgs = []
+        # Parse and upload the xml file group
+        for xml in xml_paths:
+            trig = parsed_VOEvent(xml)
+            trig.event_observed = datetime.datetime.now(
+                pytz.UTC) - datetime.timedelta(hours=0.1)
+            trig.role = "test"
             try:
                 create_voevent_wrapper(trig, ra_dec, False)
             except Exception:
