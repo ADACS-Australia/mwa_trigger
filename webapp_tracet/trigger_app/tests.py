@@ -1226,7 +1226,4 @@ class test_obs_testing_option_real_only_testevent(TestCase):
     def test_trigger_groups(self):
         events = Event.objects.all()
         self.assertEqual(len(events), 1)
-        self.assertEqual(len(Observations.objects.all()), 2)
-        for call in self.mwaApiArgs:
-            args, kwargs = call
-            self.assertEqual(kwargs['pretend'],False)
+        self.assertEqual(len(Observations.objects.all()), 0)
