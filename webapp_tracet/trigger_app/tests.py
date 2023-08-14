@@ -601,7 +601,7 @@ class test_lvc_mwa_sub_arrays(TestCase):
         "default_data.yaml",
         # Mwa proposal that has subarrays
         "trigger_app/test_yamls/mwa_early_lvc_mwa_proposal_settings.yaml",
-        # "trigger_app/test_yamls/atca_grb_proposal_settings.yaml",
+        "trigger_app/test_yamls/atca_grb_proposal_settings.yaml",
     ]
 
     mwaApiArgs: list[dict] = []
@@ -645,8 +645,8 @@ class test_lvc_mwa_sub_arrays(TestCase):
                 print("CREATE VOEVENT")
                 create_voevent_wrapper(trig, ra_dec=None)
             # Sleep needed for testing vs real api
-            # args, kwargs = patched_mwa_api.call_args
-            # self.mwaApiArgs.append(kwargs)
+            args, kwargs = patched_mwa_api.call_args
+            self.mwaApiArgs.append(kwargs)
             time.sleep(10)
             # print(args)
             # print(kwargs)
@@ -654,26 +654,25 @@ class test_lvc_mwa_sub_arrays(TestCase):
     def test_trigger_groups(self):
         # # Check event was made
         # self.assertEqual(len(Event.objects.all()), 4)
-
+        time.sleep(100)
         # # Early warning is a different event
         # self.assertEqual(len(EventGroup.objects.all()), 1)
-
-        print(Observations.objects.all())
-
-        # self.assertEqual(ProposalDecision.objects.filter(
-        #     proposal__telescope__name='MWA_VCS').first().decision, 'T')
-        # self.assertEqual(ProposalDecision.objects.filter(
-        #     proposal__telescope__name='ATCA').first().decision, 'I')
+        obs = Observations.objects.all()
+        self.assertEqual(len(obs), 2)
+        self.assertEqual(ProposalDecision.objects.filter(
+            proposal__telescope__name='MWA_VCS').first().decision, 'TT')
+        self.assertEqual(ProposalDecision.objects.filter(
+            proposal__telescope__name='ATCA').first().decision, 'I')
 
         # MWA requests are correct
-        # mwa_request_0 = self.mwaApiArgs[0]
-        # mwa_request_1 = self.mwaApiArgs[1]
-        # mwa_request_2 = self.mwaApiArgs[0]
-        # mwa_request_3 = self.mwaApiArgs[1]
-        # print(mwa_request_0)
-        # print(mwa_request_1)
-        # print(mwa_request_2)
-        # print(mwa_request_3)
+        mwa_request_0 = self.mwaApiArgs[0]
+        mwa_request_1 = self.mwaApiArgs[1]
+        mwa_request_2 = self.mwaApiArgs[0]
+        mwa_request_3 = self.mwaApiArgs[1]
+        print(mwa_request_0)
+        print(mwa_request_1)
+        print(mwa_request_2)
+        print(mwa_request_3)
 
         # self.assertEqual(len(mwa_request_0['ra']), 4)
         # self.assertEqual(len(mwa_request_0['dec']), 4)
