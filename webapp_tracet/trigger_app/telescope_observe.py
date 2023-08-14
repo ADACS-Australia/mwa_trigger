@@ -161,10 +161,13 @@ def trigger_observation(
 
         if proposal_decision_model.proposal.source_type == 'GW' and len(voevents) > 1 and latestVoevent.lvc_skymap_fits != None:
             print(f"DEBUG - checking to update position")
+            print(f"DEBUG {proposal_decision_model.keys()}")
 
             latestObs = Observations.objects.filter(
                         event_group_id=proposal_decision_model.event_group_id_id).order_by('-created_at').first()
             
+            print(latestObs)
+
             if(latestObs.mwa_sub_arrays != None):
                 print(f"DEBUG - skymap_fits_fits: {latestVoevent.lvc_skymap_fits}")
                 try:
@@ -512,13 +515,13 @@ def trigger_mwa_observation(
     # Check if succesful
     if result is None:
         decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: Web API error, possible server error.\n "
-        return 'E', decision_reason_log, []
+        return 'E', decision_reason_log, [], result
     if not result['success']:
         # Observation not succesful so record why
         for err_id in result['errors']:
             decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: {result['errors'][err_id]}.\n "
         # Return an error as the trigger status
-        return 'E', decision_reason_log, []
+        return 'E', decision_reason_log, [], result
 
     # Output the results
     logger.info(f"Trigger sent: {result['success']}")
@@ -533,7 +536,7 @@ def trigger_mwa_observation(
     # Grab the obsids (sometimes we will send of several observations)
     obsids = []
     if 'obsid_list' in result.keys() and len(result['obsid_list']) > 0:
-        for obs in result['obsid_list'][0]:
+        for obs in result['obsid_list']:
             obsids.append(obs[0])
     else:
         for r in result['schedule']['stderr'].split("\n"):

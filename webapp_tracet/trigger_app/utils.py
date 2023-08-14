@@ -3,8 +3,7 @@ import os
 from astropy import units as u
 import astropy_healpix as ah
 from matplotlib import pyplot as plt
-# import ligo.skymap
-# from ligo.skymap.plot.marker import reticle
+import ligo.skymap.plot
 from mhealpy import HealpixMap
 from astropy.time import Time
 from astropy.coordinates import SkyCoord, EarthLocation
