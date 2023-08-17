@@ -38,4 +38,6 @@
       "stderr": "INFO:Schedule metadata for 11111\n",
     },
   "success": True,
+  "obsid_list": [21321321],
+  "trigger_id": 1234
 }

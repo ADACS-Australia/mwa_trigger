@@ -16,17 +16,6 @@
         "stderr": "Pretending: trigger command not run",
     },
     "success": True,
-    "obsid_list": [
-        [
-            [
-                1375058218,
-                1375058224,
-                "_Sun_Ch121",
-                "andrew",
-                "C001",
-                "MWAX_CORRELATOR",
-                1375058216,
-            ]
-        ]
-    ],
+    "obsid_list": [1375058218],
+    "trigger_id": 12314,
 }

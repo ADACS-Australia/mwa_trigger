@@ -622,9 +622,9 @@ class test_lvc_mwa_sub_arrays(TestCase):
         trigger_mwa_test_4 = safe_load(file)
 
 
-    trigger_mwa_test_2["schedule"]["stderr"] = "INFO:Schedule metadata for 22222\n"
-    trigger_mwa_test_3["schedule"]["stderr"] = "INFO:Schedule metadata for 33333\n"
-    trigger_mwa_test_4["schedule"]["stderr"] = "INFO:Schedule metadata for 44444\n"
+    trigger_mwa_test_2["trigger_id"] = "22222"
+    trigger_mwa_test_3["trigger_id"] = "33333"
+    trigger_mwa_test_4["trigger_id"] = "44444"
 
     # 1st event = buffer obs + normal obs w/ default pointings
     # 2nd event = normal obs using skymap
@@ -660,14 +660,15 @@ class test_lvc_mwa_sub_arrays(TestCase):
             # Sleep needed for testing vs real api
             args, kwargs = patched_mwa_api.call_args
             self.mwaApiArgs.append(kwargs)
-            # time.sleep(10)
             # print(args)
             # print(kwargs)
 
     def test_trigger_groups(self):
         # time.sleep(50)
         # # Check event was made
-        # self.assertEqual(len(Event.objects.all()), 4)
+        # self.assertEqual(True, True)
+
+        self.assertEqual(len(Event.objects.all()), 4)
         # time.sleep(100)
         # # Early warning is a different event
         # self.assertEqual(len(EventGroup.objects.all()), 1)
