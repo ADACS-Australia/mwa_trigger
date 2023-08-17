@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 start_kafka () {
-	python manage.py kafka_gcn > >(tee -a logs/kafka_stdout.log) 2> >(tee -a logs/kafka_stderr.log >&2)
+	python3.10 manage.py kafka_gcn > >(tee -a logs/kafka_stdout.log) 2> >(tee -a logs/kafka_stderr.log >&2)
 	return 1
 	#return $?
 }
