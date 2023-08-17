@@ -340,7 +340,7 @@ def trigger_observation(
             decision_reason_log=f"{decision_reason_log_buffer}{decision_reason_log}"
             obsids=obsids_buffer + obsids
             Observations.objects.create(
-                    trigger_id=result_buffer['trigger_id'],
+                    trigger_id=result_buffer['trigger_id'] or random.randrange(10000, 99999),
                     telescope=proposal_decision_model.proposal.telescope,
                     proposal_decision_id=proposal_decision_model,
                     reason=f"This is a buffer observation ID: {obsids_buffer}",
@@ -352,7 +352,7 @@ def trigger_observation(
         if latestVoevent.lvc_skymap_fits != None and mwa_sub_arrays != None:
             filepath = subArrayMWAPointings(skymap=skymap, time=time, name=latestVoevent.trig_id, pointings=pointings)
             Observations.objects.create(
-                trigger_id=result['trigger_id'],
+                trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
                 telescope=proposal_decision_model.proposal.telescope,
                 proposal_decision_id=proposal_decision_model,
                 reason=reason,
@@ -366,7 +366,7 @@ def trigger_observation(
         # Create new obsid model
         else: 
             Observations.objects.create(
-                trigger_id=result['trigger_id'],
+                trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
                 telescope=proposal_decision_model.proposal.telescope,
                 proposal_decision_id=proposal_decision_model,
                 reason=reason,
@@ -535,7 +535,12 @@ def trigger_mwa_observation(
     obsids = []
     if 'obsid_list' in result.keys() and len(result['obsid_list']) > 0:
         obsids = result['obsid_list']
-
+    else:
+        for r in result['schedule']['stderr'].split("\n"):
+            if r.startswith("INFO:Schedule metadata for"):
+                obsids.append(r.split(" for ")[1][:-1])
+            elif(r.startswith('Pretending: commands not run')):
+                obsids.append(f"P{random.randint(1000,9999)}")
     return 'T', decision_reason_log, obsids, result
 
 

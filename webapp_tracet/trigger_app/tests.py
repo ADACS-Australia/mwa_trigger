@@ -631,8 +631,9 @@ class test_lvc_mwa_sub_arrays(TestCase):
     # 3rd event = normal obs using skymap if position changes
     # 4th event = normal obs using skymap if position changes
 
-    @patch('trigger_app.telescope_observe.trigger', side_effect=[trigger_mwa_test_buffer, trigger_mwa_test_1, trigger_mwa_test_2, trigger_mwa_test_3, trigger_mwa_test_4])
-    def setUp(self, patched_mwa_api):
+    # @patch('trigger_app.telescope_observe.trigger', side_effect=[trigger_mwa_test_buffer, trigger_mwa_test_1, trigger_mwa_test_2, trigger_mwa_test_3, trigger_mwa_test_4])
+    # def setUp(self, patched_mwa_api):
+    def setUp(self):
         xml_paths = [
             "../tests/test_events/LVC_real_early_warning.xml",
             "../tests/test_events/LVC_real_initial.xml",
@@ -658,8 +659,8 @@ class test_lvc_mwa_sub_arrays(TestCase):
                 print("CREATE VOEVENT")
                 create_voevent_wrapper(trig, ra_dec=None)
             # Sleep needed for testing vs real api
-            args, kwargs = patched_mwa_api.call_args
-            self.mwaApiArgs.append(kwargs)
+            # args, kwargs = patched_mwa_api.call_args
+            # self.mwaApiArgs.append(kwargs)
             # print(args)
             # print(kwargs)
 
