@@ -47,6 +47,7 @@ def group_trigger(sender, instance, **kwargs):
         "earliest_event_observed": instance.event_observed,
         "latest_event_observed": instance.event_observed,
     }
+    print(f'DEBUG - instanceData {instanceData}')
 
     if(instance.source_name):
         instanceData['source_name'] = instance.source_name
@@ -61,11 +62,14 @@ def group_trigger(sender, instance, **kwargs):
     )[0]
     # Link the Event (have to update this way to prevent save() triggering this function again)
     logger.info(f'Linking event ({instance.id}) to group {event_group}')
-    
+    print(f'Linking event ({instance.id}) to group {event_group}')
+
     Event.objects.filter(id=instance.id).update(event_group_id=event_group)
+
 
     if instance.ignored:
         # Event ignored so do nothing
+        print(f'DEBUG - Event ignored so do nothing')
         logger.info('Event ignored so do nothing')
         return
     
@@ -87,6 +91,7 @@ def group_trigger(sender, instance, **kwargs):
         for prop_dec in proposal_decisions:
             logger.info(
                 f'Proposal decision (prop_dec.id, prop_dec.decision): {prop_dec.id, prop_dec.decision}')
+            print(f'Proposal decision (prop_dec.id, prop_dec.decision): {prop_dec.id, prop_dec.decision}')
             if prop_dec.decision == "C":
                 # Previous observation canceled so assume no new observations should be triggered
                 prop_dec.decision_reason += f"{datetime.datetime.utcnow()}: Event ID {instance.id}: Previous observation canceled so not observing . \n"
@@ -109,8 +114,9 @@ def group_trigger(sender, instance, **kwargs):
                     prop_dec,
                     instance,
                 )
-            elif prop_dec.decision == "T":
+            elif prop_dec.decision == "T" or prop_dec.decision == "TT":
                 # Check new event position is further away than the repointing limit
+                print("DEBUG - testing new pointing")
                 if (prop_dec.ra and prop_dec.dec):
                     old_event_coord = SkyCoord(
                         ra=prop_dec.ra * u.degree, dec=prop_dec.dec * u.degree)
@@ -148,7 +154,11 @@ def group_trigger(sender, instance, **kwargs):
 
                         # send off alert messages to users and admins
                         send_all_alerts(True, debug_bool, False, prop_dec)
-
+                else:
+                    proposal_worth_observing(
+                        prop_dec,
+                        instance,
+                    )
         if instance.pos_error and instance.pos_error < event_group.pos_error and instance.pos_error != 0.:
             # Updated event group's best position
             event_group.ra = instance.ra

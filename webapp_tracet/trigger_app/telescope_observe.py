@@ -161,12 +161,13 @@ def trigger_observation(
 
         if proposal_decision_model.proposal.source_type == 'GW' and len(voevents) > 1 and latestVoevent.lvc_skymap_fits != None:
             print(f"DEBUG - checking to update position")
-            print(f"DEBUG {proposal_decision_model.keys()}")
+            print(f"DEBUG - proposal_decision_model.__dict__ {proposal_decision_model.__dict__}")
 
             latestObs = Observations.objects.filter(
-                        event_group_id=proposal_decision_model.event_group_id_id).order_by('-created_at').first()
+                telescope=proposal_decision_model.proposal.telescope
+            ).order_by('-created_at').first()
             
-            print(latestObs)
+            print(f"DEBUG - latestObs {latestObs}")
 
             if(latestObs.mwa_sub_arrays != None):
                 print(f"DEBUG - skymap_fits_fits: {latestVoevent.lvc_skymap_fits}")
