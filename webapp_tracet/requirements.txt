@@ -54,3 +54,4 @@ voevent-parse==1.0.3
 zope.interface==5.4.0
 gcn-kafka==0.3.0
 mhealpy
+ligo.skymap
