@@ -426,7 +426,7 @@ class UserAlerts(models.Model):
     approval = models.BooleanField(default=True)
 
 class Observations(models.Model):
-    obsid = models.CharField(max_length=128, primary_key=True)
+    trigger_id = models.CharField(max_length=128, primary_key=True)
     telescope = models.ForeignKey(
         Telescope, to_field="name", verbose_name="Telescope name", on_delete=models.CASCADE)
     proposal_decision_id = models.ForeignKey(

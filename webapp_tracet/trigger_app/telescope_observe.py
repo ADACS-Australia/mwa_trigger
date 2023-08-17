@@ -147,7 +147,7 @@ def trigger_observation(
             print(f"DEBUG - dumping MWA buffer")
             reason = f"{latestVoevent.trig_id} - First event so dumping MWA buffer "
             buffered = True
-            decision_buffer, decision_reason_log_buffer, obsids_buffer, result = trigger_mwa_observation(
+            decision_buffer, decision_reason_log_buffer, obsids_buffer, result_buffer = trigger_mwa_observation(
                 proposal_decision_model,
                 decision_reason_log,
                 obsname="buffered"+obsname,
@@ -180,19 +180,21 @@ def trigger_observation(
                     current_arrays_ra = latestObs.mwa_sub_arrays['ra']
 
                     repoint = False
+                    print(current_arrays_dec)
+                    print(current_arrays_ra)
 
                     for res in pointings:
                         repoint = True
-                        for index in enumerate(current_arrays_dec):
-                            
-                            ra1 = current_arrays_ra[index]
-                            dec1 = current_arrays_dec[index]
+                        for index, val  in enumerate(current_arrays_dec):
+                            print(f"index: {index}")
+                            ra1 = current_arrays_ra[index] *u.deg
+                            dec1 = current_arrays_dec[index] *u.deg
                             ra2 = res[3]
                             dec2 = res[4]
 
                             if(isClosePosition(ra1,dec1,ra2,dec2)):
                                 repoint = False
-                            
+                    print(f'repoint: {repoint}')        
                     if repoint:
                         reason = f"{latestVoevent.trig_id} - Updating observation positions based on event."
                         mwa_sub_arrays = {
@@ -337,47 +339,42 @@ def trigger_observation(
             decision=f"{decision_buffer}{decision}"
             decision_reason_log=f"{decision_reason_log_buffer}{decision_reason_log}"
             obsids=obsids_buffer + obsids
-        print(f"obsids_full: {obsids}")
-
-        for obsid in obsids:
-            print(f"obsid: {obsid}")
-            if buffered and len(obsids_buffer) > 0 and obsid == obsids_buffer[0] and mwa_sub_arrays != None:
-                Observations.objects.create(
-                    obsid=obsid,
+            Observations.objects.create(
+                    trigger_id=result_buffer['trigger_id'],
                     telescope=proposal_decision_model.proposal.telescope,
                     proposal_decision_id=proposal_decision_model,
-                    reason=f"This is a buffer observation ID: {obsid}",
-                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
+                    reason=f"This is a buffer observation ID: {obsids_buffer}",
+                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids_buffer[0]}",
                     mwa_sub_arrays=mwa_sub_arrays,
                     event=latestVoevent,
-                    mwa_response=result
+                    mwa_response=result_buffer
                 )
-            elif latestVoevent.lvc_skymap_fits != None and mwa_sub_arrays != None:
-                filepath = subArrayMWAPointings(skymap=skymap, time=time, name=latestVoevent.trig_id, pointings=pointings)
-                Observations.objects.create(
-                    obsid=obsid,
-                    telescope=proposal_decision_model.proposal.telescope,
-                    proposal_decision_id=proposal_decision_model,
-                    reason=reason,
-                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
-                    mwa_sub_arrays=mwa_sub_arrays,
-                    mwa_sky_map_pointings=f"mwa_pointings/{filepath}",
-                    event=latestVoevent,
-                    mwa_response=result
-                )
-                    
-            # Create new obsid model
-            else: 
-                Observations.objects.create(
-                    obsid=obsid,
-                    telescope=proposal_decision_model.proposal.telescope,
-                    proposal_decision_id=proposal_decision_model,
-                    reason=reason,
-                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
-                    mwa_sub_arrays=mwa_sub_arrays,
-                    event=latestVoevent,
-                    mwa_response=result
-                )
+        if latestVoevent.lvc_skymap_fits != None and mwa_sub_arrays != None:
+            filepath = subArrayMWAPointings(skymap=skymap, time=time, name=latestVoevent.trig_id, pointings=pointings)
+            Observations.objects.create(
+                trigger_id=result['trigger_id'],
+                telescope=proposal_decision_model.proposal.telescope,
+                proposal_decision_id=proposal_decision_model,
+                reason=reason,
+                website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
+                mwa_sub_arrays=mwa_sub_arrays,
+                mwa_sky_map_pointings=f"mwa_pointings/{filepath}",
+                event=latestVoevent,
+                mwa_response=result
+            )
+                
+        # Create new obsid model
+        else: 
+            Observations.objects.create(
+                trigger_id=result['trigger_id'],
+                telescope=proposal_decision_model.proposal.telescope,
+                proposal_decision_id=proposal_decision_model,
+                reason=reason,
+                website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
+                mwa_sub_arrays=mwa_sub_arrays,
+                event=latestVoevent,
+                mwa_response=result
+            )
     elif proposal_decision_model.proposal.telescope.name == "ATCA":
         # Check if you can observe and if so send off mwa observation
         obsname = f'{proposal_decision_model.trig_id}'
@@ -390,7 +387,7 @@ def trigger_observation(
         for obsid in obsids:
             # Create new obsid model
             Observations.objects.create(
-                obsid=obsid,
+                trigger_id=obsid,
                 telescope=proposal_decision_model.proposal.telescope,
                 proposal_decision_id=proposal_decision_model,
                 reason=reason,
@@ -537,14 +534,7 @@ def trigger_mwa_observation(
     # Grab the obsids (sometimes we will send of several observations)
     obsids = []
     if 'obsid_list' in result.keys() and len(result['obsid_list']) > 0:
-        for obs in result['obsid_list']:
-            obsids.append(obs[0])
-    else:
-        for r in result['schedule']['stderr'].split("\n"):
-            if r.startswith("INFO:Schedule metadata for"):
-                obsids.append(r.split(" for ")[1][:-1])
-            elif(r.startswith('Pretending: commands not run')):
-                obsids.append(f"P{random.randint(1000,9999)}")
+        obsids = result['obsid_list']
 
     return 'T', decision_reason_log, obsids, result
 
