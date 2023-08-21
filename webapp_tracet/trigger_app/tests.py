@@ -675,6 +675,8 @@ class test_lvc_mwa_sub_arrays(TestCase):
         # self.assertEqual(len(EventGroup.objects.all()), 1)
         obs = Observations.objects.all()
         self.assertEqual(len(obs), 5)
+        for ob in obs:
+            print(ob.trigger_id)
         # self.assertEqual(ProposalDecision.objects.filter(
         #     proposal__telescope__name='MWA_VCS').first().decision, 'TT')
         # self.assertEqual(ProposalDecision.objects.filter(
