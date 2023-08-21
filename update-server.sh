@@ -27,4 +27,4 @@ tmux kill-server
 
 # Reset comet and kafka event handlers
 tmux new -s kafka -d './kafka_daemon.sh'
-tmux new -s comet -d 'python twistd_comet_wrapper.py'
+tmux new -s comet -d 'python3.10 twistd_comet_wrapper.py'
