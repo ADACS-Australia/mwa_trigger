@@ -144,7 +144,7 @@ class ProposalDecisionFilter(django_filters.FilterSet):
 
 class MWAResponseView(View):
     def get(self, request, id):
-        observation = models.Observations.objects.get(obsid=id)
+        observation = models.Observations.objects.get(trigger_id=id)
         if observation.mwa_response:
             return JsonResponse(observation.mwa_response, safe=False)
         else:

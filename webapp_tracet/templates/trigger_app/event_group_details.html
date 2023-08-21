@@ -123,16 +123,19 @@
           <th>Proposal Project</th>
           <th>Reason</th>
           <th>Cancel Obs?</th>
+          <th>MWA response</th>
         </tr>
       </thead>
       <!-- Iterate over object_list -->
       {% for ob in obs %}
       <!-- Display Objects -->
       <tr>
-        {% if ob.website_link is None %}
+        {% if ob.obsid is not None %}
           <td>{{ ob.obsid }}</td>
-        {% else %}
-          <td><a href="{{ ob.website_link }}" style="text-decoration:None">{{ ob.obsid }}</a></td>
+        {% elif ob.mwa_response and ob.trigger_id %}
+          <td><a href="{{ ob.website_link }}" style="text-decoration:None">{{ ob.trigger_id }}</a></td>
+        {%else %}
+          <td>{{ob.mwa_response}}</td>
         {% endif %}
         <td>{{ ob.telescope.name }}</td>
         {% if ob.event is not None %}
@@ -167,6 +170,9 @@
             <button class="btn btn-danger" onclick='var conf = confirm("Are you sure you want to cancel observation {{ ob.obsid }}"); if (conf == true) { window.location = "/cancel_atca_observation/{{ ob.obsid }}";}'>Cancel</button>
           {% endif %}
         </td>
+        {% if ob.mwa_response is not None and ob.trigger_id is not None %}
+        <td><a href="/observation_mwa_response/{{ ob.trigger_id }}" style="text-decoration:None">link</a></td>
+        {% endif %}
       </tr>
       <!-- If object_list is empty  -->
       {% empty %}
@@ -176,7 +182,9 @@
     {% for ob in obs %}
       {% if ob.mwa_sky_map_pointings %}
       <div style="display: flex; justify-content: center;">
+        {% if ob.obsid %}
         <b>MWA OBSID: {{ob.obsid}}</b>
+        {% endif %}
         <img src="/media/{{ob.mwa_sky_map_pointings}}" style="object-fit: cover; width: 640px; height: 360px" width="640px"/>
       </div>
 
