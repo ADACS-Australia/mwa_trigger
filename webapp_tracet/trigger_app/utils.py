@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 import ligo.skymap.plot
 from mhealpy import HealpixMap
 from astropy.time import Time
+import time as pytime
 from astropy.coordinates import SkyCoord, EarthLocation
 import numpy as np
 import pathlib
@@ -138,11 +139,12 @@ def drawMWAPointings(skymap, time, name, pointings: List[PointingVar]):
       sub_array1 = plt.Circle((ra.value, dec.value), 17, color='blue', fill=False, transform=tr)
       ax.add_patch(sub_array1)
 
+    fileName = f"{int(pytime.time())}_{name}.png"
     # Show the plot
-    filepath = os.path.join(pathlib.Path(__file__).resolve().parent.parent, 'media', 'mwa_pointings', f"{name}.png")
+    filepath = os.path.join(pathlib.Path(__file__).resolve().parent.parent, 'media', 'mwa_pointings', fileName)
     
     plt.savefig(filepath)
-    return f"{name}.png"
+    return fileName
 
 def singleMWAPointing(skymap, time, name, pointing: PointingVar):
     return drawMWAPointings(skymap, time, name, [pointing])
