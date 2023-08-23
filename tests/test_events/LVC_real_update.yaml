@@ -22,7 +22,7 @@ lvc_prob_density_tile: null
 lvc_retraction_message: null
 lvc_significant: true
 lvc_skymap_file: null
-lvc_skymap_fits: https://gracedb.ligo.org/api/superevents/S230518h/files/Bilby.multiorder.fits,0
+lvc_skymap_fits: https://gracedb.ligo.org/api/superevents/S230823ac/files/bayestar.multiorder.fits,0
 lvc_terrestial_probability: 0.09901845917358532
 packet: "<VOEvent xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"\
   http://www.ivoa.net/xml/VOEvent/v2.0 http://www.ivoa.net/xml/VOEvent/VOEvent-v2.0.xsd\"\
@@ -62,7 +62,7 @@ packet: "<VOEvent xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:sc
   \    <Param name=\"Search\" value=\"AllSky\" ucd=\"meta.code\" dataType=\"string\"\
   >\n      <Description>Specific low-latency search</Description>\n    </Param>\n\
   \    <Group name=\"GW_SKYMAP\" type=\"GW_SKYMAP\">\n      <Param name=\"skymap_fits\"\
-  \ value=\"https://gracedb.ligo.org/api/superevents/S230518h/files/Bilby.multiorder.fits,0\"\
+  \ value=\"https://gracedb.ligo.org/api/superevents/S230823ac/files/bayestar.multiorder.fits,0\"\
   \ ucd=\"meta.ref.url\" dataType=\"string\">\n        <Description>Sky Map FITS</Description>\n\
   \      </Param>\n    </Group>\n    <Group name=\"Classification\" type=\"Classification\"\
   >\n      <Param name=\"BNS\" value=\"0.0\" ucd=\"stat.probability\" dataType=\"\
