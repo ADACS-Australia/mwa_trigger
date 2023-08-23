@@ -2,6 +2,7 @@
 *.pyc
 .eggs
 *.egg-info
+*.log
 tests/_trial_temp/
 .voevent_env/
 settings.json
