@@ -50,7 +50,7 @@
       <Description>Specific low-latency search</Description>
     </Param>
     <Group name="GW_SKYMAP" type="GW_SKYMAP">
-      <Param name="skymap_fits" value="https://gracedb.ligo.org/api/superevents/S230518h/files/Bilby.multiorder.fits,0" ucd="meta.ref.url" dataType="string">
+      <Param name="skymap_fits" value="https://gracedb.ligo.org/api/superevents/S230823ac/files/bayestar.multiorder.fits,0" ucd="meta.ref.url" dataType="string">
         <Description>Sky Map FITS</Description>
       </Param>
     </Group>
