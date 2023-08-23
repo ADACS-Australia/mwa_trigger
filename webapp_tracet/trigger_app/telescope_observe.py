@@ -169,7 +169,7 @@ def trigger_observation(
             
             print(f"DEBUG - latestObs {latestObs}")
 
-            if(latestObs.mwa_sub_arrays != None):
+            if(latestObs.mwa_sub_arrays is not None):
                 print(f"DEBUG - skymap_fits_fits: {latestVoevent.lvc_skymap_fits}")
                 try:
                     skymap = Table.read(latestVoevent.lvc_skymap_fits)
@@ -211,6 +211,9 @@ def trigger_observation(
                                 pointings[3][3].value,
                             ]
                         }
+                    else:
+                        decision_reason_log+=f"repointing is {repoint} \n"
+                        return "T", decision_reason_log
                 except Exception as e:
                     print(e)
                     logger.error("Error getting MWA pointings from skymap")
@@ -333,11 +336,10 @@ def trigger_observation(
         # print(decision, decision_reason_log, obsids)
         # decision_buffer, decision_reason_log_buffer, obsids_buffer
    
-
+        print(f"buffered: {buffered}")
 
         if buffered:
-            decision=f"{decision_buffer}{decision}"
-            decision_reason_log=f"{decision_reason_log_buffer}{decision_reason_log}"
+            decision_reason_log=f"{decision_reason_log} Making a buffer observation. \n"
             obsids=obsids_buffer + obsids
             Observations.objects.create(
                     trigger_id=result_buffer['trigger_id'] or random.randrange(10000, 99999),
@@ -349,8 +351,12 @@ def trigger_observation(
                     event=latestVoevent,
                     mwa_response=result_buffer
                 )
-        if latestVoevent.lvc_skymap_fits != None and mwa_sub_arrays != None:
+        if repoint is True:
+            reason = "This is a repointing observation" 
+        
+        if repoint is not False and latestVoevent.lvc_skymap_fits != None and mwa_sub_arrays != None:
             filepath = subArrayMWAPointings(skymap=skymap, time=time, name=latestVoevent.trig_id, pointings=pointings)
+
             Observations.objects.create(
                 trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
                 telescope=proposal_decision_model.proposal.telescope,
@@ -364,7 +370,7 @@ def trigger_observation(
             )
                 
         # Create new obsid model
-        else: 
+        elif repoint is not False: 
             Observations.objects.create(
                 trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
                 telescope=proposal_decision_model.proposal.telescope,
@@ -391,7 +397,7 @@ def trigger_observation(
                 telescope=proposal_decision_model.proposal.telescope,
                 proposal_decision_id=proposal_decision_model,
                 reason=reason,
-                event=latestVoevent
+                event=latestVoevent,
                 # TODO see if atca has a nice observation details webpage
                 # website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
             )
