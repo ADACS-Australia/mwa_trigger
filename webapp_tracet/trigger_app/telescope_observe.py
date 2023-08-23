@@ -127,6 +127,7 @@ def trigger_observation(
         buffered = False
 
         pretend = True
+        repoint = None
         trigger_real_pretend = TRIGGER_ON[0][0]
         trigger_both = TRIGGER_ON[1][0]
         trigger_real = TRIGGER_ON[2][0]
@@ -180,10 +181,13 @@ def trigger_observation(
                     current_arrays_ra = latestObs.mwa_sub_arrays['ra']
 
                     repoint = False
-                    print(current_arrays_dec)
-                    print(current_arrays_ra)
-
+                  
+                    pointings_dec = []
+                    pointings_ra = []
                     for res in pointings:
+                        pointings_ra.append(res[3])
+                        pointings_dec.append(res[4])
+
                         repoint = True
                         for index, val  in enumerate(current_arrays_dec):
                             print(f"index: {index}")
@@ -194,7 +198,11 @@ def trigger_observation(
 
                             if(isClosePosition(ra1,dec1,ra2,dec2)):
                                 repoint = False
-                    print(f'repoint: {repoint}')        
+                    print(f'repoint: {repoint}')
+                    print(current_arrays_dec)
+                    print(pointings_dec)
+                    print(current_arrays_ra)  
+                    print(pointings_ra)    
                     if repoint:
                         reason = f"{latestVoevent.trig_id} - Updating observation positions based on event."
                         mwa_sub_arrays = {
@@ -212,7 +220,7 @@ def trigger_observation(
                             ]
                         }
                     else:
-                        decision_reason_log+=f"repointing is {repoint} \n"
+                        decision_reason_log+=f"{datetime.utcnow()}: Event ID {event_id}: Repointing is {repoint} \n"
                         return "T", decision_reason_log
                 except Exception as e:
                     print(e)
@@ -337,27 +345,34 @@ def trigger_observation(
         # decision_buffer, decision_reason_log_buffer, obsids_buffer
    
         print(f"buffered: {buffered}")
-
+        print(f"mwa_sub_arrays: {mwa_sub_arrays}")
         if buffered:
-            decision_reason_log=f"{decision_reason_log} Making a buffer observation. \n"
+            print(f"Debug -  Saving buffer observation")
+            print(f"result_buffer id: {result_buffer['trigger_id']}")
+            decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Making a buffer observation. \n"
             obsids=obsids_buffer + obsids
-            Observations.objects.create(
-                    trigger_id=result_buffer['trigger_id'] or random.randrange(10000, 99999),
-                    telescope=proposal_decision_model.proposal.telescope,
-                    proposal_decision_id=proposal_decision_model,
-                    reason=f"This is a buffer observation ID: {obsids_buffer}",
-                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids_buffer[0]}",
-                    mwa_sub_arrays=mwa_sub_arrays,
-                    event=latestVoevent,
-                    mwa_response=result_buffer
-                )
+            saved_obs_1 = Observations.objects.create(
+                trigger_id=result_buffer['trigger_id'] or random.randrange(10000, 99999),
+                telescope=proposal_decision_model.proposal.telescope,
+                proposal_decision_id=proposal_decision_model,
+                reason=f"This is a buffer observation ID: {obsids_buffer}",
+                website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids_buffer[0]}",
+                mwa_sub_arrays=mwa_sub_arrays,
+                event=latestVoevent,
+                mwa_response=result_buffer
+            )
+            print(saved_obs_1)
         if repoint is True:
-            reason = "This is a repointing observation" 
-        
+            reason = "This is a repointing observation"
+            decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Repointing. \n"
+
+        print(f"result id: {result['trigger_id']}")
+
         if repoint is not False and latestVoevent.lvc_skymap_fits != None and mwa_sub_arrays != None:
             filepath = subArrayMWAPointings(skymap=skymap, time=time, name=latestVoevent.trig_id, pointings=pointings)
-
-            Observations.objects.create(
+            print(f"Debug -  Saving SKYMAP sub array observation")
+            decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Making a SKYMAP sub array observation. \n"
+            saved_obs_2 = Observations.objects.create(
                 trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
                 telescope=proposal_decision_model.proposal.telescope,
                 proposal_decision_id=proposal_decision_model,
@@ -368,9 +383,13 @@ def trigger_observation(
                 event=latestVoevent,
                 mwa_response=result
             )
+
+            print(saved_obs_2)
                 
         # Create new obsid model
         elif repoint is not False: 
+            print(f"Debug -  Saving DEFAULT sub array observation")
+            decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Making a DEFAULT sub array observation. \n"
             Observations.objects.create(
                 trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
                 telescope=proposal_decision_model.proposal.telescope,
@@ -468,7 +487,7 @@ def trigger_mwa_observation(
         )
     
     elif (prop_settings.source_type == 'GW' and mwa_sub_arrays != None):
-        print("DEBUG - Scheduling an ra/dec sub array observation using defaults")
+        print("DEBUG - Scheduling an ra/dec sub array observation")
 
         result = trigger(
             project_id=prop_settings.project_id.id,
