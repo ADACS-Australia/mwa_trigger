@@ -186,6 +186,8 @@ def grab_decisions_for_event_groups(event_groups):
     source_name_list = []
     proposal_decision_list = []
     proposal_decision_id_list = []
+    role_list = [] 
+
     for event_group in event_groups:
         event_group_events = models.Event.objects.filter(
             event_group_id=event_group)
@@ -198,6 +200,12 @@ def grab_decisions_for_event_groups(event_groups):
             source_name_list.append(event_with_source_name[0].source_name)
         else:
             source_name_list.append(event_group_events.first().source_name)
+        event_with_role = list(
+            filter(lambda x: x.role is not None, list(event_group_events)))
+        if(len(event_with_role) > 0):
+            role_list.append(event_with_role[0].role)
+        else:
+            role_list.append('unknown')
         # grab decision for each proposal
         decision_list = []
         decision_id_list = []
@@ -215,7 +223,7 @@ def grab_decisions_for_event_groups(event_groups):
         proposal_decision_id_list.append(decision_id_list)
 
     # zip into something that you can iterate over in the html
-    return list(zip(event_groups, telescope_list, source_name_list, proposal_decision_list, proposal_decision_id_list)), event_groups
+    return list(zip(event_groups, role_list, telescope_list, source_name_list, proposal_decision_list, proposal_decision_id_list)), event_groups
 
 
 class EventGroupFilter(django_filters.FilterSet):
@@ -309,7 +317,7 @@ def home_page(request):
         recent_event_groups_swift)
 
     recent_event_group_info_swift = filter(
-        lambda x: x[1] == "SWIFT", recent_event_group_info_swift)
+        lambda x: x[2] == "SWIFT", recent_event_group_info_swift)
 
     recent_event_groups_lvc = models.EventGroup.objects.filter(
         ignored=False, source_type="GW")
@@ -317,7 +325,7 @@ def home_page(request):
         recent_event_groups_lvc)
 
     recent_event_group_info_lvc = filter(
-        lambda x: x[1] == "LVC", recent_event_group_info_lvc)
+        lambda x: x[2] == "LVC", recent_event_group_info_lvc)
 
     context = {
         'twistd_comet_status': comet_status,
