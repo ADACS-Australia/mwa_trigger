@@ -141,16 +141,15 @@ class ProposalDecisionFilter(django_filters.FilterSet):
     class Meta:
         model = models.ProposalDecision
         fields = '__all__'
-        
+
 @login_required
-class MWAResponseView(View):
-    def get(self, request, id):
-        observation = models.Observations.objects.get(trigger_id=id)
-        if observation.mwa_response:
-            return JsonResponse(observation.mwa_response, safe=False)
-        else:
-            # Return a 404 if the data is not found
-            return JsonResponse({"error": "Data not found"}, status=404)
+def MWAResponse(request, id):
+    observation = models.Observations.objects.get(trigger_id=id)
+    if observation.mwa_response:
+        return JsonResponse(observation.mwa_response, safe=False)
+    else:
+        # Return a 404 if the data is not found
+        return JsonResponse({"error": "Data not found"}, status=404)
 
 def ProposalDecisionList(request):
     # Apply filters
