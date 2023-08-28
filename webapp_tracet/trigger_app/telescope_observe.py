@@ -46,7 +46,9 @@ def trigger_observation(
         The updated trigger message to include an observation specific logs.
     """
     print("Trigger observation")
-    
+    trigger_real_pretend = TRIGGER_ON[0][0]
+    trigger_both = TRIGGER_ON[1][0]
+    trigger_real = TRIGGER_ON[2][0]
     voevents = Event.objects.filter(
         trig_id=proposal_decision_model.trig_id).order_by('-recieved_data')
     telescopes = []
@@ -128,9 +130,7 @@ def trigger_observation(
 
         pretend = True
         repoint = None
-        trigger_real_pretend = TRIGGER_ON[0][0]
-        trigger_both = TRIGGER_ON[1][0]
-        trigger_real = TRIGGER_ON[2][0]
+
         print(f"proposal_decision_model.proposal.testing {proposal_decision_model.proposal.testing}")
         print(f"latestVoevent {latestVoevent.__dict__}")
         if(latestVoevent.role == 'test' and proposal_decision_model.proposal.testing != trigger_both):
@@ -651,7 +651,7 @@ def trigger_atca_observation(
     rapidObj["authenticationToken"] = prop_obj.project_id.password
     rapidObj["email"] = prop_obj.project_id.atca_email
 
-    if prop_obj.testing:
+    if prop_obj['testing'] == trigger_real_pretend:
         rapidObj["test"] = True
         rapidObj["noTimeLimit"] = True
         rapidObj["noScoreLimit"] = True
