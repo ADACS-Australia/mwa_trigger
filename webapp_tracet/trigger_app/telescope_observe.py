@@ -650,8 +650,9 @@ def trigger_atca_observation(
     rapidObj = {'requestDict': rq}
     rapidObj["authenticationToken"] = prop_obj.project_id.password
     rapidObj["email"] = prop_obj.project_id.atca_email
+    trigger_real_pretend = TRIGGER_ON[0][0]
 
-    if prop_obj['testing'] == trigger_real_pretend:
+    if prop_obj.testing == trigger_real_pretend:
         rapidObj["test"] = True
         rapidObj["noTimeLimit"] = True
         rapidObj["noScoreLimit"] = True
