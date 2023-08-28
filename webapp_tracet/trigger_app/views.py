@@ -141,7 +141,8 @@ class ProposalDecisionFilter(django_filters.FilterSet):
     class Meta:
         model = models.ProposalDecision
         fields = '__all__'
-
+        
+@login_required
 class MWAResponseView(View):
     def get(self, request, id):
         observation = models.Observations.objects.get(trigger_id=id)
