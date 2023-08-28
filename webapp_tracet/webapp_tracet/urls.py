@@ -36,7 +36,7 @@ urlpatterns = [
     path('event_log/', views.EventList),
     path('comet_log/', views.comet_log),
     path('proposal_settings/', views.ProposalSettingsList.as_view()),
-    path('observation_mwa_response/<str:id>/', views.MWAResponseView.as_view()),
+    path('observation_mwa_response/<str:id>/', views.MWAResponse),
     path('proposal_create/', views.proposal_form),
     path('proposal_edit/<int:id>/', views.proposal_form),
     path('proposal_decision_details/<int:id>/', views.ProposalDecision_details),
