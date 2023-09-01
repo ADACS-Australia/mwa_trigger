@@ -18,3 +18,4 @@ docs/html/*
 .vscode
 build
 webapp_tracet/logs
+webapp_tracet/static
