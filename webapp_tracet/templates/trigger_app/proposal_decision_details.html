@@ -73,6 +73,7 @@
         <th>Trig ID</th>
         <th>Source Name</th>
         <th>Sequence number</th>
+        <th>Classification</th>
         <th>Duration (s)</th>
         <th>RA (HH:MM:SS)</th>
         <th>Dec (DD:MM:SS)</th>
@@ -108,6 +109,7 @@
       {% endif %}
       <td>{% if event.source_name  is not None %} {{ event.source_name }}  {% endif %}</td>
       <td>{% if event.sequence_num is not None %} {{ event.sequence_num }} {% endif %}</td>
+      <td>{% if event.classification  is not None %} {{ event.classification }}  {% endif %}</td>
       <td>{% if event.duration     is not None %} {{ event.duration }}     {% endif %}</td>
       <td>{% if event.ra_hms          is not None %} {{ event.ra_hms }}          {% endif %}</td>
       <td>{% if event.dec_dms         is not None %} {{ event.dec_dms }}         {% endif %}</td>

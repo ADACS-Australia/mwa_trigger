@@ -385,6 +385,7 @@ def proposal_worth_observing(
 
     # send off alert messages to users and admins
     logger.info('Sending alerts to users and admins')
+    print(f"\nDEBUG - {trigger_bool} {debug_bool} {pending_bool} {prop_dec}\n")
     send_all_alerts(trigger_bool, debug_bool, pending_bool, prop_dec)
 
 

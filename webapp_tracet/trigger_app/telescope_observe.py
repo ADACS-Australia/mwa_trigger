@@ -355,7 +355,7 @@ def trigger_observation(
                 trigger_id=result_buffer['trigger_id'] or random.randrange(10000, 99999),
                 telescope=proposal_decision_model.proposal.telescope,
                 proposal_decision_id=proposal_decision_model,
-                reason=f"This is a buffer observation ID: {obsids_buffer}",
+                reason=f"This is a buffer observation ID",
                 website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids_buffer[0]}",
                 mwa_sub_arrays=mwa_sub_arrays,
                 event=latestVoevent,

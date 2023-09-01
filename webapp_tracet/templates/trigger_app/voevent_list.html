@@ -109,6 +109,7 @@
         <th>Trig ID</th>
         <th>Group ID</th>
         <th>Source Name</th>
+        <th>Classification</th>
         <th>Sequence number</th>
         <th>Duration (s)</th>
         <th>RA (HH:MM:SS)</th>
@@ -120,7 +121,6 @@
         {% endif %}
         <th>Fermi Detection Probability (%)</th>
         <th>SWIFT Rate Significance (sigma)</th>
-        <th>Antares Rating</th>
       </tr>
     </thead>
     <!-- Iterate over object_list -->
@@ -154,6 +154,7 @@
         <td><a href="/event_group_details/{{ object.event_group_id }}/" style="text-decoration:None">{{ object.event_group_id}}</a></td>
       {% endif %}
       <td>{% if object.event_group_id.source_name  is not None %} {{ object.event_group_id.source_name }}  {% endif %}</td>
+      <td>{% if object.classification  is not None %} {{ object.classification }}  {% endif %}</td>
       <td>{% if object.sequence_num is not None %} {{ object.sequence_num }} {% endif %}</td>
       <td>{% if object.duration     is not None %} {{ object.duration }}     {% endif %}</td>
       <td>{% if object.ra_hms       is not None %} {{ object.ra_hms|truncatechars:12 }}       {% endif %}</td>
