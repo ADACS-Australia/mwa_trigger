@@ -107,6 +107,22 @@ def EventList(request):
     f = EventFilter(request.GET, queryset=models.Event.objects.all())
     events = f.qs
 
+    for event in events:
+        if event.source_type == "GW":
+            if event.lvc_binary_neutron_star_probability is not None:
+                if event.lvc_binary_neutron_star_probability > 0.50:
+                    event.classification = "BNS"
+                elif event.lvc_neutron_star_black_hole_probability > 0.50:
+                    event.classification = "NSBH"
+                elif event.lvc_binary_black_hole_probability > 0.50:
+                    event.classification = "BBH"
+                elif event.lvc_terrestial_probability > 0.50:
+                    event.classification = "TERE"
+            else:
+                event.classification = "NOPROB"               
+        else: 
+            event.classification = None
+
     # Get position error units
     poserr_unit = request.GET.get('poserr_unit', 'deg')
 
@@ -356,6 +372,22 @@ def EventGroup_details(request, tid):
     events = models.Event.objects.filter(event_group_id=event_group)
     telescopes = ' '.join(set(events.values_list('telescope', flat=True)))
 
+    for event in events:
+        if event.source_type == "GW":
+            if event.lvc_binary_neutron_star_probability is not None:
+                if event.lvc_binary_neutron_star_probability > 0.50:
+                    event.classification = "BNS"
+                elif event.lvc_neutron_star_black_hole_probability > 0.50:
+                    event.classification = "NSBH"
+                elif event.lvc_binary_black_hole_probability > 0.50:
+                    event.classification = "BBH"
+                elif event.lvc_terrestial_probability > 0.50:
+                    event.classification = "TERE"
+            else:
+                event.classification = "NOPROB"               
+        else: 
+            event.classification = None
+
     # list all prop decisions
     prop_decs = models.ProposalDecision.objects.filter(
         event_group_id=event_group)
@@ -390,6 +422,23 @@ def ProposalDecision_details(request, id):
         event_group_id=prop_dec.event_group_id)
     telescopes = []
     event_types = []
+
+
+    for event in events:
+        if event.source_type == "GW":
+            if event.lvc_binary_neutron_star_probability is not None:
+                if event.lvc_binary_neutron_star_probability > 0.50:
+                    event.classification = "BNS"
+                elif event.lvc_neutron_star_black_hole_probability > 0.50:
+                    event.classification = "NSBH"
+                elif event.lvc_binary_black_hole_probability > 0.50:
+                    event.classification = "BBH"
+                elif event.lvc_terrestial_probability > 0.50:
+                    event.classification = "TERE"
+            else:
+                event.classification = "NOPROB"               
+        else: 
+            event.classification = None
     for event in events:
         telescopes.append(event.telescope)
         event_types.append(event.event_type)
