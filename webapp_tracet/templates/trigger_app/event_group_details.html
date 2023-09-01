@@ -191,7 +191,7 @@
     <table class="fl-table">
       <thead>
         <tr>
-          <th>Observation ID</th>
+          <th>Trigger ID</th>
           <th>Telescope</th>
           <th>Event Type</th>
           <th>Trig Source</th>
@@ -210,12 +210,12 @@
       {% for ob in obs %}
       <!-- Display Objects -->
       <tr>
-        {% if ob.trigger_id is not None %}
+        {% if ob.mwa_response and ob.trigger_id %}
+          <td><a href="https://ws.mwatelescope.org/trigger/find/?search=search&html=1&pagesize=100&trigger_id={{ob.trigger_id}}&trigger_mode=&pretend=&success=&mintime_utc=&maxtime_utc=&project_id=&obsname=&creator=" style="text-decoration:None">{{ ob.trigger_id }}</a></td>
+        {% elif ob.trigger_id is not None %}
           <td>{{ ob.trigger_id }}</td>
-        {% elif ob.mwa_response and ob.trigger_id %}
-          <td><a href="{{ ob.website_link }}" style="text-decoration:None">{{ ob.trigger_id }}</a></td>
         {%else %}
-          <td>{{ob.mwa_response}}</td>
+          <td></td>
         {% endif %}
         <td>{{ ob.telescope.name }}</td>
         {% if ob.event is not None %}
