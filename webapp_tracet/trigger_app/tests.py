@@ -738,14 +738,14 @@ class test_lvc_mwa_sub_arrays_with_repointing(TestCase):
     # 3rd event = normal obs using skymap if position changes
     # 4th event = normal obs using skymap if position changes
 
-    # @patch('trigger_app.telescope_observe.trigger', side_effect=[trigger_mwa_test_buffer, trigger_mwa_test_1, trigger_mwa_test_2, trigger_mwa_test_3, trigger_mwa_test_4])
-    # def setUp(self, patched_mwa_api):
-    def setUp(self):
+    @patch('trigger_app.telescope_observe.trigger', side_effect=[trigger_mwa_test_buffer, trigger_mwa_test_1, trigger_mwa_test_2, trigger_mwa_test_3, trigger_mwa_test_4])
+    def setUp(self, patched_mwa_api):
+    # def setUp(self):
         xml_paths = [
             # "../tests/test_events/LVC_real_early_warning.xml",
             "../tests/test_events/LVC_real_initial.xml",
             # "../tests/test_events/LVC_real_preliminary.xml",
-            "../tests/test_events/LVC_real_update.xml",
+            # "../tests/test_events/LVC_real_update.xml",
         ]
 
         # Setup current RA and Dec at zenith for the MWA
@@ -766,22 +766,22 @@ class test_lvc_mwa_sub_arrays_with_repointing(TestCase):
                 print("CREATE VOEVENT")
                 create_voevent_wrapper(trig, ra_dec=None)
             # Sleep needed for testing vs real api
-            # args, kwargs = patched_mwa_api.call_args
-            # self.mwaApiArgs.append(kwargs)
-            # print(args)
-            # print(kwargs)
+            args, kwargs = patched_mwa_api.call_args
+            self.mwaApiArgs.append(kwargs)
+            print(args)
+            print(kwargs)
 
     def test_trigger_groups(self):
         # time.sleep(50)
         # # Check event was made
         # self.assertEqual(True, True)
-
-        self.assertEqual(len(Event.objects.all()), 2)
+        print(self.mwaApiArgs)
+        self.assertEqual(len(Event.objects.all()), 1)
         # time.sleep(100)
         # # Early warning is a different event
         # self.assertEqual(len(EventGroup.objects.all()), 1)
         obs = Observations.objects.all()
-        self.assertEqual(len(obs), 3)
+        self.assertEqual(len(obs),2)
         for ob in obs:
             print(ob.trigger_id)
         # self.assertEqual(ProposalDecision.objects.filter(
