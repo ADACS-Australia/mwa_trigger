@@ -104,7 +104,7 @@ class EventFilter(django_filters.FilterSet):
 
 def EventList(request):
     # Apply filters
-    f = EventFilter(request.GET, queryset=models.Event.objects.all())
+    f = EventFilter(request.GET, queryset=models.Event.objects.all()[:300])
     events = f.qs
 
     for event in events:
@@ -138,9 +138,9 @@ def EventList(request):
         events = paginator.page(1)
 
     min_rec = models.Event.objects.filter().order_by(
-        'recieved_data').first().recieved_data
+        'recieved_data')[:300].first().recieved_data
     min_obs = models.Event.objects.filter().order_by(
-        'event_observed').first().event_observed
+        'event_observed')[:300].first().event_observed
 
     has_filter = any(field in request.GET for field in set(f.get_fields()))
     return render(request, 'trigger_app/voevent_list.html', {'filter': f, "page_obj": events, "poserr_unit": poserr_unit, 'has_filter': has_filter, 'min_rec': str(min_rec), 'min_obs': str(min_obs)})
@@ -206,7 +206,7 @@ def grab_decisions_for_event_groups(event_groups):
 
     for event_group in event_groups:
         event_group_events = models.Event.objects.filter(
-            event_group_id=event_group)
+            event_group_id=event_group)[:300]
         telescope_list.append(
             ' '.join(set(event_group_events.values_list('telescope', flat=True)))
         )
@@ -369,7 +369,7 @@ def EventGroup_details(request, tid):
     event_group = models.EventGroup.objects.get(id=tid)
 
     # grab telescope names
-    events = models.Event.objects.filter(event_group_id=event_group)
+    events = models.Event.objects.filter(event_group_id=event_group)[:300]
     telescopes = ' '.join(set(events.values_list('telescope', flat=True)))
 
     for event in events:
@@ -419,7 +419,7 @@ def ProposalDecision_details(request, id):
 
     # Work out all the telescopes that observed the event
     events = models.Event.objects.filter(
-        event_group_id=prop_dec.event_group_id)
+        event_group_id=prop_dec.event_group_id)[:300]
     telescopes = []
     event_types = []
 
@@ -747,12 +747,12 @@ def test_upload_xml(request):
 @login_required
 def cancel_atca_observation(request, id=None):
     # Grab obs and proposal data
-    obs = models.Observations.objects.filter(obsid=id).first()
+    obs = models.Observations.objects.filter(trigger_id=id).first()
     proposal_settings = obs.proposal_decision_id.proposal
     decision_reason_log = obs.proposal_decision_id.decision_reason
 
     # Create the cancel request
-    rapidObj = {'requestDict': {'cancel': obs.obsid,
+    rapidObj = {'requestDict': {'cancel': obs.trigger_id,
                                 'project': proposal_settings.project_id.id}}
     rapidObj["authenticationToken"] = proposal_settings.project_id.password
     rapidObj["email"] = proposal_settings.project_id.atca_email
