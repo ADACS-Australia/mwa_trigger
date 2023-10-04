@@ -348,7 +348,7 @@ def trigger_observation(
         print(f"mwa_sub_arrays: {mwa_sub_arrays}")
         if buffered:
             print(f"Debug -  Saving buffer observation")
-            print(f"result_buffer id: {result_buffer['trigger_id']}")
+            print(f"result_buffer: {result_buffer}")
             decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Making a buffer observation. \n"
             obsids=obsids_buffer + obsids
             saved_obs_1 = Observations.objects.create(
@@ -485,6 +485,8 @@ def trigger_mwa_observation(
             vcsmode=vcsmode,
             buffered=buffered
         )
+        print(f"buffered result: {result}")
+
     
     elif (prop_settings.source_type == 'GW' and mwa_sub_arrays != None):
         print("DEBUG - Scheduling an ra/dec sub array observation")
