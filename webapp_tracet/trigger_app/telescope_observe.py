@@ -145,20 +145,20 @@ def trigger_observation(
      
         if proposal_decision_model.proposal.source_type == 'GW' and len(voevents) == 1:
             # Dump out the last ~3 mins of MWA buffer to try and catch event
-            print(f"DEBUG - dumping MWA buffer")
-            reason = f"{latestVoevent.trig_id} - First event so dumping MWA buffer "
-            buffered = True
-            decision_buffer, decision_reason_log_buffer, obsids_buffer, result_buffer = trigger_mwa_observation(
-                proposal_decision_model,
-                decision_reason_log,
-                obsname="buffered"+obsname,
-                vcsmode=vcsmode,
-                event_id=event_id,
-                mwa_sub_arrays=mwa_sub_arrays,
-                buffered=buffered,
-                pretend=pretend
-            )
-            print(f"obsids_buffer: {obsids_buffer}")
+            print(f"DEBUG - DISABLED dumping MWA buffer")
+            # reason = f"{latestVoevent.trig_id} - First event so dumping MWA buffer "
+            # buffered = True
+            # decision_buffer, decision_reason_log_buffer, obsids_buffer, result_buffer = trigger_mwa_observation(
+            #     proposal_decision_model,
+            #     decision_reason_log,
+            #     obsname="buffered"+obsname,
+            #     vcsmode=vcsmode,
+            #     event_id=event_id,
+            #     mwa_sub_arrays=mwa_sub_arrays,
+            #     buffered=buffered,
+            #     pretend=pretend
+            # )
+            # print(f"obsids_buffer: {obsids_buffer}")
 
         if proposal_decision_model.proposal.source_type == 'GW' and len(voevents) > 1 and latestVoevent.lvc_skymap_fits != None:
             print(f"DEBUG - checking to update position")
