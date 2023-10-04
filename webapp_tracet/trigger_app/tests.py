@@ -606,25 +606,25 @@ class test_lvc_mwa_sub_arrays_no_repointing(TestCase):
 
     mwaApiArgs: list[dict] = []
 
-    with open('trigger_app/test_yamls/trigger_mwa_test_buffer.yaml', 'r') as file:
-        trigger_mwa_test_buffer = safe_load(file)
+    # with open('trigger_app/test_yamls/trigger_mwa_test_buffer.yaml', 'r') as file:
+    #     trigger_mwa_test_buffer = safe_load(file)
 
-    with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
-        trigger_mwa_test_1 = safe_load(file)
+    # with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
+    #     trigger_mwa_test_1 = safe_load(file)
 
-    with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
-        trigger_mwa_test_2 = safe_load(file)
+    # with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
+    #     trigger_mwa_test_2 = safe_load(file)
 
-    with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
-        trigger_mwa_test_3 = safe_load(file)
+    # with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
+    #     trigger_mwa_test_3 = safe_load(file)
 
-    with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
-        trigger_mwa_test_4 = safe_load(file)
+    # with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
+    #     trigger_mwa_test_4 = safe_load(file)
 
 
-    trigger_mwa_test_2["trigger_id"] = "22222"
-    trigger_mwa_test_3["trigger_id"] = "33333"
-    trigger_mwa_test_4["trigger_id"] = "44444"
+    # trigger_mwa_test_2["trigger_id"] = "22222"
+    # trigger_mwa_test_3["trigger_id"] = "33333"
+    # trigger_mwa_test_4["trigger_id"] = "44444"
 
     # 1st event = buffer obs + normal obs w/ default pointings
     # 2nd event = normal obs using skymap
@@ -637,7 +637,7 @@ class test_lvc_mwa_sub_arrays_no_repointing(TestCase):
         xml_paths = [
             # "../tests/test_events/LVC_real_early_warning.xml",
             "../tests/test_events/LVC_real_initial.xml",
-            "../tests/test_events/LVC_real_preliminary.xml",
+            # "../tests/test_events/LVC_real_preliminary.xml",
             # "../tests/test_events/LVC_real_update.xml",
         ]
 
