@@ -104,7 +104,7 @@ class EventFilter(django_filters.FilterSet):
 
 def EventList(request):
     # Apply filters
-    f = EventFilter(request.GET, queryset=models.Event.objects.all()[:300])
+    f = EventFilter(request.GET, queryset=models.Event.objects.all().filter(role="observation")[:300])
     events = f.qs
 
     for event in events:
@@ -145,6 +145,49 @@ def EventList(request):
     has_filter = any(field in request.GET for field in set(f.get_fields()))
     return render(request, 'trigger_app/voevent_list.html', {'filter': f, "page_obj": events, "poserr_unit": poserr_unit, 'has_filter': has_filter, 'min_rec': str(min_rec), 'min_obs': str(min_obs)})
 
+
+def TestEventList(request):
+    # Apply filters
+    f = EventFilter(request.GET, queryset=models.Event.objects.all().filter(role="test")[:300])
+    events = f.qs
+
+    for event in events:
+        if event.source_type == "GW":
+            if event.lvc_binary_neutron_star_probability is not None:
+                if event.lvc_binary_neutron_star_probability > 0.50:
+                    event.classification = "BNS"
+                elif event.lvc_neutron_star_black_hole_probability > 0.50:
+                    event.classification = "NSBH"
+                elif event.lvc_binary_black_hole_probability > 0.50:
+                    event.classification = "BBH"
+                elif event.lvc_terrestial_probability > 0.50:
+                    event.classification = "TERE"
+            else:
+                event.classification = "NOPROB"               
+        else: 
+            event.classification = None
+
+    # Get position error units
+    poserr_unit = request.GET.get('poserr_unit', 'deg')
+
+    # Paginate
+    page = request.GET.get('page', 1)
+    paginator = Paginator(events, 100)
+    try:
+        events = paginator.page(page)
+    except InvalidPage:
+        # if the page contains no results (EmptyPage exception) or
+        # the page number is not an integer (PageNotAnInteger exception)
+        # return the first page
+        events = paginator.page(1)
+
+    min_rec = models.Event.objects.filter().order_by(
+        'recieved_data')[:300].first().recieved_data
+    min_obs = models.Event.objects.filter().order_by(
+        'event_observed')[:300].first().event_observed
+
+    has_filter = any(field in request.GET for field in set(f.get_fields()))
+    return render(request, 'trigger_app/voevent_list.html', {'filter': f, "page_obj": events, "poserr_unit": poserr_unit, 'has_filter': has_filter, 'min_rec': str(min_rec), 'min_obs': str(min_obs)})
 
 class ProposalDecisionFilter(django_filters.FilterSet):
     # DateTimeFromToRangeFilter raises exceptions in debugger for missing _before and _after keys
@@ -196,7 +239,7 @@ def ProposalDecisionList(request):
 
 def grab_decisions_for_event_groups(event_groups):
     # For the event groups, grab all useful information like each proposal decision was
-    prop_settings = models.ProposalSettings.objects.all()
+    prop_settings = models.ProposalSettings.objects.all()[:10]
 
     telescope_list = []
     source_name_list = []
@@ -206,7 +249,7 @@ def grab_decisions_for_event_groups(event_groups):
 
     for event_group in event_groups:
         event_group_events = models.Event.objects.filter(
-            event_group_id=event_group)[:300]
+            event_group_id=event_group)[:150]
         telescope_list.append(
             ' '.join(set(event_group_events.values_list('telescope', flat=True)))
         )
@@ -227,7 +270,7 @@ def grab_decisions_for_event_groups(event_groups):
         decision_id_list = []
         for prop in prop_settings:
             this_decision = models.ProposalDecision.objects.filter(
-                event_group_id=event_group, proposal=prop)
+                event_group_id=event_group, proposal=prop)[:100]
             if this_decision.exists():
                 decision_list.append(
                     this_decision.first().get_decision_display())
@@ -328,7 +371,7 @@ def home_page(request):
 
     # Filter out ignored event groups and telescope=swift and show only the 5 most recent
     recent_event_groups_swift = models.EventGroup.objects.filter(
-        ignored=False, source_type="GRB")
+        ignored=False, source_type="GRB")[:10]
     recent_event_group_info_swift, _ = grab_decisions_for_event_groups(
         recent_event_groups_swift)
 
@@ -336,7 +379,7 @@ def home_page(request):
         lambda x: x[2] == "SWIFT", recent_event_group_info_swift)
 
     recent_event_groups_lvc = models.EventGroup.objects.filter(
-        ignored=False, source_type="GW")
+        ignored=False, source_type="GW")[:10]
     recent_event_group_info_lvc, _ = grab_decisions_for_event_groups(
         recent_event_groups_lvc)
 
@@ -349,8 +392,8 @@ def home_page(request):
         'settings': prop_settings,
         'remotes': ", ".join(settings.VOEVENT_REMOTES),
         'tcps': ", ".join(settings.VOEVENT_TCP),
-        "recent_event_groups_swift": list(recent_event_group_info_swift)[:10],
-        "recent_event_groups_lvc": list(recent_event_group_info_lvc)[:10]
+        "recent_event_groups_swift": list(recent_event_group_info_swift),
+        "recent_event_groups_lvc": list(recent_event_group_info_lvc)
     }
     return render(request, 'trigger_app/home_page.html', context)
 
