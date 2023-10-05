@@ -210,8 +210,8 @@
     {% for ob in obs %}
     {% if ob.mwa_sky_map_pointings %}
     <div style="display: flex; justify-content: center;">
-      {% if ob.obsid %}
-      <b>MWA OBSID: {{ob.obsid}}</b>
+      {% if ob.trigger_id %}
+      <b>MWA OBSID: {{ob.trigger_id}}</b>
       {% endif %}
       <img src="/media/{{ob.mwa_sky_map_pointings}}" style="object-fit: cover; width: 640px; height: 360px" width="640px"/>
     </div>

@@ -32,6 +32,7 @@ urlpatterns = [
     path('user_alert_delete/<int:id>/', views.user_alert_delete),
     path('user_alert_create/', views.user_alert_create),
     path('event_group_log/', views.EventGroupList),
+    path('test_event_group_log/', views.TestEventGroupList),
     path('event_group_details/<int:tid>/', views.EventGroup_details),
     path('event_log/', views.EventList),
     path('test_event_log/', views.TestEventList),
