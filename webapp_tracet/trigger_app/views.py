@@ -239,7 +239,7 @@ def ProposalDecisionList(request):
 
 def grab_decisions_for_event_groups(event_groups):
     # For the event groups, grab all useful information like each proposal decision was
-    prop_settings = models.ProposalSettings.objects.all()[:10]
+    prop_settings = models.ProposalSettings.objects.all()[:15]
 
     telescope_list = []
     source_name_list = []
@@ -270,7 +270,7 @@ def grab_decisions_for_event_groups(event_groups):
         decision_id_list = []
         for prop in prop_settings:
             this_decision = models.ProposalDecision.objects.filter(
-                event_group_id=event_group, proposal=prop)[:100]
+                event_group_id=event_group, proposal=prop)[:150]
             if this_decision.exists():
                 decision_list.append(
                     this_decision.first().get_decision_display())
