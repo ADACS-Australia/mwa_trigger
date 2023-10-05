@@ -310,7 +310,31 @@ def EventGroupList(request):
     if(not req.dict()):
         req = QueryDict("ignored=False&source_type=GRB&telescope=SWIFT")
 
-    f = EventGroupFilter(req, queryset=models.EventGroup.objects.distinct())
+    f = EventGroupFilter(req, queryset=models.EventGroup.objects.distinct().filter(voevent__role="observation"))
+    eventgroups = f.qs
+
+    prop_settings = models.ProposalSettings.objects.all()
+    # Paginate
+    page = request.GET.get('page', 1)
+    # zip the trigger event and the tevent_telescope_list together so I can loop over both in the html
+    paginator = Paginator(eventgroups, 100)
+    try:
+        event_group_ids_paged = paginator.page(page)
+    except InvalidPage:
+        event_group_ids_paged = paginator.page(1)
+
+    recent_triggers_info, page_obj = grab_decisions_for_event_groups(
+        event_group_ids_paged)
+
+    return render(request, 'trigger_app/event_group_list.html', {'filter': f, "trigger_info": recent_triggers_info, "settings": prop_settings, "page_obj": page_obj})
+
+def TestEventGroupList(request):
+    # Apply filters
+    req = request.GET
+    if(not req.dict()):
+        req = QueryDict("ignored=False&source_type=GRB&telescope=SWIFT")
+
+    f = EventGroupFilter(req, queryset=models.EventGroup.objects.distinct().filter(voevent__role="test"))
     eventgroups = f.qs
 
     prop_settings = models.ProposalSettings.objects.all()
