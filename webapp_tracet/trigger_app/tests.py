@@ -6,7 +6,7 @@ import pytz
 import datetime
 import requests
 
-from .models import EventGroup, Event, ProposalSettings, ProposalDecision, Observations, User
+from .models import EventGroup, Event, ProposalSettings, ProposalDecision, Observations, User, ATCAUser
 from yaml import load, Loader, safe_load
 
 from tracet.parse_xml import parsed_VOEvent
@@ -1333,7 +1333,6 @@ class test_obs_testing_option_real_only_testevent(TestCase):
         mwa_coord = SkyCoord(az=0., alt=90., unit=(
             u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
         ra_dec = mwa_coord.icrs
-        self.mwaApiArgs = []
         # Parse and upload the xml file group
         for xml in xml_paths:
             trig = parsed_VOEvent(xml)
@@ -1344,9 +1343,59 @@ class test_obs_testing_option_real_only_testevent(TestCase):
                 create_voevent_wrapper(trig, ra_dec, False)
             except Exception:
                 pass
-            self.mwaApiArgs = fake_mwa_api.call_args_list
         
     def test_trigger_groups(self):
         events = Event.objects.all()
         self.assertEqual(len(events), 1)
         self.assertEqual(len(Observations.objects.all()), 0)
+
+
+# class test_atca_http_auth(TestCase):
+#     """Tests atca http auth update
+#     """
+#     # Load default fixtures
+#     fixtures = [
+#         "default_data.yaml",
+#         "trigger_app/test_yamls/atca_grb_proposal_settings.yaml",
+#     ]
+
+#     with open('trigger_app/test_yamls/atca_test_api_response.yaml', 'r') as file:
+#         atca_test_api_response = safe_load(file)
+
+#     @patch('atca_rapid_response_api.api.send', return_value=atca_test_api_response)
+#     def setUp(self, fake_atca_api):
+#         xml_paths = [
+#             "../tests/test_events/group_02_SWIFT_01_BAT_GRB_Pos.xml",
+#             "../tests/test_events/group_02_SWIFT_02_XRT_Pos.xml",
+#             "../tests/test_events/group_02_SWIFT_03_UVOT_Pos.xml",
+#         ]
+
+#         # Setup current RA and Dec at zenith for the MWA
+#         MWA = EarthLocation(lat='-26:42:11.95',
+#                             lon='116:40:14.93', height=377.8 * u.m)
+#         mwa_coord = SkyCoord(az=0., alt=90., unit=(
+#             u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
+#         ra_dec = mwa_coord.icrs
+        
+#         self.atcaApiArgs = []
+
+#         ATCAUser.objects.create(
+#             httpAuthUsername="atcaUserName",
+#             httpAuthPassword="atcaUserPassword"
+#         )
+
+       
+#         # Parse and upload the xml file group
+#         for xml in xml_paths:
+#             trig = parsed_VOEvent(xml)
+#             create_voevent_wrapper(trig, ra_dec)
+#             args, kwargs = fake_atca_api.call_args
+#             print(args)
+#             print(kwargs)
+#             self.atcaApiArgs.append(args)
+
+
+#     def test_trigger_groups(self):
+#         # Check there are three Events that were grouped as one by the trigger ID
+#         self.assertEqual(len(Event.objects.all()), 3)
+#         print(self.atcaApiArgs)
