@@ -440,3 +440,9 @@ class Observations(models.Model):
     event = models.ForeignKey(
         Event, on_delete=models.SET_NULL, blank=True, null=True)
     mwa_response = models.JSONField(blank=True, null=True)
+
+class ATCAUser(models.Model):
+    id = models.AutoField(primary_key=True)
+    httpAuthUsername = models.CharField(max_length=128)
+    httpAuthPassword = models.CharField(max_length=128)
+   

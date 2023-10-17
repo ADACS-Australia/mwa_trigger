@@ -10,8 +10,9 @@ from astropy.table import Table
 import atca_rapid_response_api as arrApi
 from astropy.utils.data import download_file
 from tracet.triggerservice import trigger
-from .models import Observations, Event, TRIGGER_ON
+from .models import Observations, Event, TRIGGER_ON, ATCAUser
 from django.core.files import File 
+import os
 
 import logging
 logger = logging.getLogger(__name__)
@@ -653,6 +654,12 @@ def trigger_atca_observation(
     rapidObj["authenticationToken"] = prop_obj.project_id.password
     rapidObj["email"] = prop_obj.project_id.atca_email
     trigger_real_pretend = TRIGGER_ON[0][0]
+
+
+    user = ATCAUser.objects.all().first()
+
+    rapidObj['httpAuthUsername'] = user.httpAuthUsername
+    rapidObj['httpAuthPassword'] = user.httpAuthPassword
 
     if prop_obj.testing == trigger_real_pretend:
         rapidObj["test"] = True
