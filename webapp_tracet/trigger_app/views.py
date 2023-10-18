@@ -249,7 +249,7 @@ def grab_decisions_for_event_groups(event_groups):
 
     for event_group in event_groups:
         event_group_events = models.Event.objects.filter(
-            event_group_id=event_group)[:150]
+            event_group_id=event_group)[:300]
         telescope_list.append(
             ' '.join(set(event_group_events.values_list('telescope', flat=True)))
         )
@@ -270,7 +270,7 @@ def grab_decisions_for_event_groups(event_groups):
         decision_id_list = []
         for prop in prop_settings:
             this_decision = models.ProposalDecision.objects.filter(
-                event_group_id=event_group, proposal=prop)[:150]
+                event_group_id=event_group, proposal=prop)[:300]
             if this_decision.exists():
                 decision_list.append(
                     this_decision.first().get_decision_display())
@@ -395,7 +395,7 @@ def home_page(request):
 
     # Filter out ignored event groups and telescope=swift and show only the 5 most recent
     recent_event_groups_swift = models.EventGroup.objects.filter(
-        ignored=False, source_type="GRB")[:10]
+        ignored=False, source_type="GRB")[:20]
     recent_event_group_info_swift, _ = grab_decisions_for_event_groups(
         recent_event_groups_swift)
 
