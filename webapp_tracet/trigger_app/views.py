@@ -395,7 +395,7 @@ def home_page(request):
 
     # Filter out ignored event groups and telescope=swift and show only the 5 most recent
     recent_event_groups_swift = models.EventGroup.objects.filter(
-        ignored=False, source_type="GRB")[:20]
+        ignored=False, source_type="GRB")[:1]
     recent_event_group_info_swift, _ = grab_decisions_for_event_groups(
         recent_event_groups_swift)
 
