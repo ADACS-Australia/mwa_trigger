@@ -80,9 +80,10 @@ class UserAlertsAdmin(admin.ModelAdmin):
 
             
 class AtcaForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput())
+    httpAuthPassword = forms.CharField(widget=forms.PasswordInput())
     class Meta:
         model = ATCAUser
+        fields = '__all__'
 
 class AtcaAdmin(admin.ModelAdmin):
     form = AtcaForm
@@ -100,4 +101,4 @@ admin.site.register(ProposalDecision)
 admin.site.register(Telescope)
 admin.site.register(Status)
 admin.site.register(Observations)
-admin.site.register(AtcaAdmin)
+admin.site.register(ATCAUser, AtcaAdmin)
