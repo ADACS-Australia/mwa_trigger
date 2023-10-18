@@ -10,6 +10,7 @@ from astropy.time import Time
 
 from tracet.triggerservice import trigger
 import atca_rapid_response_api as arrApi
+from .models import ATCAUser
 
 logger = logging.getLogger(__name__)
 
@@ -242,6 +243,11 @@ def atca_proposal_id(project_id, secure_key, atca_email):
     rapidObj["test"] = True
     rapidObj["noTimeLimit"] = True
     rapidObj["noScoreLimit"] = True
+
+    user = ATCAUser.objects.all().first()
+
+    rapidObj['httpAuthUsername'] = user.httpAuthUsername
+    rapidObj['httpAuthPassword'] = user.httpAuthPassword
 
     request = arrApi.api(rapidObj)
     try:
