@@ -20,7 +20,7 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
-from . import models, serializers, forms, signals, ATCAUser
+from . import models, serializers, forms, signals
 from .telescope_observe import trigger_observation
 from django.views.generic import View
 import sys
@@ -830,7 +830,7 @@ def cancel_atca_observation(request, id=None):
     rapidObj["authenticationToken"] = proposal_settings.project_id.password
     rapidObj["email"] = proposal_settings.project_id.atca_email
 
-    user = ATCAUser.objects.all().first()
+    user = models.ATCAUser.objects.all().first()
 
     rapidObj['httpAuthUsername'] = user.httpAuthUsername
     rapidObj['httpAuthPassword'] = user.httpAuthPassword
