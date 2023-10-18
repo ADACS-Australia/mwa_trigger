@@ -396,7 +396,7 @@ def home_page(request):
     req = QueryDict("ignored=False&source_type=GRB&telescope=SWIFT")
 
     f = EventGroupFilter(req, queryset=models.EventGroup.objects.distinct().filter(voevent__role="observation"))
-    recent_event_groups_swift = f.qs[:20]
+    recent_event_groups_swift = f.qs[:10]
 
 
     # Filter out ignored event groups and telescope=swift and show only the 5 most recent
