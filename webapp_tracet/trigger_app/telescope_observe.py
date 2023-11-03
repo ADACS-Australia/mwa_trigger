@@ -372,14 +372,13 @@ def trigger_observation(
         if repoint is not False and latestVoevent.lvc_skymap_fits != None and mwa_sub_arrays != None:
             filepath = subArrayMWAPointings(skymap=skymap, time=time, name=latestVoevent.trig_id, pointings=pointings)
             print(f"Debug -  Saving SKYMAP sub array observation")
-            decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Making a SKYMAP sub array observation. \n"
+            decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Saving repointing MWA observation with a SKYMAP sub array. \n"
             saved_obs_2 = Observations.objects.create(
                 trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
                 telescope=proposal_decision_model.proposal.telescope,
                 proposal_decision_id=proposal_decision_model,
                 reason=reason,
                 website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
-                mwa_sub_arrays=mwa_sub_arrays,
                 mwa_sky_map_pointings=f"mwa_pointings/{filepath}",
                 event=latestVoevent,
                 mwa_response=result
@@ -390,7 +389,7 @@ def trigger_observation(
         # Create new obsid model
         elif repoint is not False: 
             print(f"Debug -  Saving DEFAULT sub array observation")
-            decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Making a DEFAULT sub array observation. \n"
+            decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Saving non-repointing MWA observation. \n"
             Observations.objects.create(
                 trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
                 telescope=proposal_decision_model.proposal.telescope,
