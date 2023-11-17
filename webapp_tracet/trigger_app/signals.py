@@ -356,6 +356,13 @@ def proposal_worth_observing(
         logger.info(
             'Check if you can observe and if so send off the observation')
         print("DEBUG - Trigger observation")
+        if  prop_dec.proposal.source_type == "GW":
+            timeDiff = datetime.datetime.now(datetime.timezone.utc) - voevent.event_observed
+            if (voevent.event_type == "Early Warning" or  voevent.event_type == "Retraction" ) and  prop_dec.proposal.early_observation_time_seconds - timeDiff.total_seconds() > 0:
+                prop_dec.proposal.mwa_exptime = prop_dec.proposal.early_observation_time_seconds - timeDiff.total_seconds()
+            elif prop_dec.proposal.mwa_exptime - timeDiff.total_seconds() > 0:
+                prop_dec.proposal.mwa_exptime = prop_dec.proposal.mwa_exptime - timeDiff.total_seconds()
+
         try:
             decision, decision_reason_log = trigger_observation(
                 prop_dec,
@@ -369,14 +376,16 @@ def proposal_worth_observing(
             decision = 'E'
         print("DEBUG - trigger_observation result")
         print(decision, decision_reason_log)
-        if decision == 'E':
-            # Error observing so send off debug
-            debug_bool = True
+    if decision == 'E':
+        # Error observing so send off debug
+        debug_bool = True
     elif pending_bool:
         # Send off a pending decision
         decision = 'P'
+    elif voevent.event_type and voevent.event_type == "Retraction" and prop_dec.decision:
+        decision = prop_dec.decision
     else:
-        decision = 'I'
+        decision = "I"
 
     # Update proposal decision and log
     prop_dec.decision = decision

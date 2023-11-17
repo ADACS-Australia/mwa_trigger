@@ -19,6 +19,11 @@
     lon: 149.550278
     lat: -30.312778
     height: 237.0
+- model: trigger_app.ATCAUser
+  pk: 1
+  fields:
+    httpAuthUsername: ATCA
+    httpAuthPassword: test
 - model: trigger_app.EventTelescope
   pk: 1
   fields:

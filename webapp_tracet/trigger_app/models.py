@@ -81,6 +81,9 @@ class ProposalSettings(models.Model):
                                    help_text="A short identifier of the proposal of maximum lenth 16 charcters.")
     proposal_description = models.CharField(
         max_length=513, help_text="A brief description of the proposal. Only needs to be enough to distinguish it from the other proposals.")
+    
+    maximum_observation_time_minutes = models.IntegerField(
+        help_text="Set maximum observation time based off event time e.g. event 30 min ago when set to 120 will only allow a max observation of 90 mins with events older than 120 mins will be ignored. Setting to 0 disables this check", default=0)
     priority = models.IntegerField(
         help_text="Set proposal processing priority (lower is better)", default=1)
 
@@ -122,6 +125,8 @@ class ProposalSettings(models.Model):
                                                          help_text="PROB_NS - probability that at least one object in the binary has a mass that is less than 3 solar masses", default=1)
 
     # GW event probs
+    early_observation_time_seconds = models.IntegerField(
+        help_text="This is the observation time for early warning and preliminary notices, for MWA will use n=1", default=900)
     minimum_binary_neutron_star_probability = models.FloatField(
         verbose_name="Minimum probability for event to be BNS", help_text="", default=0.01)
     maximum_binary_neutron_star_probability = models.FloatField(

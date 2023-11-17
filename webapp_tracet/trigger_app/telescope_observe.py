@@ -657,7 +657,7 @@ def trigger_atca_observation(
 
     user = ATCAUser.objects.all().first()
 
-    rapidObj['httpAuthUsername'] = user.httpAuthUsername
+    rapidObj['httpAuthUsername'] = user.httpAuthUsername 
     rapidObj['httpAuthPassword'] = user.httpAuthPassword
 
     if prop_obj.testing == trigger_real_pretend:
