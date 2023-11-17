@@ -318,17 +318,20 @@ def worth_observing_gw(
 
  
     # Check alert is less than 3 hours from the event time
-    three_hours_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=3)
-    
+    three_hours_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=2)
+
+    if telescope == "LVC" and event_type == "EarlyWarning":
+        trigger_bool = True
+        lvc_binary_neutron_star_probability = 0.97
+        lvc_neutron_star_black_hole_probability = 0.01
+        lvc_binary_black_hole_probability = 0.01
+        lvc_terrestial_probability = 0.01
     if(event_observed < three_hours_ago):
         debug_bool = True
         decision_reason_log += f'{datetime.datetime.utcnow()}: Event ID {event_id}: The event time {event_observed.strftime("%Y-%m-%dT%H:%M:%S+0000")} is more than 3 hours ago {three_hours_ago.strftime("%Y-%m-%dT%H:%M:%S+0000")} so not triggering. \n'
     elif(lvc_instruments != None and len(lvc_instruments.split(',')) < 2):
         debug_bool = True
         decision_reason_log += f'{datetime.datetime.utcnow()}: Event ID {event_id}: The event has only {lvc_instruments} so not triggering. \n'
-    elif telescope == "LVC" and event_type == "EarlyWarning":
-        trigger_bool = True
-        decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: Early warning, no information so triggering. \n"
     elif telescope == "LVC" and event_type == "Retraction":
         debug_bool = True
         decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: Retraction, scheduling no capture observation (WIP, ignoring for now). \n"
