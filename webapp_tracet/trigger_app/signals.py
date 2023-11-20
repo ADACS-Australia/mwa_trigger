@@ -376,9 +376,9 @@ def proposal_worth_observing(
             decision = 'E'
         print("DEBUG - trigger_observation result")
         print(decision, decision_reason_log)
-    if decision == 'E':
-        # Error observing so send off debug
-        debug_bool = True
+        if decision == 'E':
+            # Error observing so send off debug
+            debug_bool = True
     elif pending_bool:
         # Send off a pending decision
         decision = 'P'
