@@ -233,8 +233,8 @@
         {% else %}
         <td>Not Avail</td>
         {% endif %}
-        {% if ob.mwa_response is not None and  ob.mwa_response.params.exptime is not None %}
-        <td>{{ ob.mwa_response.params.nobs }} * {{ ob.mwa_response.params.exptime }}s</td>
+        <!-- {% if ob.mwa_response is not None and  ob.mwa_response.params.exptime is not None %}
+        <td>{{ ob.mwa_response.params.nobs }} * {{ ob.mwa_response.params.exptime }}s</td> -->
         {% elif ob.mwa_response is not None and ob.mwa_response.params.obstime is not None %}
         <td>{{ ob.mwa_response.params.obstime }}</td>
         {% else %}
