@@ -104,7 +104,7 @@ class EventFilter(django_filters.FilterSet):
 
 def EventList(request):
     # Apply filters
-    f = EventFilter(request.GET, queryset=models.Event.objects.all().filter(role="observation")[:300])
+    f = EventFilter(request.GET, queryset=models.Event.objects.all().filter(role="observation"))
     events = f.qs
 
     for event in events:
@@ -138,9 +138,9 @@ def EventList(request):
         events = paginator.page(1)
 
     min_rec = models.Event.objects.filter().order_by(
-        'recieved_data')[:300].first().recieved_data
+        'recieved_data').first().recieved_data
     min_obs = models.Event.objects.filter().order_by(
-        'event_observed')[:300].first().event_observed
+        'event_observed').first().event_observed
 
     has_filter = any(field in request.GET for field in set(f.get_fields()))
     return render(request, 'trigger_app/voevent_list.html', {'filter': f, "page_obj": events, "poserr_unit": poserr_unit, 'has_filter': has_filter, 'min_rec': str(min_rec), 'min_obs': str(min_obs)})
@@ -148,7 +148,7 @@ def EventList(request):
 
 def TestEventList(request):
     # Apply filters
-    f = EventFilter(request.GET, queryset=models.Event.objects.all().filter(role="test")[:300])
+    f = EventFilter(request.GET, queryset=models.Event.objects.all().filter(role="test"))
     events = f.qs
 
     for event in events:
@@ -182,9 +182,9 @@ def TestEventList(request):
         events = paginator.page(1)
 
     min_rec = models.Event.objects.filter().order_by(
-        'recieved_data')[:300].first().recieved_data
+        'recieved_data').first().recieved_data
     min_obs = models.Event.objects.filter().order_by(
-        'event_observed')[:300].first().event_observed
+        'event_observed').first().event_observed
 
     has_filter = any(field in request.GET for field in set(f.get_fields()))
     return render(request, 'trigger_app/voevent_list.html', {'filter': f, "page_obj": events, "poserr_unit": poserr_unit, 'has_filter': has_filter, 'min_rec': str(min_rec), 'min_obs': str(min_obs)})
@@ -249,7 +249,7 @@ def grab_decisions_for_event_groups(event_groups):
 
     for event_group in event_groups:
         event_group_events = models.Event.objects.filter(
-            event_group_id=event_group)[:300]
+            event_group_id=event_group)
         telescope_list.append(
             ' '.join(set(event_group_events.values_list('telescope', flat=True)))
         )
@@ -270,7 +270,7 @@ def grab_decisions_for_event_groups(event_groups):
         decision_id_list = []
         for prop in prop_settings:
             this_decision = models.ProposalDecision.objects.filter(
-                event_group_id=event_group, proposal=prop)[:300]
+                event_group_id=event_group, proposal=prop)
             if this_decision.exists():
                 decision_list.append(
                     this_decision.first().get_decision_display())
@@ -442,7 +442,7 @@ def EventGroup_details(request, tid):
     event_group = models.EventGroup.objects.get(id=tid)
 
     # grab telescope names
-    events = models.Event.objects.filter(event_group_id=event_group)[:300]
+    events = models.Event.objects.filter(event_group_id=event_group)
     telescopes = ' '.join(set(events.values_list('telescope', flat=True)))
 
     for event in events:
@@ -492,7 +492,7 @@ def ProposalDecision_details(request, id):
 
     # Work out all the telescopes that observed the event
     events = models.Event.objects.filter(
-        event_group_id=prop_dec.event_group_id)[:300]
+        event_group_id=prop_dec.event_group_id)
     telescopes = []
     event_types = []
 
