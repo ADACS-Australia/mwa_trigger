@@ -356,13 +356,24 @@ def proposal_worth_observing(
         logger.info(
             'Check if you can observe and if so send off the observation')
         print("DEBUG - Trigger observation")
+        def round_to_nearest_modulo_8(number):
+            """Rounds a number to the nearest modulo of 8."""
+            remainder = number % 8
+            if remainder >= 4:
+                rounded_number = number + (8 - remainder)
+            else:
+                rounded_number = number - remainder
+            return rounded_number
+
         if  prop_dec.proposal.source_type == "GW":
             timeDiff = datetime.datetime.now(datetime.timezone.utc) - voevent.event_observed
-            if (voevent.event_type == "Early Warning" or  voevent.event_type == "Retraction" ) and  prop_dec.proposal.early_observation_time_seconds - timeDiff.total_seconds() > 0:
-                prop_dec.proposal.mwa_exptime = prop_dec.proposal.early_observation_time_seconds - timeDiff.total_seconds()
+            if (voevent.event_type == "Early Warning" ) and (prop_dec.proposal.early_observation_time_seconds - timeDiff.total_seconds()) > 0:
+                prop_dec.proposal.mwa_exptime = prop_dec.proposal.early_observation_time_seconds
+                observation_reason = f"Early warning so using ealy obs time of {prop_dec.proposal.early_observation_time_seconds}"
             elif prop_dec.proposal.mwa_exptime - timeDiff.total_seconds() > 0:
-                prop_dec.proposal.mwa_exptime = prop_dec.proposal.mwa_exptime - timeDiff.total_seconds()
-
+                newTime = round_to_nearest_modulo_8(prop_dec.proposal.mwa_exptime - timeDiff.total_seconds())
+                observation_reason = f"Event time {voevent.event_observed}, time ago in seconds {timeDiff.total_seconds()}, so adjusting original exp time {prop_dec.proposal.mwa_exptime} to {newTime}"
+                prop_dec.proposal.mwa_exptime = newTime
         try:
             decision, decision_reason_log = trigger_observation(
                 prop_dec,

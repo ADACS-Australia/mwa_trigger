@@ -615,15 +615,15 @@ class test_lvc_mwa_sub_arrays_no_repointing(TestCase):
     with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
         trigger_mwa_test_2 = safe_load(file)
 
-    # with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
-    #     trigger_mwa_test_3 = safe_load(file)
+    with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
+        trigger_mwa_test_3 = safe_load(file)
 
     # with open('trigger_app/test_yamls/trigger_mwa_test.yaml', 'r') as file:
     #     trigger_mwa_test_4 = safe_load(file)
 
 
     trigger_mwa_test_2["trigger_id"] = "22222"
-    # trigger_mwa_test_3["trigger_id"] = "33333"
+    trigger_mwa_test_3["trigger_id"] = "33333"
     # trigger_mwa_test_4["trigger_id"] = "44444"
 
     # 1st event = buffer obs + normal obs w/ default pointings
@@ -632,14 +632,15 @@ class test_lvc_mwa_sub_arrays_no_repointing(TestCase):
     # 4th event = normal obs using skymap if position changes
 
     @patch('trigger_app.telescope_observe.trigger', side_effect=[trigger_mwa_test_buffer, trigger_mwa_test_1, trigger_mwa_test_2, 
-                                                                #  trigger_mwa_test_3, trigger_mwa_test_4
+                                                                 trigger_mwa_test_3, 
+                                                                # trigger_mwa_test_4
                                                                  ])
     def setUp(self, patched_mwa_api):
     # def setUp(self):
         xml_paths = [
             "../tests/test_events/LVC_real_early_warning.xml",
             "../tests/test_events/LVC_real_preliminary.xml",
-            # "../tests/test_events/LVC_real_initial.xml",
+            "../tests/test_events/LVC_real_initial.xml",
             # "../tests/test_events/LVC_real_update.xml",
         ]
 
@@ -653,7 +654,7 @@ class test_lvc_mwa_sub_arrays_no_repointing(TestCase):
         for xml in xml_paths:
             trig = parsed_VOEvent(xml)
             trig.event_observed = datetime.datetime.now(
-                pytz.UTC) - datetime.timedelta(hours=0.1)
+                pytz.UTC) - datetime.timedelta(seconds=360)
             print(trig.trig_id)
             if(trig.ra and trig.dec):
                 create_voevent_wrapper(trig, ra_dec)
@@ -671,14 +672,15 @@ class test_lvc_mwa_sub_arrays_no_repointing(TestCase):
         # # Check event was made
         # self.assertEqual(True, True)
 
-        self.assertEqual(len(Event.objects.all()),2)
+        self.assertEqual(len(Event.objects.all()),3)
         # time.sleep(100)
         # # Early warning is a different event
         # self.assertEqual(len(EventGroup.objects.all()), 1)
         obs = Observations.objects.all()
-        self.assertEqual(len(obs), 3)
+        self.assertEqual(len(obs), 4)
         for ob in obs:
             print(ob.trigger_id)
+            print(ob.reason)
         # self.assertEqual(ProposalDecision.objects.filter(
         #     proposal__telescope__name='MWA_VCS').first().decision, 'TT')
         # self.assertEqual(ProposalDecision.objects.filter(
@@ -1415,52 +1417,52 @@ class test_obs_testing_option_real_only_testevent(TestCase):
         self.assertEqual(len(Observations.objects.all()), 0)
 
 
-# class test_atca_http_auth(TestCase):
-#     """Tests atca http auth update
-#     """
-#     # Load default fixtures
-#     fixtures = [
-#         "default_data.yaml",
-#         "trigger_app/test_yamls/atca_grb_proposal_settings.yaml",
-#     ]
+class test_atca_http_auth(TestCase):
+    """Tests atca http auth update
+    """
+    # Load default fixtures
+    fixtures = [
+        "default_data.yaml",
+        "trigger_app/test_yamls/atca_grb_proposal_settings.yaml",
+    ]
 
-#     with open('trigger_app/test_yamls/atca_test_api_response.yaml', 'r') as file:
-#         atca_test_api_response = safe_load(file)
+    with open('trigger_app/test_yamls/atca_test_api_response.yaml', 'r') as file:
+        atca_test_api_response = safe_load(file)
 
-#     @patch('atca_rapid_response_api.api.send', return_value=atca_test_api_response)
-#     def setUp(self, fake_atca_api):
-#         xml_paths = [
-#             "../tests/test_events/group_02_SWIFT_01_BAT_GRB_Pos.xml",
-#             "../tests/test_events/group_02_SWIFT_02_XRT_Pos.xml",
-#             "../tests/test_events/group_02_SWIFT_03_UVOT_Pos.xml",
-#         ]
+    @patch('atca_rapid_response_api.api.send', return_value=atca_test_api_response)
+    def setUp(self, fake_atca_api):
+        xml_paths = [
+            "../tests/test_events/group_02_SWIFT_01_BAT_GRB_Pos.xml",
+            "../tests/test_events/group_02_SWIFT_02_XRT_Pos.xml",
+            "../tests/test_events/group_02_SWIFT_03_UVOT_Pos.xml",
+        ]
 
-#         # Setup current RA and Dec at zenith for the MWA
-#         MWA = EarthLocation(lat='-26:42:11.95',
-#                             lon='116:40:14.93', height=377.8 * u.m)
-#         mwa_coord = SkyCoord(az=0., alt=90., unit=(
-#             u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
-#         ra_dec = mwa_coord.icrs
+        # Setup current RA and Dec at zenith for the MWA
+        MWA = EarthLocation(lat='-26:42:11.95',
+                            lon='116:40:14.93', height=377.8 * u.m)
+        mwa_coord = SkyCoord(az=0., alt=90., unit=(
+            u.deg, u.deg), frame='altaz', obstime=Time.now(), location=MWA)
+        ra_dec = mwa_coord.icrs
         
-#         self.atcaApiArgs = []
+        self.atcaApiArgs = []
 
-#         ATCAUser.objects.create(
-#             httpAuthUsername="atcaUserName",
-#             httpAuthPassword="atcaUserPassword"
-#         )
+        ATCAUser.objects.create(
+            httpAuthUsername="atcaUserName",
+            httpAuthPassword="atcaUserPassword"
+        )
 
        
-#         # Parse and upload the xml file group
-#         for xml in xml_paths:
-#             trig = parsed_VOEvent(xml)
-#             create_voevent_wrapper(trig, ra_dec)
-#             args, kwargs = fake_atca_api.call_args
-#             print(args)
-#             print(kwargs)
-#             self.atcaApiArgs.append(args)
+        # Parse and upload the xml file group
+        for xml in xml_paths:
+            trig = parsed_VOEvent(xml)
+            create_voevent_wrapper(trig, ra_dec)
+            args, kwargs = fake_atca_api.call_args
+            print(args)
+            print(kwargs)
+            self.atcaApiArgs.append(args)
 
 
-#     def test_trigger_groups(self):
-#         # Check there are three Events that were grouped as one by the trigger ID
-#         self.assertEqual(len(Event.objects.all()), 3)
-#         print(self.atcaApiArgs)
+    def test_trigger_groups(self):
+        # Check there are three Events that were grouped as one by the trigger ID
+        self.assertEqual(len(Event.objects.all()), 3)
+        print(self.atcaApiArgs)
