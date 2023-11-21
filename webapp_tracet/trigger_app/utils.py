@@ -98,6 +98,7 @@ def getMWAPointingsFromSkymapFile(skymap):
 
 
 def drawMWAPointings(skymap, time, name, pointings: List[PointingVar]):
+    plt.close('all')
     with open(MWA_SPOTS, 'r') as file:
         lines = file.readlines()
         data = []
