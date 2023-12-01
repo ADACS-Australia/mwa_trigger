@@ -68,7 +68,7 @@
         <th>Source Type</th>
         <th>Telescope</th>
         <th>Event Type</th>
-        <th>Alert Time (UTC)</th>
+        <th>Event Time (UTC)</th>
         <th>Recieved (UTC)</th>
         <th>Trig ID</th>
         <th>Source Name</th>
@@ -143,7 +143,10 @@
           <th>Telescope</th>
           <th>Event Type</th>
           <th>Trig Source</th>
-          <th>Alert Time (UTC)</th>
+          <th>Event Time (UTC)</th>
+          <th>MWA Trigger Sent Time (UTC)</th>
+          <th>MWA Obs start time (UTC)</th>
+
           <th>Duration</th>
           <th>Proposal Decision ID</th>
           <th>Proposal</th>
@@ -173,6 +176,16 @@
         {% endif %}
         {% if ob.event is not None %}
         <td>{{ ob.event.trig_id }}</td>
+        {% else %}
+        <td>Not Avail</td>
+        {% endif %}
+        {% if ob.event is not None %}
+        <td>{{ ob.event.event_observed|date:"Y-m-d H:i:s" }}</td>
+        {% else %}
+        <td>Not Avail</td>
+        {% endif %}
+        {% if ob.event is not None %}
+        <td>{{ ob.event.event_observed|date:"Y-m-d H:i:s" }}</td>
         {% else %}
         <td>Not Avail</td>
         {% endif %}

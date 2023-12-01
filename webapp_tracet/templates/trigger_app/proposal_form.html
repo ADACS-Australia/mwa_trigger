@@ -33,6 +33,7 @@
         {% for error in form.proposal_description.errors %}<div class="alert alert-danger"><strong>{{ error|escape }}</strong></div>{% endfor %}
 
         <hr>
+        <p>{{ form.maximum_observation_time_seconds.label_tag }} {% help_wrap form.maximum_observation_time_seconds.help_text %}{{ form.maximum_observation_time_seconds }}</p>
         <p>{{ form.priority.label_tag }} {% help_wrap form.priority.help_text %}{{ form.priority }}</p>
 
         {{ form.source_type.label_tag }}{{ form.source_type }}
@@ -93,10 +94,10 @@
             </table>
             <h4>Event type</h4>
             <table>
-                <tr><td>Trigger on probability event source is a binary neutron star (% range)  {% help_wrap 'PROB_BNS - probability the source is BNS' %}</td><td>{{ form.minimum_binary_neutron_star_probability }}</td><td>{{ form.maximum_binary_neutron_star_probability }}</td></tr>
-                <tr><td>Trigger on probability event source is a neutron star black hole (% range)  {% help_wrap 'PROB_NSBH - probability the source is NSBH' %}</td><td>{{ form.minimum_neutron_star_black_hole_probability }}</td><td>{{ form.maximum_neutron_star_black_hole_probability }}</td></tr>
-                <tr><td>Trigger on probability event source is a binary black hole (% range)  {% help_wrap 'PROB_BBH - probability the source is BBH' %}</td><td>{{ form.minimum_binary_black_hole_probability }}</td><td>{{ form.maximum_binary_black_hole_probability }}</td></tr>
-                <tr><td>Trigger on probability event source is terrerstrial etc  (% range)  {% help_wrap 'PROB_TERRES - probability the source is terrestrial (i.e., a background noise fluctuation or a glitch)' %}</td><td>{{ form.minimum_terrestial_probability }}</td><td>{{ form.maximum_terrestial_probability }}</td></tr>
+                <tr><td>Trigger on probability event source is a binary neutron star (% range)  {% help_wrap 'PROB_BNS - probability the source is BNS, is always 0.97 on early warning' %}</td><td>{{ form.minimum_binary_neutron_star_probability }}</td><td>{{ form.maximum_binary_neutron_star_probability }}</td></tr>
+                <tr><td>Trigger on probability event source is a neutron star black hole (% range)  {% help_wrap 'PROB_NSBH - probability the source is NSBH, is always 0.01 on early warning' %}</td><td>{{ form.minimum_neutron_star_black_hole_probability }}</td><td>{{ form.maximum_neutron_star_black_hole_probability }}</td></tr>
+                <tr><td>Trigger on probability event source is a binary black hole (% range)  {% help_wrap 'PROB_BBH - probability the source is BBH, is always 0.01 on early warning' %}</td><td>{{ form.minimum_binary_black_hole_probability }}</td><td>{{ form.maximum_binary_black_hole_probability }}</td></tr>
+                <tr><td>Trigger on probability event source is terrerstrial etc  (% range)  {% help_wrap 'PROB_TERRES - probability the source is terrestrial (i.e., a background noise fluctuation or a glitch), is always 0.01 on early warning' %}</td><td>{{ form.minimum_terrestial_probability }}</td><td>{{ form.maximum_terrestial_probability }}</td></tr>
             </table>
         </div> 
 
@@ -115,6 +116,7 @@
         </table>
         <div id="mwa">
             <p id="mwa_gw">{{ form.start_observation_at_high_sensitivity.label_tag }}{% help_wrap form.start_observation_at_high_sensitivity.help_text %}{{ form.start_observation_at_high_sensitivity }}</p>
+            <p id="mwa_gw">{{ form.early_observation_time_seconds.label_tag }}{% help_wrap form.early_observation_time_seconds.help_text %}{{ form.early_observation_time_seconds }}</p>
             <table id="mwa_gw_sub">
                 <tr>
                     <td>{{ form.mwa_sub_alt_NE.label_tag }}{% help_wrap form.mwa_sub_alt_NE.help_text %}
@@ -145,7 +147,6 @@
             <table>
                 <tr><td>{{ form.mwa_freqspecs.label_tag }}  {% help_wrap form.mwa_freqspecs.help_text %}</td>  <td>{{ form.mwa_freqspecs }}</td></tr>
                 <tr><td>{{ form.mwa_exptime.label_tag }}    {% help_wrap form.mwa_exptime.help_text %}</td>    <td>{{ form.mwa_exptime }}</td></tr>
-                <tr><td>{{ form.mwa_nobs.label_tag }}       {% help_wrap form.mwa_nobs.help_text %}</td>       <td>{{ form.mwa_nobs }}</td></tr>
                 <tr><td>{{ form.mwa_calexptime.label_tag }} {% help_wrap form.mwa_calexptime.help_text %}</td> <td>{{ form.mwa_calexptime }}</td></tr>
                 <tr><td>{{ form.mwa_horizon_limit.label_tag }}  {% help_wrap form.mwa_horizon_limit.help_text %}</td>  <td>{{ form.mwa_horizon_limit }}</td></tr>
                 {% for error in form.mwa_horizon_limit.errors %}<div class="alert alert-danger"><strong>{{ form.mwa_horizon_limit.label_tag }}{{ error|escape }}</strong></div>{% endfor %}
@@ -153,7 +154,6 @@
         </div>
         <div id="mwa_corr">
             <table>
-                <tr><td>{{ form.mwa_nobs.label_tag }}       {% help_wrap form.mwa_nobs.help_text %}</td>       <td>{{ form.mwa_nobs }}</td></tr>
                 <tr><td>{{ form.mwa_freqres.label_tag }}    {% help_wrap form.mwa_freqres.help_text %}</td>    <td>{{ form.mwa_freqres }}</td></tr>
                 <tr><td>{{ form.mwa_inttime.label_tag }}    {% help_wrap form.mwa_inttime.help_text %}</td>    <td>{{ form.mwa_inttime }}</td></tr>
             </table>
