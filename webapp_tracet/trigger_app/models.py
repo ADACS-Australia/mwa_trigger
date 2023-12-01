@@ -82,8 +82,8 @@ class ProposalSettings(models.Model):
     proposal_description = models.CharField(
         max_length=513, help_text="A brief description of the proposal. Only needs to be enough to distinguish it from the other proposals.")
     
-    maximum_observation_time_minutes = models.IntegerField(
-        help_text="Set maximum observation time based off event time e.g. event 30 min ago when set to 120 will only allow a max observation of 90 mins with events older than 120 mins will be ignored. Setting to 0 disables this check", default=0)
+    maximum_observation_time_seconds = models.IntegerField(
+        help_text="Set maximum observation time based off event time e.g. event 30 min ago when set to 7200 (2hrs) will only allow a max observation of 90 mins with events older than 120 mins will be ignored. Setting to 0 disables this check", default=0)
     priority = models.IntegerField(
         help_text="Set proposal processing priority (lower is better)", default=1)
 
@@ -126,7 +126,7 @@ class ProposalSettings(models.Model):
 
     # GW event probs
     early_observation_time_seconds = models.IntegerField(
-        help_text="This is the observation time for early warning and preliminary notices, for MWA will use n=1", default=900)
+        help_text="This is the observation time for GW early warning and preliminary notices, please be a multiple of the MWA exp time", default=900)
     minimum_binary_neutron_star_probability = models.FloatField(
         verbose_name="Minimum probability for event to be BNS", help_text="", default=0.01)
     maximum_binary_neutron_star_probability = models.FloatField(
@@ -179,8 +179,6 @@ class ProposalSettings(models.Model):
 
     mwa_freqspecs = models.CharField(default="144,24", max_length=260, verbose_name="MWA frequency specifications",
                                      help_text="The frequency channels IDs for the MWA to observe at.")
-    mwa_nobs = models.IntegerField(
-        default=1, verbose_name="Number of Observations", help_text="The number of observations to schedule.")
     mwa_exptime = models.IntegerField(default=896, verbose_name="Observation time (s)",
                                       help_text="Exposure time of each observation scheduled, in seconds (must be modulo-8 seconds).")
     mwa_calexptime = models.FloatField(default=120., verbose_name="Calibrator Observation time (s)",
