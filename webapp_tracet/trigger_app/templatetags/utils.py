@@ -1,5 +1,7 @@
+import datetime
 from urllib.parse import urlencode
 from collections import OrderedDict
+from astropy.time import Time
 
 from django import template
 from django.utils.safestring import mark_safe
@@ -39,3 +41,12 @@ def help_wrap(title, *args, **kwargs):
 @register.filter
 def index(indexable, i):
     return indexable[i]
+
+@register.filter
+def print_timestamp(timestamp):
+    try:
+        #assume, that timestamp is given in seconds with decimal point
+        t = Time(timestamp, format='gps', scale='utc').isot
+    except ValueError:
+        return None
+    return t.replace('T',' ').replace('.000','')

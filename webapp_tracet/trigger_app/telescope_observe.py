@@ -166,6 +166,7 @@ def trigger_observation(
                 decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: First event so sending dump MWA buffer request to MWA\n"
 
                 buffered = True
+                request_sent_at = datetime.utcnow()
                 decision_buffer, decision_reason_log_buffer, obsids_buffer, result_buffer = trigger_mwa_observation(
                     proposal_decision_model,
                     decision_reason_log,
@@ -186,7 +187,8 @@ def trigger_observation(
                     website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids_buffer[0]}",
                     mwa_sub_arrays=mwa_sub_arrays,
                     event=latestVoevent,
-                    mwa_response=result_buffer
+                    mwa_response=result_buffer,
+                    request_sent_at=request_sent_at
                 )
 
 
@@ -228,7 +230,7 @@ def trigger_observation(
                         estObsTime =  round_to_nearest_modulo_8(proposal_decision_model.proposal.early_observation_time_seconds - timeDiff.total_seconds())
                         decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Event time was {timeDiff.total_seconds()} seconds ago, early observation proposal setting is {proposal_decision_model.proposal.early_observation_time_seconds} seconds so making an observation of {estObsTime} seconds \n"
                         decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Sending observation request to MWA \n"
-
+                        request_sent_at = datetime.utcnow()
                         # Only schedule a 15 min obs
                         decision, decision_reason_log_obs, obsids, result = trigger_mwa_observation(
                                 proposal_decision_model,
@@ -249,7 +251,8 @@ def trigger_observation(
                             mwa_sub_arrays=mwa_sub_arrays,
                             website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
                             event=latestVoevent,
-                            mwa_response=result
+                            mwa_response=result,
+                            request_sent_at=request_sent_at
                         )
                 # else:
                 #     decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Event time was {timeDiff.total_seconds()} seconds ago, early_observation_time_seconds is {proposal_decision_model.proposal.early_observation_time_seconds} so not making an observation \n"
@@ -293,6 +296,7 @@ def trigger_observation(
                             # Only schedule a 15 min obs
                             proposal_decision_model.proposal.mwa_nobs = floor(estObsTime / proposal_decision_model.proposal.mwa_exptime)
                             decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Sending sub array observation request to MWA\n"
+                            request_sent_at = datetime.utcnow()
                             decision, decision_reason_log_obs, obsids, result = trigger_mwa_observation(
                                 proposal_decision_model,
                                 decision_reason_log,
@@ -312,7 +316,8 @@ def trigger_observation(
                                 mwa_sub_arrays=mwa_sub_arrays,
                                 website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
                                 event=latestVoevent,
-                                mwa_response=result
+                                mwa_response=result,
+                                request_sent_at=request_sent_at
                             )
                         else:
                             decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Event time was {timeDiff.total_seconds()} seconds ago, maximum_observation_time_second is {proposal_decision_model.proposal.maximum_observation_time_seconds} so not making an observation \n"
@@ -388,6 +393,7 @@ def trigger_observation(
                                 ]
                             }
                             decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Sending sub array observation request to MWA\n"
+                            request_sent_at = datetime.utcnow()
                             decision, decision_reason_log_obs, obsids, result = trigger_mwa_observation(
                                 proposal_decision_model,
                                 decision_reason_log,
@@ -399,6 +405,7 @@ def trigger_observation(
                                 )
                             print(f"result: {result}")
                             decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Saving observation result. \n"
+                            request_sent_at = datetime.utcnow()
                             saved_obs_2 = Observations.objects.create(
                                 trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
                                 telescope=proposal_decision_model.proposal.telescope,
@@ -407,7 +414,8 @@ def trigger_observation(
                                 mwa_sub_arrays=mwa_sub_arrays,
                                 website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
                                 event=latestVoevent,
-                                mwa_response=result
+                                mwa_response=result,
+                                request_sent_at = request_sent_at
                             )
                         else:
                             decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: New skymap is NOT more than 4 degrees of previous observation pointing. \n"
