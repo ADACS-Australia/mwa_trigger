@@ -183,12 +183,14 @@ class test_grb_group_swift(TestCase):
             f"\n\ntest_grb_group_02 MWA proposal decison:\n{ProposalDecision.objects.filter(proposal__telescope__name='MWA_VCS').first().decision_reason}\n\n")
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='MWA_VCS').first().decision, 'T')
+        self.assertEqual(len(Observations.objects.filter(telescope='MWA_VCS')), 1)
 
     def test_atca_proposal_decision(self):
         print(
             f"\n\ntest_grb_group_02 ATCA proposal decison:\n{ProposalDecision.objects.filter(proposal__telescope__name='ATCA').first().decision_reason}\n\n")
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='ATCA').first().decision, 'T')
+        self.assertEqual(len(Observations.objects.filter(telescope='ATCA')), 1)
 
 
 class test_atca_no_pending_on_dec_limit(TestCase):
@@ -261,6 +263,7 @@ class test_atca_no_pending_on_dec_limit(TestCase):
             f"\n\ntest_grb_group_02 ATCA proposal decison:\n{ProposalDecision.objects.filter(proposal__telescope__name='ATCA').first().decision_reason}\n\n")
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='ATCA').first().decision, 'I')
+        self.assertEqual(len(Observations.objects.filter(telescope='ATCA')), 0)
 
 
 class test_grb_group_swift_2(TestCase):
@@ -311,12 +314,15 @@ class test_grb_group_swift_2(TestCase):
             f"\n\ntest_grb_group_03 MWA proposal dgecison:\n{ProposalDecision.objects.filter(proposal__telescope__name='MWA_VCS').first().decision_reason}\n\n")
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='MWA_VCS').first().decision, 'T')
+        self.assertEqual(len(Observations.objects.filter(telescope='MWA_VCS')), 1)
+
 
     def test_atca_proposal_decision(self):
         print(
             f"\n\ntest_grb_group_02 ATCA proposal decison:\n{ProposalDecision.objects.filter(proposal__telescope__name='ATCA').first().decision_reason}\n\n")
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='ATCA').first().decision, 'T')
+        self.assertEqual(len(Observations.objects.filter(telescope='ATCA')), 1)
 
 
 class test_grb_observation_fail_atca(TestCase):
@@ -400,6 +406,7 @@ class test_grb_observation_fail_mwa(TestCase):
     def test_trigger_groups(self):
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='MWA_VCS').first().decision, 'E')
+        self.assertEqual(len(Observations.objects.filter(telescope='MWA_VCS')), 0)
 
 
 class test_grb_observation_ignored_mwa(TestCase):
@@ -438,6 +445,7 @@ class test_grb_observation_ignored_mwa(TestCase):
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__telescope__name='MWA_VCS').first().decision, 'I')
 
+        self.assertEqual(len(Observations.objects.filter(telescope='MWA_VCS')), 0)
 
 # class test_nu(TestCase):
 #     """Tests that a neutrino Event will trigger an observation
@@ -541,6 +549,7 @@ class test_fs(TestCase):
         print(
             f"\n\ntest_fs proposal decison:\n{ProposalDecision.objects.all().first().decision_reason}\n\n")
         self.assertEqual(ProposalDecision.objects.all().first().decision, 'T')
+        self.assertEqual(len(Observations.objects.filter(telescope='MWA_VCS')), 1)
 
 
 class test_hess_any_dur(TestCase):
@@ -591,6 +600,8 @@ class test_hess_any_dur(TestCase):
             proposal__event_any_duration=True).first().decision, 'T')
         self.assertEqual(ProposalDecision.objects.filter(
             proposal__event_any_duration=False).first().decision, 'I')
+        self.assertEqual(len(Observations.objects.filter(telescope='MWA_VCS')), 1)
+        self.assertEqual(len(Observations.objects.filter(telescope='ATCA')), 0)
 
 
 class test_lvc_mwa_sub_arrays_no_repointing(TestCase):
@@ -1587,3 +1598,4 @@ class test_atca_http_auth(TestCase):
         # Check there are three Events that were grouped as one by the trigger ID
         self.assertEqual(len(Event.objects.all()), 3)
         print(self.atcaApiArgs)
+        self.assertEqual(len(Observations.objects.filter(telescope='ATCA')), 1)
