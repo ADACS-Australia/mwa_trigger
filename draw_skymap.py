@@ -8,13 +8,13 @@ import numpy as np
 import json
 from ligo.skymap import io, version, plot, postprocess, bayestar, kde
 
-url = 'https://dcc.ligo.org/public/0146/G1701985/001/bayestar_no_virgo.fits.gz'
-center = SkyCoord.from_name('NGC 4993')
+url = "https://dcc.ligo.org/public/0146/G1701985/001/bayestar_no_virgo.fits.gz"
+center = SkyCoord.from_name("NGC 4993")
 
 fig = plt.figure(figsize=(4, 4), dpi=100)
-ax = plt.axes(projection='astro hours mollweide')
+ax = plt.axes(projection="astro hours mollweide")
 
-ax.imshow_hpx(url, cmap='cylon')
+ax.imshow_hpx(url, cmap="cylon")
 # def calc_sinalt(ra, dec, lon=116.6288746, lat=-26.6969812):
 #     part_1 = np.sin(np.deg2rad(dec))*np.sin(np.deg2rad(lat))
 #     part_2 = np.cos(np.deg2rad(dec))*np.cos(np.deg2rad(lat))*np.cos(np.deg2rad(lon-ra))
@@ -50,26 +50,27 @@ ax.imshow_hpx(url, cmap='cylon')
 # ax.contour_hpx(X, Y, z, 12, colors='black')
 
 geojson_filename = os.path.join(
-    os.path.dirname(plot.__file__), 'ne_simplified_coastline.json')
-with open(geojson_filename, 'r') as geojson_file:
-    geoms = json.load(geojson_file)['geometries']
-verts = [coord for geom in geoms
-            for coord in zip(*geom['coordinates'])]
+    os.path.dirname(plot.__file__), "ne_simplified_coastline.json"
+)
+with open(geojson_filename, "r") as geojson_file:
+    geoms = json.load(geojson_file)["geometries"]
+verts = [coord for geom in geoms for coord in zip(*geom["coordinates"])]
 
 
-plt.tick_params(both = False)
-plt.plot(*verts, color='0.5', linewidth=0.5,
-            transform=ax.get_transform('world'))
+plt.tick_params(both=False)
+plt.plot(*verts, color="0.5", linewidth=0.5, transform=ax.get_transform("world"))
 
 
 ax.grid(linewidth=0.3)
 
 ax.plot(
-    center.ra.deg, center.dec.deg,
-    transform=ax.get_transform('world'),
+    center.ra.deg,
+    center.dec.deg,
+    transform=ax.get_transform("world"),
     marker=plot.reticle(),
     markersize=30,
-    markeredgewidth=3)
+    markeredgewidth=3,
+)
 # Add markers
 # ax.contour_hpx(horizon, dlon=-np.deg2rad(116.62), linewidths=1, linestyles='-', colors='red')
 plt.show()

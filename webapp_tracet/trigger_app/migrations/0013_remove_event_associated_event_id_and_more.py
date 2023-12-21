@@ -6,20 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0012_cometlog_created_at'),
+        ("trigger_app", "0012_cometlog_created_at"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='event',
-            name='associated_event_id',
+            model_name="event",
+            name="associated_event_id",
         ),
         migrations.AddField(
-            model_name='eventgroup',
-            name='source_name',
+            model_name="eventgroup",
+            name="source_name",
             field=models.CharField(blank=True, max_length=128, null=True),
         ),
         migrations.DeleteModel(
-            name='PossibleEventAssociation',
+            name="PossibleEventAssociation",
         ),
     ]

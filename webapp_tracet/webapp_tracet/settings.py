@@ -21,8 +21,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'www.mwa-trigger.duckdns.org',
-                 'mwa-trigger.duckdns.org', 'www.tracet.duckdns.org', 'tracet.duckdns.org', '146.118.70.58']
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "www.mwa-trigger.duckdns.org",
+    "mwa-trigger.duckdns.org",
+    "www.tracet.duckdns.org",
+    "tracet.duckdns.org",
+    "146.118.70.58",
+]
 
 # Remote broadcasters we subscribe to for VOEvents
 # ["voevent.dc3.com", "chimefrb.physics.mcgill.ca"]
@@ -39,94 +46,92 @@ VOEVENT_TCP = ["41.63.245.86"]
 
 # Application definition
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
     "django_apscheduler",
-    'django_filters',
-    'trigger_app',
+    "django_filters",
+    "trigger_app",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'webapp_tracet.urls'
+ROOT_URLCONF = "webapp_tracet.urls"
 
-TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [TEMPLATES_DIR],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [TEMPLATES_DIR],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'webapp_tracet.wsgi.application'
+WSGI_APPLICATION = "webapp_tracet.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 # Secret key and database defaults
-SECRET_KEY = os.environ.get('DB_SECRET_KEY', None)
+SECRET_KEY = os.environ.get("DB_SECRET_KEY", None)
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'trigger_db',
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': 'localhost',
-        'PORT': '',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "trigger_db",
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": "localhost",
+        "PORT": "",
     }
 }
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = '/static/'
-STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, "static/"),
-)
+STATIC_URL = "/static/"
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static/"),)
 
 # Based on the SYSTEM_ENV decide if DEBUG should be on or off
 # and override secret key and databases for github actions testing
-SYSTEM_ENV = os.environ.get('SYSTEM_ENV', None)
-if SYSTEM_ENV == 'PRODUCTION' or SYSTEM_ENV == 'STAGING':
+SYSTEM_ENV = os.environ.get("SYSTEM_ENV", None)
+if SYSTEM_ENV == "PRODUCTION" or SYSTEM_ENV == "STAGING":
     DEBUG = False
     CSRF_COOKIE_SECURE = True
     STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")
-elif SYSTEM_ENV == 'GITHUB_WORKFLOW':
+elif SYSTEM_ENV == "GITHUB_WORKFLOW":
     DEBUG = True
-    SECRET_KEY = 'TESTING_KEY'
+    SECRET_KEY = "TESTING_KEY"
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': 'github_actions',
-            'USER': 'postgres',
-            'PASSWORD': 'postgres',
-            'HOST': '127.0.0.1',
-            'PORT': '5432',
+        "default": {
+            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "NAME": "github_actions",
+            "USER": "postgres",
+            "PASSWORD": "postgres",
+            "HOST": "127.0.0.1",
+            "PORT": "5432",
         }
     }
-elif SYSTEM_ENV == 'DEVELOPMENT':
+elif SYSTEM_ENV == "DEVELOPMENT":
     DEBUG = True
 
 
@@ -135,27 +140,27 @@ elif SYSTEM_ENV == 'DEVELOPMENT':
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = "/"
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -164,23 +169,23 @@ USE_L10N = True
 USE_TZ = True
 
 # Base url to serve media files
-MEDIA_URL = '/media/'
+MEDIA_URL = "/media/"
 
 # Path where media is stored
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Set up email backend
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'mwa.trigger@gmail.com'
-EMAIL_HOST_PASSWORD = os.getenv('GMAIL_APP_PASSWORD')
+EMAIL_HOST_USER = "mwa.trigger@gmail.com"
+EMAIL_HOST_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 
 # Format string for displaying run time timestamps in the Django admin site. The default
 # just adds seconds to the standard Django format, which is useful for displaying the timestamps
@@ -200,52 +205,52 @@ APSCHEDULER_RUN_NOW_TIMEOUT = 25  # Seconds
 
 # Django rest framework authentication
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
     ]
 }
 # Logging config for webapp requests etc
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{thread:d} {asctime} \n{message}\n',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{thread:d} {asctime} \n{message}\n",
+            "style": "{",
         },
     },
-    'filters': {
-        'event_create': {
-            '()': 'log_filters.EventCreateFilter',
+    "filters": {
+        "event_create": {
+            "()": "log_filters.EventCreateFilter",
         },
     },
-    'handlers': {
-        'debug-file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'formatter': 'verbose',
-            'filename': os.path.join(BASE_DIR, 'logs/debug.log'),
+    "handlers": {
+        "debug-file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "formatter": "verbose",
+            "filename": os.path.join(BASE_DIR, "logs/debug.log"),
         },
-        'event_create-file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/event_create.log'),
-            'formatter': 'verbose',
-            'filters': ['event_create']
+        "event_create-file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/event_create.log"),
+            "formatter": "verbose",
+            "filters": ["event_create"],
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['debug-file'],
-            'level': 'DEBUG',
-            'propagate': True,
+    "loggers": {
+        "django": {
+            "handlers": ["debug-file"],
+            "level": "DEBUG",
+            "propagate": True,
         },
-        'root': {
-            'handlers': ['event_create-file'],
-            'level': 'INFO',
-            'filters': ['event_create'],
-            'propagate': True,
-        }
+        "root": {
+            "handlers": ["event_create-file"],
+            "level": "INFO",
+            "filters": ["event_create"],
+            "propagate": True,
+        },
     },
 }

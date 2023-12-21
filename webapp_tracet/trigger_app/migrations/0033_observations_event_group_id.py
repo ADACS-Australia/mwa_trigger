@@ -7,13 +7,18 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0032_alter_observations_mwa_sky_map_pointings'),
+        ("trigger_app", "0032_alter_observations_mwa_sky_map_pointings"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='observations',
-            name='event_group_id',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='trigger_app.event'),
+            model_name="observations",
+            name="event_group_id",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="trigger_app.event",
+            ),
         ),
     ]

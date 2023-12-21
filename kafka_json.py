@@ -10,6 +10,7 @@ import astropy_healpix as ah
 from gcn_kafka import Consumer
 import numpy as np
 
+
 def parse_notice(record):
     record = json.loads(record)
 
@@ -50,19 +51,23 @@ def parse_notice(record):
 
     # Print remaining fields
     if "event" in record:
-        record.get('event', {}).pop('skymap')
-   
-    print('Record:')
+        record.get("event", {}).pop("skymap")
+
+    print("Record:")
     pprint(record)
 
+
 # Environment variables
-GCN_KAFKA_CLIENT = os.getenv('GCN_KAFKA_CLIENT')
-GCN_KAFKA_SECRET = os.getenv('GCN_KAFKA_SECRET')
+GCN_KAFKA_CLIENT = os.getenv("GCN_KAFKA_CLIENT")
+GCN_KAFKA_SECRET = os.getenv("GCN_KAFKA_SECRET")
 
 consumer = Consumer(client_id=GCN_KAFKA_CLIENT, client_secret=GCN_KAFKA_SECRET)
-consumer.subscribe([
-    # 'igwn.gwalert', 
-    'gcn.notices.swift.bat.guano'])
+consumer.subscribe(
+    [
+        # 'igwn.gwalert',
+        "gcn.notices.swift.bat.guano"
+    ]
+)
 print("starting kafka")
 # with open('kafka.json', 'a') as f:
 for message in consumer.consume():

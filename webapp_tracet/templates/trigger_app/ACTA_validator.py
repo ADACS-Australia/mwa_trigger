@@ -13,6 +13,7 @@ import atca_rapid_response_api as arrApi
 
 logger = logging.getLogger(__name__)
 
+
 def atca_proposal_id(project_id, secure_key, atca_email):
     """Check that the ATCA project ID and secure key are valid.
 
@@ -26,9 +27,16 @@ def atca_proposal_id(project_id, secure_key, atca_email):
         The email address of someone that was on the ATCA observing proposal. This is an authentication step.
     """
     # Setup current RA and Dec at zenith for ATCA
-    atca = EarthLocation(lat='-30:18:46', lon='149:33:01', height=377.8 * u.m)
-    atca_coord = coord = SkyCoord(az=0., alt=90., unit=(u.deg, u.deg), frame='altaz', obstime=Time.now(), location=atca)
-    ra = atca_coord.icrs.ra.to_string(unit=u.hour, sep=':')[:11]
+    atca = EarthLocation(lat="-30:18:46", lon="149:33:01", height=377.8 * u.m)
+    atca_coord = coord = SkyCoord(
+        az=0.0,
+        alt=90.0,
+        unit=(u.deg, u.deg),
+        frame="altaz",
+        obstime=Time.now(),
+        location=atca,
+    )
+    ra = atca_coord.icrs.ra.to_string(unit=u.hour, sep=":")[:11]
     rq = {
         "source": "Test",
         "rightAscension": ra,
@@ -47,7 +55,7 @@ def atca_proposal_id(project_id, secure_key, atca_email):
 
     # We have our request now, so we need to craft the service request to submit it to
     # the rapid response service.
-    rapidObj = { 'requestDict': rq }
+    rapidObj = {"requestDict": rq}
     rapidObj["authenticationToken"] = secure_key
     rapidObj["email"] = atca_email
     rapidObj["test"] = True
@@ -56,8 +64,8 @@ def atca_proposal_id(project_id, secure_key, atca_email):
 
     user = ATCAUser.objects.all().first()
 
-    rapidObj['httpAuthUsername'] = user.httpAuthUsername
-    rapidObj['httpAuthPassword'] = user.httpAuthPassword
+    rapidObj["httpAuthUsername"] = user.httpAuthUsername
+    rapidObj["httpAuthPassword"] = user.httpAuthPassword
 
     request = arrApi.api(rapidObj)
     try:

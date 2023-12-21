@@ -6,13 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0028_remove_proposalsettings_minimum_false_alarm_rate_and_more'),
+        (
+            "trigger_app",
+            "0028_remove_proposalsettings_minimum_false_alarm_rate_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='observations',
-            name='mwa_sky_map_pointings',
-            field=models.FileField(blank=True, null=True, upload_to='mwa_pointings/'),
+            model_name="observations",
+            name="mwa_sky_map_pointings",
+            field=models.FileField(blank=True, null=True, upload_to="mwa_pointings/"),
         ),
     ]

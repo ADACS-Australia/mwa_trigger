@@ -6,9 +6,8 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0002_rename_adminalerts_alertpermission'),
-        ('trigger_app', '0003_alter_observations_obsid'),
+        ("trigger_app", "0002_rename_adminalerts_alertpermission"),
+        ("trigger_app", "0003_alter_observations_obsid"),
     ]
 
-    operations = [
-    ]
+    operations = []

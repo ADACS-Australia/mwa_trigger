@@ -6,23 +6,35 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0014_proposalsettings_atca_dec_max_1_and_more'),
+        ("trigger_app", "0014_proposalsettings_atca_dec_max_1_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='proposalsettings',
-            name='atca_dec_max_1',
-            field=models.IntegerField(default=-5, help_text='Only observe within this range', verbose_name='Declination max limit 1 (deg)'),
+            model_name="proposalsettings",
+            name="atca_dec_max_1",
+            field=models.IntegerField(
+                default=-5,
+                help_text="Only observe within this range",
+                verbose_name="Declination max limit 1 (deg)",
+            ),
         ),
         migrations.AlterField(
-            model_name='proposalsettings',
-            name='atca_dec_max_2',
-            field=models.IntegerField(default=20, help_text='Only observe within this range', verbose_name='Declination max limit 2 (deg)'),
+            model_name="proposalsettings",
+            name="atca_dec_max_2",
+            field=models.IntegerField(
+                default=20,
+                help_text="Only observe within this range",
+                verbose_name="Declination max limit 2 (deg)",
+            ),
         ),
         migrations.AlterField(
-            model_name='proposalsettings',
-            name='atca_dec_min_2',
-            field=models.IntegerField(default=5, help_text='Only observe within this range', verbose_name='Declination min limit 2 (deg)'),
+            model_name="proposalsettings",
+            name="atca_dec_min_2",
+            field=models.IntegerField(
+                default=5,
+                help_text="Only observe within this range",
+                verbose_name="Declination min limit 2 (deg)",
+            ),
         ),
     ]

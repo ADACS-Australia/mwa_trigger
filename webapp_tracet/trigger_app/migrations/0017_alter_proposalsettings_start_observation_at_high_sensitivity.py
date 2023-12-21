@@ -6,13 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0016_proposalsettings_mwa_sub_alt_ne_and_more'),
+        ("trigger_app", "0016_proposalsettings_mwa_sub_alt_ne_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='proposalsettings',
-            name='start_observation_at_high_sensitivity',
-            field=models.BooleanField(default=False, help_text='On early warnings there will not be positional data so start MWA in sub array mode at the high sensitivity area over the indian ocean', verbose_name='Without positional data, start observations with MWA sub array at high sensitivity area'),
+            model_name="proposalsettings",
+            name="start_observation_at_high_sensitivity",
+            field=models.BooleanField(
+                default=False,
+                help_text="On early warnings there will not be positional data so start MWA in sub array mode at the high sensitivity area over the indian ocean",
+                verbose_name="Without positional data, start observations with MWA sub array at high sensitivity area",
+            ),
         ),
     ]

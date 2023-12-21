@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0008_event_lvc_binary_black_hole_probability_and_more'),
+        ("trigger_app", "0008_event_lvc_binary_black_hole_probability_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='event',
-            name='lvc_skymap_file',
-            field=models.FileField(blank=True, null=True, upload_to='skymaps/'),
+            model_name="event",
+            name="lvc_skymap_file",
+            field=models.FileField(blank=True, null=True, upload_to="skymaps/"),
         ),
     ]

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0023_alter_cometlog_log_and_more'),
+        ("trigger_app", "0023_alter_cometlog_log_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='observations',
-            name='mwa_sub_arrays',
+            model_name="observations",
+            name="mwa_sub_arrays",
             field=models.JSONField(null=True),
         ),
     ]
