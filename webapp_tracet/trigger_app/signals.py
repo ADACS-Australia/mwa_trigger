@@ -363,6 +363,7 @@ def proposal_worth_observing(
                 reason=observation_reason,
                 event_id=voevent.id,
             )
+            print(decision, decision_reason_log)
         except Exception as e:
             print(e)
             logger.info(e)
