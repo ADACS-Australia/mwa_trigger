@@ -4,5 +4,6 @@ numpy
 Comet
 pytest
 git+https://github.com/ste616/atca-rapid-response-api.git#subdirectory=python
-ligo.skymap
+# ligo.skymap
 mhealpy
+gcn_kafka
