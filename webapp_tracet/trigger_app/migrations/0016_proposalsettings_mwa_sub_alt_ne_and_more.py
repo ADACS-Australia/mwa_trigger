@@ -6,48 +6,80 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0015_alter_proposalsettings_atca_dec_max_1_and_more'),
+        ("trigger_app", "0015_alter_proposalsettings_atca_dec_max_1_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='proposalsettings',
-            name='mwa_sub_alt_NE',
-            field=models.FloatField(default=90.0, help_text='Altitude in degrees for the North-East sub array', verbose_name='NE alt(deg)'),
+            model_name="proposalsettings",
+            name="mwa_sub_alt_NE",
+            field=models.FloatField(
+                default=90.0,
+                help_text="Altitude in degrees for the North-East sub array",
+                verbose_name="NE alt(deg)",
+            ),
         ),
         migrations.AddField(
-            model_name='proposalsettings',
-            name='mwa_sub_alt_NW',
-            field=models.FloatField(default=66.85, help_text='Altitude in degrees for the North-West sub array', verbose_name='NW alt(deg)'),
+            model_name="proposalsettings",
+            name="mwa_sub_alt_NW",
+            field=models.FloatField(
+                default=66.85,
+                help_text="Altitude in degrees for the North-West sub array",
+                verbose_name="NW alt(deg)",
+            ),
         ),
         migrations.AddField(
-            model_name='proposalsettings',
-            name='mwa_sub_alt_SE',
-            field=models.FloatField(default=59.35, help_text='Altitude in degrees for the South-East sub array', verbose_name='SE alt(deg)'),
+            model_name="proposalsettings",
+            name="mwa_sub_alt_SE",
+            field=models.FloatField(
+                default=59.35,
+                help_text="Altitude in degrees for the South-East sub array",
+                verbose_name="SE alt(deg)",
+            ),
         ),
         migrations.AddField(
-            model_name='proposalsettings',
-            name='mwa_sub_alt_SW',
-            field=models.FloatField(default=43.97, help_text='Altitude in degrees for the South-West sub array', verbose_name='SW alt(deg)'),
+            model_name="proposalsettings",
+            name="mwa_sub_alt_SW",
+            field=models.FloatField(
+                default=43.97,
+                help_text="Altitude in degrees for the South-West sub array",
+                verbose_name="SW alt(deg)",
+            ),
         ),
         migrations.AddField(
-            model_name='proposalsettings',
-            name='mwa_sub_az_NE',
-            field=models.FloatField(default=0.0, help_text='Azimuth in degrees for the North-East sub array', verbose_name='NE az(deg)'),
+            model_name="proposalsettings",
+            name="mwa_sub_az_NE",
+            field=models.FloatField(
+                default=0.0,
+                help_text="Azimuth in degrees for the North-East sub array",
+                verbose_name="NE az(deg)",
+            ),
         ),
         migrations.AddField(
-            model_name='proposalsettings',
-            name='mwa_sub_az_NW',
-            field=models.FloatField(default=270.0, help_text='Azimuth in degrees for the North-West sub array', verbose_name='NW az(deg)'),
+            model_name="proposalsettings",
+            name="mwa_sub_az_NW",
+            field=models.FloatField(
+                default=270.0,
+                help_text="Azimuth in degrees for the North-West sub array",
+                verbose_name="NW az(deg)",
+            ),
         ),
         migrations.AddField(
-            model_name='proposalsettings',
-            name='mwa_sub_az_SE',
-            field=models.FloatField(default=219.88, help_text='Azimuth in degrees for the South-East sub array', verbose_name='SE az(deg)'),
+            model_name="proposalsettings",
+            name="mwa_sub_az_SE",
+            field=models.FloatField(
+                default=219.88,
+                help_text="Azimuth in degrees for the South-East sub array",
+                verbose_name="SE az(deg)",
+            ),
         ),
         migrations.AddField(
-            model_name='proposalsettings',
-            name='mwa_sub_az_SW',
-            field=models.FloatField(default=270.0, help_text='Azimuth in degrees for the South-West sub array', verbose_name='SW az(deg)'),
+            model_name="proposalsettings",
+            name="mwa_sub_az_SW",
+            field=models.FloatField(
+                default=270.0,
+                help_text="Azimuth in degrees for the South-West sub array",
+                verbose_name="SW az(deg)",
+            ),
         ),
     ]

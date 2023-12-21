@@ -6,26 +6,32 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0040_alter_proposalsettings_early_observation_time_seconds'),
+        ("trigger_app", "0040_alter_proposalsettings_early_observation_time_seconds"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='proposalsettings',
-            name='maximum_observation_time_minutes',
+            model_name="proposalsettings",
+            name="maximum_observation_time_minutes",
         ),
         migrations.RemoveField(
-            model_name='proposalsettings',
-            name='mwa_nobs',
+            model_name="proposalsettings",
+            name="mwa_nobs",
         ),
         migrations.AddField(
-            model_name='proposalsettings',
-            name='maximum_observation_time_seconds',
-            field=models.IntegerField(default=0, help_text='Set maximum observation time based off event time e.g. event 30 min ago when set to 7200 (2hrs) will only allow a max observation of 90 mins with events older than 120 mins will be ignored. Setting to 0 disables this check'),
+            model_name="proposalsettings",
+            name="maximum_observation_time_seconds",
+            field=models.IntegerField(
+                default=0,
+                help_text="Set maximum observation time based off event time e.g. event 30 min ago when set to 7200 (2hrs) will only allow a max observation of 90 mins with events older than 120 mins will be ignored. Setting to 0 disables this check",
+            ),
         ),
         migrations.AlterField(
-            model_name='proposalsettings',
-            name='early_observation_time_seconds',
-            field=models.IntegerField(default=900, help_text='This is the observation time for GW early warning and preliminary notices, please be a multiple of the MWA exp time'),
+            model_name="proposalsettings",
+            name="early_observation_time_seconds",
+            field=models.IntegerField(
+                default=900,
+                help_text="This is the observation time for GW early warning and preliminary notices, please be a multiple of the MWA exp time",
+            ),
         ),
     ]

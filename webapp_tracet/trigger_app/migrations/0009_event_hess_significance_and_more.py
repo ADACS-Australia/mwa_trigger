@@ -6,23 +6,29 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0008_event_lvc_binary_black_hole_probability_and_more'),
+        ("trigger_app", "0008_event_lvc_binary_black_hole_probability_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='event',
-            name='hess_significance',
+            model_name="event",
+            name="hess_significance",
             field=models.FloatField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='proposalsettings',
-            name='maximum_hess_significance',
-            field=models.FloatField(default=1, verbose_name='Maximum significance from HESS to trigger an observation'),
+            model_name="proposalsettings",
+            name="maximum_hess_significance",
+            field=models.FloatField(
+                default=1,
+                verbose_name="Maximum significance from HESS to trigger an observation",
+            ),
         ),
         migrations.AddField(
-            model_name='proposalsettings',
-            name='minimum_hess_significance',
-            field=models.FloatField(default=0.2, verbose_name='Minimum significance from HESS to trigger an observation'),
+            model_name="proposalsettings",
+            name="minimum_hess_significance",
+            field=models.FloatField(
+                default=0.2,
+                verbose_name="Minimum significance from HESS to trigger an observation",
+            ),
         ),
     ]

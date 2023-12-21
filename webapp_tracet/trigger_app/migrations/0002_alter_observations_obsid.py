@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0001_squashed_0002_alter_telescopeprojectid_password'),
+        ("trigger_app", "0001_squashed_0002_alter_telescopeprojectid_password"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='observations',
-            name='obsid',
+            model_name="observations",
+            name="obsid",
             field=models.AutoField(primary_key=True, serialize=False),
         ),
     ]

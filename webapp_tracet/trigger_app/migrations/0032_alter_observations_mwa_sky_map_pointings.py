@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0031_alter_observations_mwa_sky_map_pointings'),
+        ("trigger_app", "0031_alter_observations_mwa_sky_map_pointings"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='observations',
-            name='mwa_sky_map_pointings',
-            field=models.ImageField(blank=True, null=True, upload_to='mwa_pointings'),
+            model_name="observations",
+            name="mwa_sky_map_pointings",
+            field=models.ImageField(blank=True, null=True, upload_to="mwa_pointings"),
         ),
     ]

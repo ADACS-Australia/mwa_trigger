@@ -14,6 +14,7 @@ from .models import ATCAUser
 
 logger = logging.getLogger(__name__)
 
+
 def mwa_freqspecs(input_spec, numchannels=24, separator=";"):
     """
     Validate the frequency specification given on the command line
@@ -43,39 +44,39 @@ def mwa_freqspecs(input_spec, numchannels=24, separator=";"):
             except ValueError:
                 raise ValidationError(
                     f"Unable to parse frequency channel: {atom}",
-                    params={'input_spec': input_spec},
+                    params={"input_spec": input_spec},
                 )
-        elif (":" in atom):
+        elif ":" in atom:
             sub_seperator = ":"
-        elif ("-" in atom):
+        elif "-" in atom:
             sub_seperator = "-"
-        elif ("," in atom):
+        elif "," in atom:
             sub_seperator = ","
 
         # assumes <channelstart>:<channelstop>:<increment>
         increment = 1
         res = atom.split(sub_seperator)
-        if (len(res) > 2):
+        if len(res) > 2:
             try:
                 increment = int(res[2])
             except ValueError:
                 raise ValidationError(
                     f"Unable to parse frequency increment: {res[2]}",
-                    params={'input_spec': input_spec},
+                    params={"input_spec": input_spec},
                 )
         try:
             freqstart_center = int(res[0])
         except ValueError:
             raise ValidationError(
                 f"Unable to parse frequency start: {res[0]}",
-                params={'input_spec': input_spec},
+                params={"input_spec": input_spec},
             )
         try:
             freqstop_width = int(res[1])
         except ValueError:
             raise ValidationError(
                 f"Unable to parse frequency stop: {res[1]}",
-                params={'input_spec': input_spec},
+                params={"input_spec": input_spec},
             )
         if ":" in atom or "-" in atom:
             freqstart = freqstart_center
@@ -85,16 +86,20 @@ def mwa_freqspecs(input_spec, numchannels=24, separator=";"):
         else:
             freqcenter = freqstart_center
             freqwidth = freqstop_width
-            for freq in range(freqcenter - int(freqwidth / 2.0), freqcenter + int(freqwidth / 2.0 + 0.5), increment):
+            for freq in range(
+                freqcenter - int(freqwidth / 2.0),
+                freqcenter + int(freqwidth / 2.0 + 0.5),
+                increment,
+            ):
                 freqs.append(freq)
 
     # remove duplicates
     origfreqs = freqs
     freqs = list(set(freqs))
-    if (len(freqs) < len(origfreqs)):
+    if len(freqs) < len(origfreqs):
         raise ValidationError(
             f"Removed duplicate items from frequency list",
-            params={'input_spec': input_spec},
+            params={"input_spec": input_spec},
         )
     # sort
     freqs.sort()
@@ -102,16 +107,25 @@ def mwa_freqspecs(input_spec, numchannels=24, separator=";"):
     if len(freqs) > numchannels:
         raise ValidationError(
             f"Too many frequency channels supplied (>{numchannels}).",
-            params={'input_spec': input_spec},
+            params={"input_spec": input_spec},
         )
 
-    if (len(freqs) == 1):
+    if len(freqs) == 1:
         # only a single frequency
-        logger.warning('--freq=%d requested, but interpreting it as --freq=%d,24' % (freqs[0], freqs[0]))
+        logger.warning(
+            "--freq=%d requested, but interpreting it as --freq=%d,24"
+            % (freqs[0], freqs[0])
+        )
         freqcenter = freqs[0]
         freqwidth = 24
         increment = 1
-        freqs = list(range(freqcenter - int(freqwidth / 2.0), freqcenter + int(freqwidth / 2.0 + 0.5), increment))
+        freqs = list(
+            range(
+                freqcenter - int(freqwidth / 2.0),
+                freqcenter + int(freqwidth / 2.0 + 0.5),
+                increment,
+            )
+        )
 
     if len(freqs) < numchannels:  # Pad to numchannels
         if freqs[-1] <= 255 - (24 - len(freqs)):
@@ -119,13 +133,13 @@ def mwa_freqspecs(input_spec, numchannels=24, separator=";"):
         elif freqs[0] > (24 - len(freqs)):
             freqs = list(range(freqs[0] - (24 - len(freqs)), freqs[0], 1)) + freqs
         else:
-            freqs += [x for x in range(60, 200) if x not in freqs][:(24 - len(freqs))]
+            freqs += [x for x in range(60, 200) if x not in freqs][: (24 - len(freqs))]
             freqs.sort()
 
     if (min(freqs) < 0) or (max(freqs) > 255):
         raise ValidationError(
             "Centre channel too close to 0 or 255, some channels would be < 0 or > 255",
-            params={'input_spec': input_spec},
+            params={"input_spec": input_spec},
         )
 
     return freqs
@@ -140,7 +154,11 @@ def mwa_horizon_limit(horizon_limit):
         The selected horizion limit in degrees.
     """
     if horizon_limit < 10:
-        raise forms.ValidationError(gettext(f"Horizon limit error: The horizion limit must be over 10 degrees or the MWA back end will reject it."))
+        raise forms.ValidationError(
+            gettext(
+                f"Horizon limit error: The horizion limit must be over 10 degrees or the MWA back end will reject it."
+            )
+        )
 
 
 def atca_freq_bands(min_freq, max_freq, freq, field_name):
@@ -158,9 +176,17 @@ def atca_freq_bands(min_freq, max_freq, freq, field_name):
         The name of the model field you are testing.
     """
     if freq > max_freq:
-        raise forms.ValidationError(gettext(f"{field_name} error: A centre frequency of {freq} MHz would have a maximum above {max_freq} MHz which is outside the bands frequency range."))
+        raise forms.ValidationError(
+            gettext(
+                f"{field_name} error: A centre frequency of {freq} MHz would have a maximum above {max_freq} MHz which is outside the bands frequency range."
+            )
+        )
     if freq < min_freq:
-        raise forms.ValidationError(gettext(f"{field_name} error: A centre frequency of {freq} MHz would have a minimum below {min_freq} MHz which is outside the bands frequency range."))
+        raise forms.ValidationError(
+            gettext(
+                f"{field_name} error: A centre frequency of {freq} MHz would have a minimum below {min_freq} MHz which is outside the bands frequency range."
+            )
+        )
 
 
 def mwa_proposal_id(project_id, secure_key):
@@ -177,12 +203,12 @@ def mwa_proposal_id(project_id, secure_key):
         project_id=project_id,
         secure_key=secure_key,
         pretend=True,
-        ra=0.,
-        dec=0.,
-        creator='VOEvent_Auto_Trigger',
-        obsname='proposal_test',
+        ra=0.0,
+        dec=0.0,
+        creator="VOEvent_Auto_Trigger",
+        obsname="proposal_test",
         nobs=1,
-        freqspecs="121,24", #Assume always using 24 contiguous coarse frequency channels
+        freqspecs="121,24",  # Assume always using 24 contiguous coarse frequency channels
         avoidsun=True,
         inttime=0.5,
         freqres=10.0,
@@ -195,13 +221,14 @@ def mwa_proposal_id(project_id, secure_key):
     # Check if succesful
     if result is None:
         raise forms.ValidationError({"Web API error, possible server error"})
-    if not result['success']:
+    if not result["success"]:
         # Observation not succesful so record why
         error_message = ""
-        for err_id in result['errors']:
+        for err_id in result["errors"]:
             error_message += f"{result['errors'][err_id]}.\n "
         # Return an error as the trigger status
         raise forms.ValidationError({error_message})
+
 
 def atca_proposal_id(project_id, secure_key, atca_email):
     """Check that the ATCA project ID and secure key are valid.
@@ -216,9 +243,16 @@ def atca_proposal_id(project_id, secure_key, atca_email):
         The email address of someone that was on the ATCA observing proposal. This is an authentication step.
     """
     # Setup current RA and Dec at zenith for ATCA
-    atca = EarthLocation(lat='-30:18:46', lon='149:33:01', height=377.8 * u.m)
-    atca_coord = coord = SkyCoord(az=0., alt=90., unit=(u.deg, u.deg), frame='altaz', obstime=Time.now(), location=atca)
-    ra = atca_coord.icrs.ra.to_string(unit=u.hour, sep=':')[:11]
+    atca = EarthLocation(lat="-30:18:46", lon="149:33:01", height=377.8 * u.m)
+    atca_coord = coord = SkyCoord(
+        az=0.0,
+        alt=90.0,
+        unit=(u.deg, u.deg),
+        frame="altaz",
+        obstime=Time.now(),
+        location=atca,
+    )
+    ra = atca_coord.icrs.ra.to_string(unit=u.hour, sep=":")[:11]
     rq = {
         "source": "Test",
         "rightAscension": ra,
@@ -237,7 +271,7 @@ def atca_proposal_id(project_id, secure_key, atca_email):
 
     # We have our request now, so we need to craft the service request to submit it to
     # the rapid response service.
-    rapidObj = { 'requestDict': rq }
+    rapidObj = {"requestDict": rq}
     rapidObj["authenticationToken"] = secure_key
     rapidObj["email"] = atca_email
     rapidObj["test"] = True
@@ -246,8 +280,8 @@ def atca_proposal_id(project_id, secure_key, atca_email):
 
     user = ATCAUser.objects.all().first()
 
-    rapidObj['httpAuthUsername'] = user.httpAuthUsername
-    rapidObj['httpAuthPassword'] = user.httpAuthPassword
+    rapidObj["httpAuthUsername"] = user.httpAuthUsername
+    rapidObj["httpAuthPassword"] = user.httpAuthPassword
 
     request = arrApi.api(rapidObj)
     try:

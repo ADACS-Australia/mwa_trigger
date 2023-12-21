@@ -6,16 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0037_rename_obsid_observations_trigger_id'),
+        ("trigger_app", "0037_rename_obsid_observations_trigger_id"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ATCAUser',
+            name="ATCAUser",
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('httpAuthUsername', models.CharField(max_length=128)),
-                ('httpAuthPassword', models.CharField(max_length=128)),
+                ("id", models.AutoField(primary_key=True, serialize=False)),
+                ("httpAuthUsername", models.CharField(max_length=128)),
+                ("httpAuthPassword", models.CharField(max_length=128)),
             ],
         ),
     ]

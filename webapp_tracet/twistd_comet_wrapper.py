@@ -1,8 +1,10 @@
 import os
+
 # Configure settings for project
 # Need to run this before calling models from application!
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'webapp_tracet.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "webapp_tracet.settings")
 import django
+
 # Import settings
 django.setup()
 from django.conf import settings
@@ -28,7 +30,7 @@ def output_popen_stdout(process):
     if output:
         # New output so send it to the log
         CometLog.objects.create(log=output.strip().decode())
-    comet_status = Status.objects.get(name='twistd_comet')
+    comet_status = Status.objects.get(name="twistd_comet")
     poll = process.poll()
     logger.debug(f"poll: {poll}")
     if poll is None:
@@ -43,7 +45,7 @@ def output_popen_stdout(process):
     comet_status.save()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # kill unterminated twistd jobs
     if os.path.exists("/tmp/twistd_comet.pid"):
         call("kill `cat /tmp/twistd_comet.pid`", shell=True)
@@ -81,7 +83,7 @@ if __name__ == '__main__':
         max_instances=1,
         replace_existing=True,
         kwargs={
-            'process': process,
+            "process": process,
         },
     )
     logger.info("Added job 'output_popen_stdout'.")
@@ -89,8 +91,7 @@ if __name__ == '__main__':
     logger.info("Starting scheduler...")
     scheduler.start()
     logger.info("I moved on")
-    logger.info(
-        'Press Ctrl+{0} to exit'.format('Break' if os.name == 'nt' else 'C'))
+    logger.info("Press Ctrl+{0} to exit".format("Break" if os.name == "nt" else "C"))
 
     try:
         # This is here to simulate application activity (which keeps the main thread alive).
