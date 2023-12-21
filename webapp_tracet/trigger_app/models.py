@@ -438,6 +438,7 @@ class Observations(models.Model):
     reason = models.CharField(max_length=2029, blank=True, null=True)
     mwa_sub_arrays=models.JSONField(null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    request_sent_at = models.DateTimeField(blank=True, null=True)
     mwa_sky_map_pointings = models.ImageField(
         upload_to='mwa_pointings', blank=True, null=True)
     event = models.ForeignKey(

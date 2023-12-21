@@ -184,13 +184,13 @@
         {% else %}
         <td>Not Avail</td>
         {% endif %}
-        {% if ob.event is not None %}
-        <td>{{ ob.event.event_observed|date:"Y-m-d H:i:s" }}</td>
+        {% if ob.request_sent_at is not None %}
+        <td>{{ ob.request_sent_at|date:"Y-m-d H:i:s" }}</td>
         {% else %}
         <td>Not Avail</td>
         {% endif %}
-        {% if ob.event is not None %}
-        <td>{{ ob.event.event_observed|date:"Y-m-d H:i:s" }}</td>
+        {% if ob.mwa_response.obsid_list.0 is not None %}
+        <td>{{ ob.mwa_response.obsid_list.0.0|print_timestamp }}</td>
         {% else %}
         <td>Not Avail</td>
         {% endif %}

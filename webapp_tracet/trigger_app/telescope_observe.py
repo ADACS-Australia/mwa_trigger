@@ -166,6 +166,7 @@ def trigger_observation(
                 decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: First event so sending dump MWA buffer request to MWA\n"
 
                 buffered = True
+                request_sent_at = datetime.utcnow()
                 decision_buffer, decision_reason_log_buffer, obsids_buffer, result_buffer = trigger_mwa_observation(
                     proposal_decision_model,
                     decision_reason_log,
@@ -178,16 +179,18 @@ def trigger_observation(
                 )
                 print(f"obsids_buffer: {obsids_buffer}")
                 decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Saving buffer observation result. \n"
-                saved_obs_1 = Observations.objects.create(
-                    trigger_id=result_buffer['trigger_id'] or random.randrange(10000, 99999),
-                    telescope=proposal_decision_model.proposal.telescope,
-                    proposal_decision_id=proposal_decision_model,
-                    reason=f"This is a buffer observation ID",
-                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids_buffer[0]}",
-                    mwa_sub_arrays=mwa_sub_arrays,
-                    event=latestVoevent,
-                    mwa_response=result_buffer
-                )
+                if decision_buffer.find('T') > -1:
+                    saved_obs_1 = Observations.objects.create(
+                        trigger_id=result_buffer['trigger_id'] or random.randrange(10000, 99999),
+                        telescope=proposal_decision_model.proposal.telescope,
+                        proposal_decision_id=proposal_decision_model,
+                        reason=f"This is a buffer observation ID",
+                        website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids_buffer[0]}",
+                        mwa_sub_arrays=mwa_sub_arrays,
+                        event=latestVoevent,
+                        mwa_response=result_buffer,
+                        request_sent_at=request_sent_at
+                    )
 
 
 
@@ -228,7 +231,7 @@ def trigger_observation(
                         estObsTime =  round_to_nearest_modulo_8(proposal_decision_model.proposal.early_observation_time_seconds - timeDiff.total_seconds())
                         decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Event time was {timeDiff.total_seconds()} seconds ago, early observation proposal setting is {proposal_decision_model.proposal.early_observation_time_seconds} seconds so making an observation of {estObsTime} seconds \n"
                         decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Sending observation request to MWA \n"
-
+                        request_sent_at = datetime.utcnow()
                         # Only schedule a 15 min obs
                         decision, decision_reason_log_obs, obsids, result = trigger_mwa_observation(
                                 proposal_decision_model,
@@ -241,16 +244,18 @@ def trigger_observation(
                                 )
                         print(f"result: {result}")
                         decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Saving observation result. \n"
-                        saved_obs_2 = Observations.objects.create(
-                            trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
-                            telescope=proposal_decision_model.proposal.telescope,
-                            proposal_decision_id=proposal_decision_model,
-                            reason=reason,
-                            mwa_sub_arrays=mwa_sub_arrays,
-                            website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
-                            event=latestVoevent,
-                            mwa_response=result
-                        )
+                        if decision.find('T')> -1:
+                            saved_obs_2 = Observations.objects.create(
+                                trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
+                                telescope=proposal_decision_model.proposal.telescope,
+                                proposal_decision_id=proposal_decision_model,
+                                reason=reason,
+                                mwa_sub_arrays=mwa_sub_arrays,
+                                website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
+                                event=latestVoevent,
+                                mwa_response=result,
+                                request_sent_at=request_sent_at
+                            )
                 # else:
                 #     decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Event time was {timeDiff.total_seconds()} seconds ago, early_observation_time_seconds is {proposal_decision_model.proposal.early_observation_time_seconds} so not making an observation \n"
                     ## If first event is not early warning and has a skymap
@@ -293,6 +298,7 @@ def trigger_observation(
                             # Only schedule a 15 min obs
                             proposal_decision_model.proposal.mwa_nobs = floor(estObsTime / proposal_decision_model.proposal.mwa_exptime)
                             decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Sending sub array observation request to MWA\n"
+                            request_sent_at = datetime.utcnow()
                             decision, decision_reason_log_obs, obsids, result = trigger_mwa_observation(
                                 proposal_decision_model,
                                 decision_reason_log,
@@ -304,16 +310,18 @@ def trigger_observation(
                                 )
                             print(f"result: {result}")
                             decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Saving observation result. \n"
-                            saved_obs_2 = Observations.objects.create(
-                                trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
-                                telescope=proposal_decision_model.proposal.telescope,
-                                proposal_decision_id=proposal_decision_model,
-                                reason=reason,
-                                mwa_sub_arrays=mwa_sub_arrays,
-                                website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
-                                event=latestVoevent,
-                                mwa_response=result
-                            )
+                            if decision.find('T')> -1:
+                                saved_obs_2 = Observations.objects.create(
+                                    trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
+                                    telescope=proposal_decision_model.proposal.telescope,
+                                    proposal_decision_id=proposal_decision_model,
+                                    reason=reason,
+                                    mwa_sub_arrays=mwa_sub_arrays,
+                                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
+                                    event=latestVoevent,
+                                    mwa_response=result,
+                                    request_sent_at=request_sent_at
+                                )
                         else:
                             decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Event time was {timeDiff.total_seconds()} seconds ago, maximum_observation_time_second is {proposal_decision_model.proposal.maximum_observation_time_seconds} so not making an observation \n"
 
@@ -388,6 +396,7 @@ def trigger_observation(
                                 ]
                             }
                             decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Sending sub array observation request to MWA\n"
+                            request_sent_at = datetime.utcnow()
                             decision, decision_reason_log_obs, obsids, result = trigger_mwa_observation(
                                 proposal_decision_model,
                                 decision_reason_log,
@@ -399,16 +408,19 @@ def trigger_observation(
                                 )
                             print(f"result: {result}")
                             decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Saving observation result. \n"
-                            saved_obs_2 = Observations.objects.create(
-                                trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
-                                telescope=proposal_decision_model.proposal.telescope,
-                                proposal_decision_id=proposal_decision_model,
-                                reason=reason,
-                                mwa_sub_arrays=mwa_sub_arrays,
-                                website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
-                                event=latestVoevent,
-                                mwa_response=result
-                            )
+                            request_sent_at = datetime.utcnow()
+                            if decision.find('T')> -1:
+                                saved_obs_2 = Observations.objects.create(
+                                    trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
+                                    telescope=proposal_decision_model.proposal.telescope,
+                                    proposal_decision_id=proposal_decision_model,
+                                    reason=reason,
+                                    mwa_sub_arrays=mwa_sub_arrays,
+                                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
+                                    event=latestVoevent,
+                                    mwa_response=result,
+                                    request_sent_at = request_sent_at
+                                )
                         else:
                             decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: New skymap is NOT more than 4 degrees of previous observation pointing. \n"
                             return "T", decision_reason_log
@@ -420,30 +432,57 @@ def trigger_observation(
                     print(f"DEBUG - no sub arrays on previous obs")
                     decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Could not find sub array position on previous observation. \n"
 
-        
-        elif proposal_decision_model.proposal.telescope.name == "ATCA":
-            # Check if you can observe and if so send off mwa observation
-            obsname = f'{proposal_decision_model.trig_id}'
-            decision, decision_reason_log, obsids = trigger_atca_observation(
+        else:
+            print("Not a GW so ignoring GW logic")
+            decision, decision_reason_log_obs, obsids, result = trigger_mwa_observation(
                 proposal_decision_model,
                 decision_reason_log,
                 obsname,
+                vcsmode=vcsmode,
                 event_id=event_id,
-            )
-            for obsid in obsids:
-                # Create new obsid model
-                Observations.objects.create(
-                    trigger_id=obsid,
+                mwa_sub_arrays=mwa_sub_arrays,
+                pretend=pretend
+                )
+            print(f"result: {result}")
+            decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Saving observation result. \n"
+            request_sent_at = datetime.utcnow()
+            if decision.find('T')> -1:
+                saved_obs = Observations.objects.create(
+                    trigger_id=result['trigger_id'] or random.randrange(10000, 99999),
                     telescope=proposal_decision_model.proposal.telescope,
                     proposal_decision_id=proposal_decision_model,
                     reason=reason,
+                    mwa_sub_arrays=mwa_sub_arrays,
+                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
                     event=latestVoevent,
-                    # TODO see if atca has a nice observation details webpage
-                    # website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
+                    mwa_response=result,
+                    request_sent_at=request_sent_at
                 )
+                print(saved_obs)
+
+    elif proposal_decision_model.proposal.telescope.name == "ATCA":
+        # Check if you can observe and if so send off mwa observation
+        obsname = f'{proposal_decision_model.trig_id}'
+        decision, decision_reason_log, obsids = trigger_atca_observation(
+            proposal_decision_model,
+            decision_reason_log,
+            obsname,
+            event_id=event_id,
+        )
+        for obsid in obsids:
+            # Create new obsid model
+            Observations.objects.create(
+                trigger_id=obsid,
+                telescope=proposal_decision_model.proposal.telescope,
+                proposal_decision_id=proposal_decision_model,
+                reason=reason,
+                event=latestVoevent,
+                # TODO see if atca has a nice observation details webpage
+                # website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
+            )
     else:
         decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Not making an MWA observation. \n"
-    return "T", decision_reason_log
+    return decision, decision_reason_log
 
 
 def trigger_mwa_observation(
@@ -488,83 +527,91 @@ def trigger_mwa_observation(
     # Not below horizon limit so observer
     logger.info(f"Triggering MWA at UTC time {Time.now()} ...")
     # Handle early warning events without position using sub arrays
-    if(prop_settings.source_type == 'GW' and buffered == True and vcsmode == True):
-        print("DEBUG - Dumping buffer")
-        print("DEBUG - Using nobs = 1, exptime = 8")
+    try:
+        if(prop_settings.source_type == 'GW' and buffered == True and vcsmode == True):
+            print("DEBUG - Dumping buffer")
+            print("DEBUG - Using nobs = 1, exptime = 8")
 
-        result = trigger(
-            project_id=prop_settings.project_id.id,
-            secure_key=prop_settings.project_id.password,
-            pretend=pretend,
-            creator='VOEvent_Auto_Trigger',  # TODO grab version
-            obsname=obsname,
-            nobs=1,
-            # Assume always using 24 contiguous coarse frequency channels
-            freqspecs=prop_settings.mwa_freqspecs,
-            avoidsun=True,
-            inttime=prop_settings.mwa_inttime,
-            freqres=prop_settings.mwa_freqres,
-            exptime=8,
-            vcsmode=vcsmode,
-            buffered=buffered
-        )
-        print(f"buffered result: {result}")
+            result = trigger(
+                project_id=prop_settings.project_id.id,
+                secure_key=prop_settings.project_id.password,
+                pretend=pretend,
+                creator='VOEvent_Auto_Trigger',  # TODO grab version
+                obsname=obsname,
+                nobs=1,
+                # Assume always using 24 contiguous coarse frequency channels
+                freqspecs=prop_settings.mwa_freqspecs,
+                avoidsun=True,
+                inttime=prop_settings.mwa_inttime,
+                freqres=prop_settings.mwa_freqres,
+                exptime=8,
+                vcsmode=vcsmode,
+                buffered=buffered
+            )
+            print(f"buffered result: {result}")
 
-    
-    elif (prop_settings.source_type == 'GW' and mwa_sub_arrays != None):
-        print("DEBUG - Scheduling an ra/dec sub array observation")
+        
+        elif (prop_settings.source_type == 'GW' and mwa_sub_arrays != None):
+            print("DEBUG - Scheduling an ra/dec sub array observation")
 
-        result = trigger(
-            project_id=prop_settings.project_id.id,
-            secure_key=prop_settings.project_id.password,
-            pretend=pretend,
-            subarray_list=['all_ne', 'all_nw', 'all_se', 'all_sw'],
-            ra=mwa_sub_arrays['ra'],
-            dec=mwa_sub_arrays['dec'],
-            creator='VOEvent_Auto_Trigger',  # TODO grab version
-            obsname=obsname,
-            nobs=1,
-            # Assume always using 24 contiguous coarse frequency channels
-            freqspecs=prop_settings.mwa_freqspecs,
-            avoidsun=True,
-            inttime=prop_settings.mwa_inttime,
-            freqres=prop_settings.mwa_freqres,
-            exptime=prop_settings.mwa_exptime,
-            calibrator=True,
-            calexptime=prop_settings.mwa_calexptime,
-            vcsmode=vcsmode,
-        )
-    else:
-        print("DEBUG - Scheduling an ra/dec observation")
+            result = trigger(
+                project_id=prop_settings.project_id.id,
+                secure_key=prop_settings.project_id.password,
+                pretend=pretend,
+                subarray_list=['all_ne', 'all_nw', 'all_se', 'all_sw'],
+                ra=mwa_sub_arrays['ra'],
+                dec=mwa_sub_arrays['dec'],
+                creator='VOEvent_Auto_Trigger',  # TODO grab version
+                obsname=obsname,
+                nobs=1,
+                # Assume always using 24 contiguous coarse frequency channels
+                freqspecs=prop_settings.mwa_freqspecs,
+                avoidsun=True,
+                inttime=prop_settings.mwa_inttime,
+                freqres=prop_settings.mwa_freqres,
+                exptime=prop_settings.mwa_exptime,
+                calibrator=True,
+                calexptime=prop_settings.mwa_calexptime,
+                vcsmode=vcsmode,
+            )
+        else:
+            print("DEBUG - Scheduling an ra/dec observation")
 
-        result = trigger(
-            project_id=prop_settings.project_id.id,
-            secure_key=prop_settings.project_id.password,
-            pretend=pretend,
-            ra=proposal_decision_model.ra,
-            dec=proposal_decision_model.dec,
-            alt=proposal_decision_model.alt,
-            az=proposal_decision_model.az,
-            creator='VOEvent_Auto_Trigger',  # TODO grab version
-            obsname=obsname,
-            nobs=1,
-            # Assume always using 24 contiguous coarse frequency channels
-            freqspecs=prop_settings.mwa_freqspecs,
-            avoidsun=True,
-            inttime=prop_settings.mwa_inttime,
-            freqres=prop_settings.mwa_freqres,
-            exptime=prop_settings.mwa_exptime,
-            calibrator=True,
-            calexptime=prop_settings.mwa_calexptime,
-            vcsmode=vcsmode,
-        )
+            result = trigger(
+                project_id=prop_settings.project_id.id,
+                secure_key=prop_settings.project_id.password,
+                pretend=pretend,
+                ra=proposal_decision_model.ra,
+                dec=proposal_decision_model.dec,
+                alt=proposal_decision_model.alt,
+                az=proposal_decision_model.az,
+                creator='VOEvent_Auto_Trigger',  # TODO grab version
+                obsname=obsname,
+                nobs=1,
+                # Assume always using 24 contiguous coarse frequency channels
+                freqspecs=prop_settings.mwa_freqspecs,
+                avoidsun=True,
+                inttime=prop_settings.mwa_inttime,
+                freqres=prop_settings.mwa_freqres,
+                exptime=prop_settings.mwa_exptime,
+                calibrator=True,
+                calexptime=prop_settings.mwa_calexptime,
+                vcsmode=vcsmode,
+            )
+    except Exception as e:
+        print(f"DEGUB - Error exception scheduling observation {e}")
+        decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: Exception trying to schedule event {e}\n "
+        return 'E', decision_reason_log, [], []
+
     print(f"result: {result}")
     logger.debug(f"result: {result}")
     # Check if succesful
     if result is None:
+        print("DEBUG - Error: no result from scheduling observation")
         decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: Web API error, possible server error.\n "
         return 'E', decision_reason_log, [], result
     if not result['success']:
+        print("DEBUG - Error: failed to schedule observation")
         # Observation not succesful so record why
         for err_id in result['errors']:
             decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: {result['errors'][err_id]}.\n "
