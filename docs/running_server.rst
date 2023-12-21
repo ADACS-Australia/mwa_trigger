@@ -25,6 +25,7 @@ Starting the server
 Start the uwsgi server with
 
 .. code-block::
+
    cd ~/tracet/webapp_tracet
    /home/ubuntu/.local/bin/uwsgi --ini webapp_tracet_uwsgi.ini
 
@@ -34,6 +35,7 @@ To capture events via the VOEvent network and kafka you need two background serv
 We will run these in tmux so they persist through logout (and we can join/monitor them if we like).
 
 .. code-block::
+   
    cd ~/tracet/webapp_tracet
    tmux new -s kafka -d './kafka_daemon.sh'
    tmux new -s comet -d 'python3.10 twistd_comet_wrapper.py'
