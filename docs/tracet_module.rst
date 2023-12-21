@@ -6,6 +6,7 @@ parse\_xml Module
 .. currentmodule:: tracet.parse_xml
 
 .. _parsed_VOEvent:
+
 parsed_VOEvent Class
 --------------------
 
