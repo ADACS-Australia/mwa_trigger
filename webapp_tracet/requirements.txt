@@ -29,6 +29,7 @@ mwa-pb==1.4
 numpy==1.22.3
 orderedmultidict==1.0.1
 packaging==21.3
+pandas==2.0.3
 Pillow==9.1.0
 psycopg2==2.9.3
 pyerfa==2.0.0.1
