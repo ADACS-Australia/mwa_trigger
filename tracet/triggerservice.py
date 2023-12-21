@@ -222,77 +222,117 @@ def trigger(
     logger=DEFAULTLOGGER,
 ):
     """
-    Call with the parameters that describe the observation/s to schedule, and those observations will
-    be added to the schedule immediately, starting 'now'.
+    Call with the parameters that describe the observation/s to schedule, and
+    those observations will be added to the schedule immediately, starting
+    'now'.
 
     You can pass more than one position, in any combination of:
-      -one or more RA/Dec pairs
-      -one or more alt/az pairs
-      -one of more source names
 
-    Observations will be generated for each position given, in turn (all RA/Dec first, then all Alt/Az, then all
-    sourcenames) unless the 'subarrays' list of subarray names is provided, in which case each position will be
+      - one or more RA/Dec pairs
+      - one or more alt/az pairs
+      - one of more source names
+
+    Observations will be generated for each position given, in turn (all RA/Dec
+    first, then all Alt/Az, then all source names) unless the 'subarrays' list
+    of subarray names is provided, in which case each position will be
     allocated to one subarray, and observed simultaneously.
 
-    You can also pass, for example, one Alt value and a list of Az values, in which case the one Alt value will be
-    propagated to the other Az's. For example, alt=70.0, az=[0,90,180] will give [(70,0), (70,90), (70,180)]. The same
-    is true for RA/Dec.
+    You can also pass, for example, one Alt value and a list of Az values, in
+    which case the one Alt value will be propagated to the other Az's. For
+    example, alt=70.0, az=[0,90,180] will give [(70,0), (70,90), (70,180)]. The
+    same is true for RA/Dec.
 
-    You can also pass more than one frequency specifier, in which case observations will be generated for each choice
-    of frequency, AT each position.
+    You can also pass more than one frequency specifier, in which case
+    observations will be generated for each choice of frequency, AT each
+    position.
 
-    If the 'avoidsum' parameter is True, then the coordinates of the target and calibrator are shifted slightly to
-    put the Sun in a beam null. For this to work, the target coordinates must be RA/Dec values, not Alt/Az.
+    If the 'avoidsum' parameter is True, then the coordinates of the target and
+    calibrator are shifted slightly to put the Sun in a beam null. For this to
+    work, the target coordinates must be RA/Dec values, not Alt/Az.
 
-    If 'buffered' is specified, and True, then instead of scheduling new observations, a voltage buffer dump of all
-    available past data will be triggered, and voltage capture will continue from 'now' until (nobs * exptime) seconds
-    into the future. Existing observations in the schedule, from 'now' until that time, will be truncated or deleted.
+    If 'buffered' is specified, and True, then instead of scheduling new
+    observations, a voltage buffer dump of all available past data will be
+    triggered, and voltage capture will continue from 'now' until (nobs *
+    exptime) seconds into the future. Existing observations in the schedule,
+    from 'now' until that time, will be truncated or deleted.
 
     The structure returned is a dictionary, containing the following:
-      result['success'] - a boolean, True if the observations were scheduled successfully, False if there was an error.
-      result['errors'] - a dictionary, containing integer keys from 0-N, where each value is an error message. Normally empty.
-      result['params'] - a dictionary containing all parameters passed to the web service, after parsing, and some extra
-                         parameters calculated by the web service (the name of the automatically chosen calibrator, etc).
-      result['clear'] - the commands used to clear the schedule. It contains the keys/values:
-                           'command': The full clear_schedule.py command line
-                           'retcode': The integer return code from that command
-                           'stderr': The output to STDERR from that command
-                           'stdout': The output to STDOUT from that command
-      result['schedule'] - the commands used to schedule the triggered observations. It contains the keys/values:
-                           'command': A string containing all of the single_observation.py command lines
-                           'retcode':The integer return code from the shell spawned to run those commands
-                           'stderr': The output to STDERR from those commands
-                           'stdout': The output to STDOUT from those commands
 
-    (and only if buffered is True)
-      result['obsid_list'] - The observation IDs of all MWA observations covered by the buffer dump and subsequent
-                             voltage capture. Use these observation IDs to download the voltage capture files, and to
-                             determine the telescope setting/s during the time span including the captured data.
+      - **result['success']** - a boolean, True if the observations were
+        scheduled successfully, False if there was an error.
+      - **result['errors']** - a dictionary, containing integer keys from 0-N,
+        where each value is an error message. Normally empty.
+      - **result['params']** - a dictionary containing all parameters passed to
+        the web service, after parsing, and some extra parameters calculated by
+        the web service (the name of the automatically chosen calibrator, etc).
+      - **result['clear']** - the commands used to clear the schedule. It
+        contains the keys/values:
+
+            - 'command': The full clear_schedule.py command line
+            - 'retcode': The integer return code from that command
+            - 'stderr': The output to STDERR from that command
+            - 'stdout': The output to STDOUT from that command
+
+      - **result['schedule']** - the commands used to schedule the triggered
+        observations. It contains the keys/values:
+
+            - 'command': A string containing all of the single_observation.py
+              command lines
+            - 'retcode':The integer return code from the shell spawned to run
+              those commands
+            - 'stderr': The output to STDERR from those commands
+            - 'stdout': The output to STDOUT from those commands
+            
+      - **result['obsid_list']** - (only if buffered is True) The observation
+        IDs of all MWA observations covered by the buffer dump and subsequent
+        voltage capture. Use these observation IDs to download the voltage
+        capture files, and to determine the telescope setting/s during the time
+        span including the captured data.
 
     :param project_id: eg 'C001' - project ID for the triggered observations
     :param secure_key: password associated with that project_id
-    :param group_id: optional group ID - the start time of a previously triggered observation of the same event
-    :param ra: Either one RA (float, in hours), or a list of RA floats. Eg 12.234, or [11.0, 12.0]
-    :param dec: Either one Dec (float, in degrees), or a list of Dec floats. Eg -12.234, or [-26.0, -36.0]
-    :param alt: Either one Alt (float, in degrees), or a list of Alt floats. Eg 80.0, or [70.0, 90.0]
-    :param az: Either one Az (float, in degrees), or a list of Az floats. Eg 250.3, or [90.0, 270.0]
-    :param source: Either one source name string, or a list of source name strings. Eg 'Sun', or ['Sun', 'Moon']
-    :param subarray_list: An optional list of subarray names, the same length as the total number of points (ra/decs, alt/azs, etc)
-    :param freqspecs: Either one frequency specifier string, or a list of frequency specifier strings. Eg '145,24', or ['121,24', '145,24']
+    :param group_id: optional group ID - the start time of a previously
+        triggered observation of the same event
+    :param ra: Either one RA (float, in hours), or a list of RA floats. Eg
+        12.234, or [11.0, 12.0]
+    :param dec: Either one Dec (float, in degrees), or a list of Dec floats. Eg
+        -12.234, or [-26.0, -36.0]
+    :param alt: Either one Alt (float, in degrees), or a list of Alt floats. Eg
+        80.0, or [70.0, 90.0]
+    :param az: Either one Az (float, in degrees), or a list of Az floats. Eg
+        250.3, or [90.0, 270.0]
+    :param source: Either one source name string, or a list of source name
+        strings. Eg 'Sun', or ['Sun', 'Moon']
+    :param subarray_list: An optional list of subarray names, the same length
+        as the total number of points (ra/decs, alt/azs, etc)
+    :param freqspecs: Either one frequency specifier string, or a list of
+        frequency specifier strings. Eg '145,24', or ['121,24', '145,24']
     :param creator: Creator string, eg 'Andrew'
     :param obsname: Observation name string, eg 'Fermi Trigger 20180211.1234'
-    :param nobs: Number of observations to schedule for each position/frequency combination
-    :param exptime: Exposure time of each observation scheduled, in seconds (must be modulo-8 seconds)
-    :param calexptime: Exposure time of the trailing calibrator observation, if applicable, in seconds
-    :param calibrator: None or False for no calibrator observation, a source name to specify one, or True to have one chosen for you.
-    :param freqres: Correlator frequency resolution for observations. None to use whatever the current mode is, for lower latency. Eg 40
-    :param inttime: Correlator integration time for observations. None to use whatever the current mode is, for lower latency. Eg 0.5
-    :param avoidsun: boolean or integer. If True, the coordinates of the target and calibrator are shifted slightly to put the Sun in a null.
-    :param vcsmode: boolean. If True, the observations are made in 'Voltage Capture' mode instead of normal (HW_LFILES) mode.
-    :param buffered: boolean. If True and vcsmode, trigger a Voltage capture using the ring buffer.
-    :param pretend: boolean or integer. If True, the clear_schedule.py and single_observation.py commands will be generated but NOT run.
+    :param nobs: Number of observations to schedule for each position/frequency
+        combination
+    :param exptime: Exposure time of each observation scheduled, in seconds
+        (must be modulo-8 seconds)
+    :param calexptime: Exposure time of the trailing calibrator observation, if
+        applicable, in seconds
+    :param calibrator: None or False for no calibrator observation, a source
+        name to specify one, or True to have one chosen for you.
+    :param freqres: Correlator frequency resolution for observations. None to
+        use whatever the current mode is, for lower latency. Eg 40
+    :param inttime: Correlator integration time for observations. None to use
+        whatever the current mode is, for lower latency. Eg 0.5
+    :param avoidsun: boolean or integer. If True, the coordinates of the target
+        and calibrator are shifted slightly to put the Sun in a null.
+    :param vcsmode: boolean. If True, the observations are made in 'Voltage
+        Capture' mode instead of normal (HW_LFILES) mode.
+    :param buffered: boolean. If True and vcsmode, trigger a Voltage capture
+        using the ring buffer.
+    :param pretend: boolean or integer. If True, the clear_schedule.py and
+        single_observation.py commands will be generated but NOT run.
     :param logger: optional logging.logger object
-    :return: dictionary structure describing the processing (see above for more information).
+
+    :return: dictionary structure describing the processing (see above for more
+        information).
     """
 
     if vcsmode and buffered:
@@ -399,50 +439,73 @@ def triggerbuffer(
     logger=DEFAULTLOGGER,
 ):
     """
-    Trigger an immediate dump of the memory buffers to disk, using 'start_time' as the earliest time to capture (zero,
-    or any time earlier than the oldest time in the buffer, means 'save as much as possible'. If 'end_time' is
-    specified, save data only up to (but not necessarily including) that time, or if 'obs_time' is specified, then
-    keep capturing voltages until that many seconds from 'now'. Existing observations in the schedule, from 'now'
-    until that time, will be truncated or deleted.
+    Trigger an immediate dump of the memory buffers to disk, using 'start_time'
+    as the earliest time to capture (zero, or any time earlier than the oldest
+    time in the buffer, means 'save as much as possible'. If 'end_time' is
+    specified, save data only up to (but not necessarily including) that time,
+    or if 'obs_time' is specified, then keep capturing voltages until that many
+    seconds from 'now'. Existing observations in the schedule, from 'now' until
+    that time, will be truncated or deleted.
 
-    For triggers requiring continued capturing after the trigger, you would normally pass zero to start_time, and a
-    duration to obstime as a capture duration, counted from the time that the trigger takes place.
+    For triggers requiring continued capturing after the trigger, you would
+    normally pass zero to start_time, and a duration to obstime as a capture
+    duration, counted from the time that the trigger takes place.
 
-    For captures requiring only one or two subfiles at a specific time in the past, you would pass specific GPS times
-    to start_time and stop_time, and not use obstime.
+    For captures requiring only one or two subfiles at a specific time in the
+    past, you would pass specific GPS times to start_time and stop_time, and
+    not use obstime.
 
-    Note that if start_time and end_time are both specified, and both zero, no subfiles are captured, but otherwise
-    the full end-to-end process takes place as a null operation, including calls to all 24 MWAX servers.
+    Note that if start_time and end_time are both specified, and both zero, no
+    subfiles are captured, but otherwise the full end-to-end process takes
+    place as a null operation, including calls to all 24 MWAX servers.
 
     The structure returned is a dictionary, containing the following:
-      result['success'] - a boolean, True if the observations were scheduled successfully, False if there was an error.
-      result['errors'] - a dictionary, containing integer keys from 0-N, where each value is an error message. Normally empty.
-      result['params'] - a dictionary containing all parameters passed to the web service, after parsing, and some extra
-                         parameters calculated by the web service (the name of the automatically chosen calibrator, etc).
-      result['clear'] - the commands used to clear the schedule. It contains the keys/values:
-                           'command': The full clear_schedule.py command line
-                           'retcode': The integer return code from that command
-                           'stderr': The output to STDERR from that command
-                           'stdout': The output to STDOUT from that command
-      result['schedule'] - the commands used to trigger the buffer dump and add a VOLTAGE_STOP observation.
-                           It contains the keys/values:
-                               'command': A string containing all of the single_observation.py command lines
-                               'retcode':The integer return code from the shell spawned to run those commands
-                               'stderr': The output to STDERR from those commands
-                               'stdout': The output to STDOUT from those commands
-      result['obsid_list'] - The observation IDs of all MWA observations covered by the buffer dump and subsequent
-                             voltage capture. Use these observation IDs to download the voltage capture files, and to
-                             determine the telescope setting/s during the time span including the captured data.
+
+      - **result['success']** - a boolean, True if the observations were scheduled
+        successfully, False if there was an error.
+      - **result['errors']** - a dictionary, containing integer keys from 0-N,
+        where each value is an error message. Normally empty.
+      - **result['params']** - a dictionary containing all parameters passed to the
+        web service, after parsing, and some extra parameters calculated by the
+        web service (the name of the automatically chosen calibrator, etc).
+      - **result['clear']** - the commands used to clear the schedule. It contains
+        the keys/values: 
+
+            - 'command': The full clear_schedule.py command line
+            - 'retcode': The integer return code from that command
+            - 'stderr': The output to STDERR from that command 
+            - 'stdout': The output to STDOUT from that command
+
+      - **result['schedule']** - the commands used to trigger the buffer dump and
+        add a VOLTAGE_STOP observation. It contains the keys/values: 
+
+            - 'command': A string containing all of the single_observation.py command
+              lines 
+            - 'retcode': The integer return code from the shell spawned to run
+              those commands 
+            - 'stderr': The output to STDERR from those commands 
+            - 'stdout': The output to STDOUT from those commands
+
+      - **result['obsid_list']** - The observation IDs of all MWA observations
+        covered by the buffer dump and subsequent voltage capture. Use these
+        observation IDs to download the voltage capture files, and to determine
+        the telescope setting/s during the time span including the captured
+        data.
 
     :param project_id: eg 'C001' - project ID for the triggered observations
     :param secure_key: password associated with that project_id
-    :param pretend: boolean or integer. If True, the triggervcs command will NOT be run.
+    :param pretend: boolean or integer. If True, the triggervcs command will
+        NOT be run.
     :param logger: optional logging.logger object
-    :param start_time: Optional earliest time to capture - defaults to zero, for 'as early as possible'.
-    :param end_time: Optional end time, in GPS seconds, to capture (can also be in the past).
-    :param obstime: Duration of data capture, in seconds, if end_time is not specified. Counts from 'now', not the time
-                    in the past when data capture started.
-    :return: dictionary structure describing the processing (see above for more information).
+    :param start_time: Optional earliest time to capture - defaults to zero,
+        for 'as early as possible'.
+    :param end_time: Optional end time, in GPS seconds, to capture (can also be
+        in the past).
+    :param obstime: Duration of data capture, in seconds, if end_time is not
+                    specified. Counts from 'now', not the time in the past when
+                    data capture started.
+    :return: dictionary structure describing the processing (see above for more
+        information).
     """
     urldict = {}
     postdict = {}
