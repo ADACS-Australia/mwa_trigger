@@ -222,17 +222,17 @@ def worth_observing_gw(
         lvc_includes_neutron_star_probability=None,
         lvc_false_alarm_rate=None,
         # Thresholds
-        minimum_neutron_star_probability=None,
-        maximum_neutron_star_probability=None,
-        minimum_binary_neutron_star_probability=None,
-        maximum_binary_neutron_star_probability=None,
-        minimum_neutron_star_black_hole_probability=None,
-        maximum_neutron_star_black_hole_probability=None,
-        minimum_binary_black_hole_probability=None,
-        maximum_binary_black_hole_probability=None,
-        minimum_terrestial_probability=None,
-        maximum_terrestial_probability=None,
-        observe_significant=None,
+        minimum_neutron_star_probability=0.01,
+        maximum_neutron_star_probability=1.0,
+        minimum_binary_neutron_star_probability=0.01,
+        maximum_binary_neutron_star_probability=1.0,
+        minimum_neutron_star_black_hole_probability=0.01,
+        maximum_neutron_star_black_hole_probability=1.0,
+        minimum_binary_black_hole_probability=0.01,
+        maximum_binary_black_hole_probability=1.0,
+        minimum_terrestial_probability=0.95,
+        maximum_terrestial_probability=0.95,
+        observe_significant=True,
         event_type=None,
         maximum_false_alarm_rate=None,
         # Other
@@ -274,12 +274,16 @@ def worth_observing_gw(
         The maximum terrestial probability. Default: 0.95.
     observe_significant : `bool`, optional
         Observe significant events. Default: True.
+    event_type : TODO needs documentation. Default: None
+    maximum_false_alarm_rate : TODO needs documentation. Default: None
+
     decision_reason_log : `str`
         A log of all the decisions made so far so a user can understand why the source was(n't) observed. Default: "".
     event_observed : `date`, optional
         Time of the event. Default: Date now.
     event_id : `int`, optional
         An Event ID that will be recorded in the decision_reason_log. Default: None.
+    lvc_instruments TODO needs documentation. Default: None
 
     Returns
     -------
@@ -317,18 +321,19 @@ def worth_observing_gw(
     print(f"\nLogic lvc_instruments: {lvc_instruments}")
 
  
-    # Check alert is less than 3 hours from the event time
+    # Check alert is less than 2 hours from the event time
     two_hours_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=2)
 
     if telescope == "LVC" and event_type == "EarlyWarning":
-        trigger_bool = True
+        trigger_bool = True  # Always trigger on Early Warning events
         lvc_binary_neutron_star_probability = 0.97
         lvc_neutron_star_black_hole_probability = 0.01
         lvc_binary_black_hole_probability = 0.01
         lvc_terrestial_probability = 0.01
     if(event_observed < two_hours_ago):
         debug_bool = True
-        decision_reason_log += f'{datetime.datetime.utcnow()}: Event ID {event_id}: The event time {event_observed.strftime("%Y-%m-%dT%H:%M:%S+0000")} is more than 3 hours ago {two_hours_ago.strftime("%Y-%m-%dT%H:%M:%S+0000")} so not triggering. \n'
+        trigger_bool = False  # don't trigger if the event was earlier than two_hours_ago
+        decision_reason_log += f'{datetime.datetime.utcnow()}: Event ID {event_id}: The event time {event_observed.strftime("%Y-%m-%dT%H:%M:%S+0000")} is more than 2 hours ago {two_hours_ago.strftime("%Y-%m-%dT%H:%M:%S+0000")} so not triggering. \n'
     elif(lvc_instruments != None and len(lvc_instruments.split(',')) < 2):
         debug_bool = True
         decision_reason_log += f'{datetime.datetime.utcnow()}: Event ID {event_id}: The event has only {lvc_instruments} so not triggering. \n'
