@@ -1,6 +1,8 @@
 Running Server
 ==============
 
+.. note:: The below assumes that you are running TraceT on Nimbus. Paths will need to be adjusted if you are running it elsewhere.
+
 Checking for errors and inspecting logs
 ---------------------------------------
 nginx errors are in
@@ -24,30 +26,19 @@ Start the uwsgi server with
 
 .. code-block::
 
-   uwsgi --ini webapp_tracet_uwsgi.ini
+   cd ~/tracet/webapp_tracet
+   /home/ubuntu/.local/bin/uwsgi --ini webapp_tracet_uwsgi.ini
 
 This will run in the background and the following sections describe how to restarting and stopping the server.
 
-You also need to run the a twistd wrapper to listen for VOEvents. This can be run in tmux session using the command:
+To capture events via the VOEvent network and kafka you need two background services to run.
+We will run these in tmux so they persist through logout (and we can join/monitor them if we like).
 
 .. code-block::
-
-   tmux new -s twistd_comet_wrapper
-
-This will land you in the tmux session where you can run the wrapper command:
-
-.. code-block::
-
-   python twistd_comet_wrapper.py
-
-This will start listening to VOEvents and you should see that "VOEvent Receiving Status" on the homepage changes from stopped to running.
-
-You can detatch from the session with command `CTRL+B, D` and reattach with
-
-.. code-block::
-
-   tmux attach -t twistd_comet_wrapper
-
+   
+   cd ~/tracet/webapp_tracet
+   tmux new -s kafka -d './kafka_daemon.sh'
+   tmux new -s comet -d 'python3.10 twistd_comet_wrapper.py'
 
 Restarting the server
 ---------------------
@@ -62,7 +53,7 @@ Stopping the server
 
 .. code-block::
 
-   uwsgi --stop /tmp/project-master.pid
+   /home/ubuntu/.local/bin/uwsgi --stop /tmp/project-master.pid
 
 
 Installing updates
@@ -70,26 +61,54 @@ Installing updates
 
 If the updates are small normally something as simple as the following will suffice:
 
-.. code-block::
+.. code-block:: bash
 
+   cd ~/tracet
    git pull
    kill -HUP `cat /tmp/project-master.pid`
 
-Larger updates may need a combination of the following commands
+Larger update need more effort:
 
-.. code-block::
+.. code-block:: bash
 
+   # check we are in /tracet
+   cd /home/ubuntu/tracet
+   # update git repo
    git pull
    # Stop server
-   uwsgi --stop /tmp/project-master.pid
+   /home/ubuntu/.local/bin/uwsgi --stop /tmp/project-master.pid
+
    # Check for new dependent software
-   pip install -r requirements.txt
-   # install updates to the tracet python module
-   pip install ..
+   python3.10 -m pip install -r requirements.txt
+   python3.10 -m pip install .
+   python3.10 -m pip install -r webapp_tracet/requirements.txt
+
+   cd webapp_tracet
+
    # Check for new static files
-   python manage.py collectstatic
+   python3.10 manage.py collectstatic --noinput
+
    # Make any required changes to the backend database
-   python manage.py makemigrations
-   python manage.py migrate
+   python3.10 manage.py makemigrations
+   python3.10 manage.py migrate
+
    # Start server
-   uwsgi --ini gleam_webapp_uwsgi.ini
+   /home/ubuntu/.local/bin/uwsgi --ini webapp_tracet_uwsgi.ini
+
+   # create environment variables required by kafka
+   tmux kill-server
+
+   # Reset comet and kafka event handlers
+   tmux new -s kafka -d './kafka_daemon.sh'
+   tmux new -s comet -d 'python3.10 twistd_comet_wrapper.py'
+
+
+All of the above is captured in the script `update-server.sh`, so you can run it via:
+
+.. code-block:: bash
+
+   cd ~/tracet
+   ./update-server.sh
+
+
+

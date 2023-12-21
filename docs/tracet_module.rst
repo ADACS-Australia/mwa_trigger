@@ -6,6 +6,7 @@ parse\_xml Module
 .. currentmodule:: tracet.parse_xml
 
 .. _parsed_VOEvent:
+
 parsed_VOEvent Class
 --------------------
 
@@ -61,11 +62,6 @@ triggerservice Module
 
 .. currentmodule:: tracet.triggerservice
 
-trigger_mwa Function
---------------------
-.. autofunction:: trigger_mwa
-
-
 web_api Function
 ----------------
 .. autofunction:: web_api
@@ -81,6 +77,10 @@ vcsfree Function
 obslist Function
 ----------------
 .. autofunction:: obslist
+
+trigger Function
+--------------------
+.. autofunction:: trigger
 
 triggerbuffer Function
 ----------------------

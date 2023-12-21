@@ -220,35 +220,35 @@ def worth_observing_nu(
 
 
 def worth_observing_gw(
-    # event values
-    telescope=None,
-    lvc_significant=None,
-    lvc_binary_neutron_star_probability=None,
-    lvc_neutron_star_black_hole_probability=None,
-    lvc_binary_black_hole_probability=None,
-    lvc_terrestial_probability=None,
-    lvc_includes_neutron_star_probability=None,
-    lvc_false_alarm_rate=None,
-    # Thresholds
-    minimum_neutron_star_probability=None,
-    maximum_neutron_star_probability=None,
-    minimum_binary_neutron_star_probability=None,
-    maximum_binary_neutron_star_probability=None,
-    minimum_neutron_star_black_hole_probability=None,
-    maximum_neutron_star_black_hole_probability=None,
-    minimum_binary_black_hole_probability=None,
-    maximum_binary_black_hole_probability=None,
-    minimum_terrestial_probability=None,
-    maximum_terrestial_probability=None,
-    observe_significant=None,
-    event_type=None,
-    maximum_false_alarm_rate=None,
-    # Other
-    decision_reason_log="",
-    event_observed=datetime.datetime.now(datetime.timezone.utc),
-    event_id=None,
-    lvc_instruments=None,
-):
+        # event values
+        telescope=None,
+        lvc_significant=None,
+        lvc_binary_neutron_star_probability=None,
+        lvc_neutron_star_black_hole_probability=None,
+        lvc_binary_black_hole_probability=None,
+        lvc_terrestial_probability=None,
+        lvc_includes_neutron_star_probability=None,
+        lvc_false_alarm_rate=None,
+        # Thresholds
+        minimum_neutron_star_probability=0.01,
+        maximum_neutron_star_probability=1.0,
+        minimum_binary_neutron_star_probability=0.01,
+        maximum_binary_neutron_star_probability=1.0,
+        minimum_neutron_star_black_hole_probability=0.01,
+        maximum_neutron_star_black_hole_probability=1.0,
+        minimum_binary_black_hole_probability=0.01,
+        maximum_binary_black_hole_probability=1.0,
+        minimum_terrestial_probability=0.95,
+        maximum_terrestial_probability=0.95,
+        observe_significant=True,
+        event_type=None,
+        maximum_false_alarm_rate=None,
+        # Other
+        decision_reason_log="",
+        event_observed=datetime.datetime.now(datetime.timezone.utc),
+        event_id=None,
+        lvc_instruments=None
+    ):
     """Decide if a Gravity Wave Event is worth observing.
 
     Parameters
@@ -282,12 +282,16 @@ def worth_observing_gw(
         The maximum terrestial probability. Default: 0.95.
     observe_significant : `bool`, optional
         Observe significant events. Default: True.
+    event_type : TODO needs documentation. Default: None
+    maximum_false_alarm_rate : TODO needs documentation. Default: None
+
     decision_reason_log : `str`
         A log of all the decisions made so far so a user can understand why the source was(n't) observed. Default: "".
     event_observed : `date`, optional
         Time of the event. Default: Date now.
     event_id : `int`, optional
         An Event ID that will be recorded in the decision_reason_log. Default: None.
+    lvc_instruments TODO needs documentation. Default: None
 
     Returns
     -------
@@ -330,7 +334,7 @@ def worth_observing_gw(
     )
 
     if telescope == "LVC" and event_type == "EarlyWarning":
-        trigger_bool = True
+        trigger_bool = True  # Always trigger on Early Warning events
         lvc_binary_neutron_star_probability = 0.97
         lvc_neutron_star_black_hole_probability = 0.01
         lvc_binary_black_hole_probability = 0.01

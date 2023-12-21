@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath("."))
 # -- Project information -----------------------------------------------------
 
 project = "tracet"
-copyright = "2022, ADACS"
+copyright = "2023, ADACS"
 author = "ADACS"
 
 # The full version, including alpha/beta/rc tags
