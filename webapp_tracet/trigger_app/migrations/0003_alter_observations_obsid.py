@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0002_alter_observations_obsid'),
+        ("trigger_app", "0002_alter_observations_obsid"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='observations',
-            name='obsid',
+            model_name="observations",
+            name="obsid",
             field=models.CharField(max_length=128, primary_key=True, serialize=False),
         ),
     ]

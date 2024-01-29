@@ -6,17 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0027_proposalsettings_minimum_false_alarm_rate'),
+        ("trigger_app", "0027_proposalsettings_minimum_false_alarm_rate"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='proposalsettings',
-            name='minimum_false_alarm_rate',
+            model_name="proposalsettings",
+            name="minimum_false_alarm_rate",
         ),
         migrations.AddField(
-            model_name='proposalsettings',
-            name='maximum_false_alarm_rate',
-            field=models.CharField(default='1.00e-8', help_text='Can be 0.000001 or 1.0e-8 formats', max_length=260, verbose_name='Maximum false alarm rate (FAR) to trigger'),
+            model_name="proposalsettings",
+            name="maximum_false_alarm_rate",
+            field=models.CharField(
+                default="1.00e-8",
+                help_text="Can be 0.000001 or 1.0e-8 formats",
+                max_length=260,
+                verbose_name="Maximum false alarm rate (FAR) to trigger",
+            ),
         ),
     ]

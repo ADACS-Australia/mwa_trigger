@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0025_event_lvc_instruments_observations_created_at'),
+        ("trigger_app", "0025_event_lvc_instruments_observations_created_at"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='event',
-            name='lvc_false_alarm_rate',
+            model_name="event",
+            name="lvc_false_alarm_rate",
             field=models.CharField(blank=True, max_length=128, null=True),
         ),
     ]

@@ -6,13 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0041_remove_proposalsettings_maximum_observation_time_minutes_and_more'),
+        (
+            "trigger_app",
+            "0041_remove_proposalsettings_maximum_observation_time_minutes_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='observations',
-            name='request_sent_at',
+            model_name="observations",
+            name="request_sent_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

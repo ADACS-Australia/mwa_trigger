@@ -19,3 +19,4 @@ docs/html/*
 build
 webapp_tracet/logs
 webapp_tracet/static
+settings.ini

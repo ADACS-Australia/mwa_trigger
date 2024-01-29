@@ -6,21 +6,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0019_alter_cometlog_log_alter_event_lvc_event_url_and_more'),
+        ("trigger_app", "0019_alter_cometlog_log_alter_event_lvc_event_url_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='event',
-            name='lvc_significance',
+            model_name="event",
+            name="lvc_significance",
         ),
         migrations.RemoveField(
-            model_name='proposalsettings',
-            name='observe_low_significance',
+            model_name="proposalsettings",
+            name="observe_low_significance",
         ),
         migrations.AddField(
-            model_name='event',
-            name='lvc_significant',
+            model_name="event",
+            name="lvc_significant",
             field=models.BooleanField(blank=True, default=False, null=True),
         ),
     ]

@@ -6,9 +6,8 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0009_alter_event_lvc_skymap_file'),
-        ('trigger_app', '0009_event_hess_significance_and_more'),
+        ("trigger_app", "0009_alter_event_lvc_skymap_file"),
+        ("trigger_app", "0009_event_hess_significance_and_more"),
     ]
 
-    operations = [
-    ]
+    operations = []
