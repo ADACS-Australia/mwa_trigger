@@ -8,12 +8,12 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('trigger_app', '0001_squashed_0002_alter_telescopeprojectid_password'),
+        ("trigger_app", "0001_squashed_0002_alter_telescopeprojectid_password"),
     ]
 
     operations = [
         migrations.RenameModel(
-            old_name='AdminAlerts',
-            new_name='AlertPermission',
+            old_name="AdminAlerts",
+            new_name="AlertPermission",
         ),
     ]

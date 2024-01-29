@@ -117,11 +117,17 @@ def get_event_type(ivorn):
 
 
 def load_swift_source_database():
-    """Load the SWIFT source database file within the repo into a pandas dataframe.
-    """
-    df = pd.read_table(data_load.SWIFT_FLARE_STAR_NAMES, sep='|', header=0,
-                       comment="+", skiprows=41, usecols=list(range(1, 15)), skipinitialspace=True)
-    df = df[df['ROW'] != 'ROW']
+    """Load the SWIFT source database file within the repo into a pandas dataframe."""
+    df = pd.read_table(
+        data_load.SWIFT_FLARE_STAR_NAMES,
+        sep="|",
+        header=0,
+        comment="+",
+        skiprows=41,
+        usecols=list(range(1, 15)),
+        skipinitialspace=True,
+    )
+    df = df[df["ROW"] != "ROW"]
     return df
 
 
@@ -154,13 +160,16 @@ def get_source_types(telescope, event_type, source_name, v):
 
     # Check for Flare Stars
     maxi_data_file = data_load.MAXI_FLARE_STAR_NAMES
-    maxi_flare_stars = [a.strip().lower() for a in open(
-        maxi_data_file, 'r').readlines() if not a.startswith("#")]
+    maxi_flare_stars = [
+        a.strip().lower()
+        for a in open(maxi_data_file, "r").readlines()
+        if not a.startswith("#")
+    ]
     swift_df = load_swift_source_database()
-    swift_flare_stars = list(swift_df[swift_df['SRC_TYPE'] == '11']["NAME"])
+    swift_flare_stars = list(swift_df[swift_df["SRC_TYPE"] == "11"]["NAME"])
     flare_stars = maxi_flare_stars + swift_flare_stars
     # Check if this is a sub_sub_threshold event and ignore if it is
-    if telescope == "SWIFT" and 'sub-sub-threshold' in str(v.What.Description):
+    if telescope == "SWIFT" and "sub-sub-threshold" in str(v.What.Description):
         flare_star = False
     else:
         flare_star = False
@@ -179,15 +188,16 @@ def get_source_types(telescope, event_type, source_name, v):
         if grb is None:
             grb = False
         else:
-            grb = grb.attrib['value']
+            grb = grb.attrib["value"]
             # Convert string to bool
-            if 'true' in grb.lower().strip():
+            if "true" in grb.lower().strip():
                 grb = True
-            elif 'false' in grb.lower().strip():
+            elif "false" in grb.lower().strip():
                 grb = False
             else:
                 logger.error(
-                    f"Unrecognised value of Param[@name='GRB_Identified']: {grb}")
+                    f"Unrecognised value of Param[@name='GRB_Identified']: {grb}"
+                )
                 grb = False
     elif telescope == "Fermi":
         # grb = False   # Ignore all Fermi triggers
@@ -223,17 +233,20 @@ def get_position_info(v):
     """
     try:
         ra = float(
-            v.WhereWhen.ObsDataLocation.ObservationLocation.AstroCoords.Position2D.Value2.C1)
+            v.WhereWhen.ObsDataLocation.ObservationLocation.AstroCoords.Position2D.Value2.C1
+        )
         dec = float(
-            v.WhereWhen.ObsDataLocation.ObservationLocation.AstroCoords.Position2D.Value2.C2)
+            v.WhereWhen.ObsDataLocation.ObservationLocation.AstroCoords.Position2D.Value2.C2
+        )
         err = float(
-            v.WhereWhen.ObsDataLocation.ObservationLocation.AstroCoords.Position2D.Error2Radius)
+            v.WhereWhen.ObsDataLocation.ObservationLocation.AstroCoords.Position2D.Error2Radius
+        )
     except:
         # Try old method if new one doesn't work
         try:
             ra = float(v.find(".//C1"))
             dec = float(v.find(".//C2"))
-            err = float(v.find('.//Error2Radius'))
+            err = float(v.find(".//Error2Radius"))
         except:
             ra = None
             dec = None
@@ -402,8 +415,7 @@ class parsed_VOEvent:
         return self.__dict__.iteritems()
 
     def parse(self):
-        """Parses the XML into the class attributes. This is run when the class is initiated.
-        """
+        """Parses the XML into the class attributes. This is run when the class is initiated."""
         # Read in xml
         if self.packet is None:
             with open(self.xml, "rb") as f:
@@ -428,30 +440,28 @@ class parsed_VOEvent:
             src = v.find(".//Param[@name='Source_Name']")
             if src is not None:
                 # MAXI sometimes puts spaces at the start of the string!
-                self.source_name = str(src.attrib['value']).strip()
+                self.source_name = str(src.attrib["value"]).strip()
 
         # Work out what type of source it is
         self.source_type = get_source_types(
-            self.telescope, self.event_type, self.source_name, v)
+            self.telescope, self.event_type, self.source_name, v
+        )
         logger.debug(f"source types: {self.source_type}")
 
         # Attempt to get a Trigger ID (for Fermi, SWIFT, Antares and LVC)
         if v.find(".//Param[@name='TrigID']") is not None:
-            self.trig_id = str(
-                v.find(".//Param[@name='TrigID']").attrib["value"])
+            self.trig_id = str(v.find(".//Param[@name='TrigID']").attrib["value"])
         elif v.find(".//Param[@name='AMON_ID']") is not None:
             # ICECUBE's ID
-            self.trig_id = str(
-                v.find(".//Param[@name='AMON_ID']").attrib["value"])
+            self.trig_id = str(v.find(".//Param[@name='AMON_ID']").attrib["value"])
         elif v.find(".//Param[@name='GraceID']") is not None:
             # The gracedb ID for GW
-            self.trig_id = str(
-                v.find(".//Param[@name='GraceID']").attrib["value"])
+            self.trig_id = str(v.find(".//Param[@name='GraceID']").attrib["value"])
         elif v.find(".//EventIVORN[@cite='followup']") is not None:
             # Hess has no Trigger ID so get from swift followup ivorn, if doesnt exist use autogen
             # TODO replace this with something more reliable
             swift_ivron = str(v.find(".//EventIVORN[@cite='followup']"))
-            self.trig_id = swift_ivron.split('_').pop().split('-')[0]
+            self.trig_id = swift_ivron.split("_").pop().split("-")[0]
         else:
             self.trig_id = str(uuid.uuid4().int)[:12]
             self.self_generated_trig_id = True
@@ -464,9 +474,11 @@ class parsed_VOEvent:
             self.dec_dms = None
         else:
             self.ra_hms = str(
-                Angle(self.ra, unit=u.deg).to_string(unit=u.hour, sep=':'))
+                Angle(self.ra, unit=u.deg).to_string(unit=u.hour, sep=":")
+            )
             self.dec_dms = str(
-                Angle(self.dec, unit=u.deg).to_string(unit=u.deg, sep=':'))
+                Angle(self.dec, unit=u.deg).to_string(unit=u.deg, sep=":")
+            )
         logger.debug(f"Trig position: {self.ra} {self.dec} {self.err}")
 
         # Get observed time as UTC
@@ -499,22 +511,22 @@ class parsed_VOEvent:
                 self.fermi_detection_prob = int(
                     v.find(".//Param[@name='Most_Likely_Prob']").attrib["value"]
                 )
-                
+
         elif self.telescope == "SWIFT":
             # Check if SWIFT tracking fails
-            startrack_lost_lock = v.find(
-                ".//Param[@name='StarTrack_Lost_Lock']")
+            startrack_lost_lock = v.find(".//Param[@name='StarTrack_Lost_Lock']")
             if startrack_lost_lock is None:
                 # No 'StarTrack_Lost_Lock' in xml so assume false
                 startrack_lost_lock = False
             else:
                 startrack_lost_lock = startrack_lost_lock.attrib["value"]
                 # convert 'true' to True, and everything else to false
-                startrack_lost_lock = (startrack_lost_lock.lower() == "true")
+                startrack_lost_lock = startrack_lost_lock.lower() == "true"
             logger.debug("StarLock OK? {0}".format(not startrack_lost_lock))
             if startrack_lost_lock:
                 logger.warning(
-                    "The SWIFT star tracker lost it's lock so ignoring event")
+                    "The SWIFT star tracker lost it's lock so ignoring event"
+                )
                 self.event_type += " SWIFT lost star tracker"
                 self.ignore = True
 
@@ -525,8 +537,7 @@ class parsed_VOEvent:
             self.sequence_num = None
             swift_rate_signif = v.find(".//Param[@name='Rate_Signif']")
             if swift_rate_signif is not None:
-                self.swift_rate_signif = float(
-                    swift_rate_signif.attrib["value"])
+                self.swift_rate_signif = float(swift_rate_signif.attrib["value"])
             grb_ident = v.find(".//Param[@name='GRB_Identified']")
             if grb_ident is not None:
                 self.grb_ident = grb_ident.attrib["value"]
@@ -535,50 +546,66 @@ class parsed_VOEvent:
             self.event_duration = None
             self.sequence_num = None
             self.antares_ranking = int(
-                v.find(".//Param[@name='ranking']").attrib["value"])
+                v.find(".//Param[@name='ranking']").attrib["value"]
+            )
 
         elif self.telescope == "HESS":
             self.event_duration = float(
-                v.find(".//Param[@name='observation_duration']").attrib["value"])
+                v.find(".//Param[@name='observation_duration']").attrib["value"]
+            )
             self.hess_significance = float(
-                v.find(".//Param[@name='significance']").attrib["value"])
+                v.find(".//Param[@name='significance']").attrib["value"]
+            )
 
         elif self.telescope == "LVC":
             self.event_duration = None
             self.sequence_num = None
             logger.info("LVC telescope")
-        
 
             # Check if GW event is a burst
-            if v.find(".//Param[@name='Group']") is not None and v.find(".//Param[@name='Group']").attrib["value"] == 'Burst':
+            if (
+                v.find(".//Param[@name='Group']") is not None
+                and v.find(".//Param[@name='Group']").attrib["value"] == "Burst"
+            ):
                 # Ignore burst events
                 self.is_burst = v.find(".//Param[@name='Group']").attrib["value"]
                 self.ignore = True
-                
 
-            if self.event_type != 'Retraction' and not self.is_burst:
+            if self.event_type != "Retraction" and not self.is_burst:
                 # Capture Probabilities of observations for proposals and analysis
                 self.lvc_includes_neutron_star_probability = float(
-                    v.find(".//Param[@name='HasNS']").attrib["value"])
+                    v.find(".//Param[@name='HasNS']").attrib["value"]
+                )
                 self.lvc_false_alarm_rate = float(
-                    v.find(".//Param[@name='FAR']").attrib["value"])
+                    v.find(".//Param[@name='FAR']").attrib["value"]
+                )
                 # Not yet live
-                self.lvc_significant = bool(v.find(".//Param[@name='Significant']").attrib["value"])
+                self.lvc_significant = bool(
+                    v.find(".//Param[@name='Significant']").attrib["value"]
+                )
                 self.lvc_event_url = str(
-                    v.find(".//Param[@name='EventPage']").attrib["value"])
-                
-                self.lvc_false_alarm_rate = v.find(".//Param[@name='FAR']").attrib["value"]
-            
+                    v.find(".//Param[@name='EventPage']").attrib["value"]
+                )
+
+                self.lvc_false_alarm_rate = v.find(".//Param[@name='FAR']").attrib[
+                    "value"
+                ]
+
                 self.lvc_binary_neutron_star_probability = float(
-                    v.find(".//Param[@name='BNS']").attrib["value"])
+                    v.find(".//Param[@name='BNS']").attrib["value"]
+                )
                 self.lvc_neutron_star_black_hole_probability = float(
-                    v.find(".//Param[@name='NSBH']").attrib["value"])
+                    v.find(".//Param[@name='NSBH']").attrib["value"]
+                )
                 self.lvc_binary_black_hole_probability = float(
-                    v.find(".//Param[@name='BBH']").attrib["value"])
+                    v.find(".//Param[@name='BBH']").attrib["value"]
+                )
                 self.lvc_terrestial_probability = float(
-                    v.find(".//Param[@name='Terrestrial']").attrib["value"])
+                    v.find(".//Param[@name='Terrestrial']").attrib["value"]
+                )
                 self.lvc_instruments = str(
-                    v.find(".//Param[@name='Instruments']").attrib["value"])
+                    v.find(".//Param[@name='Instruments']").attrib["value"]
+                )
                 print(v.find(".//Param[@name='Instruments']").attrib["value"])
 
             lvc_skymap_fits = v.find(".//Param[@name='skymap_fits']")
@@ -587,22 +614,23 @@ class parsed_VOEvent:
                 logger.info("Parsing skymap")
                 # Initial and Update alerts should contain skymap data as URL
                 self.lvc_skymap_fits = str(lvc_skymap_fits.attrib["value"])
-                
-            if self.event_type == 'Retraction' and 'Citations' in v:
+
+            if self.event_type == "Retraction" and "Citations" in v:
                 # Capture message that comes with retraction
                 self.lvc_retraction_message = str(v.Citations.Description)
 
         # Check the voevent role (normally observation or test)
         self.role = v.attrib["role"]
-        if self.role == 'test':
-            self.event_observed = datetime.datetime.now(
-                pytz.UTC) - datetime.timedelta(hours=0.1)
+        if self.role == "test":
+            self.event_observed = datetime.datetime.now(pytz.UTC) - datetime.timedelta(
+                hours=0.1
+            )
         # Antares has a flag for real alerts that is worth checking
         if v.find(".//Param[@name='isRealAlert']") is not None:
             if not v.find(".//Param[@name='isRealAlert']").attrib["value"]:
                 # Not a real alert so ignore
                 self.ignore = True
-                print('Not a real alert so ignore')
+                print("Not a real alert so ignore")
 
         logger.debug("Trig details:")
         logger.debug(f"Dur:  {self.event_duration} s")

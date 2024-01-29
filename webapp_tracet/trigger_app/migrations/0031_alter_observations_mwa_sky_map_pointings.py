@@ -7,13 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0030_alter_observations_mwa_sky_map_pointings'),
+        ("trigger_app", "0030_alter_observations_mwa_sky_map_pointings"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='observations',
-            name='mwa_sky_map_pointings',
-            field=models.ImageField(blank=True, null=True, storage=django.core.files.storage.FileSystemStorage(location='/media/mwa_pointings'), upload_to=''),
+            model_name="observations",
+            name="mwa_sky_map_pointings",
+            field=models.ImageField(
+                blank=True,
+                null=True,
+                storage=django.core.files.storage.FileSystemStorage(
+                    location="/media/mwa_pointings"
+                ),
+                upload_to="",
+            ),
         ),
     ]

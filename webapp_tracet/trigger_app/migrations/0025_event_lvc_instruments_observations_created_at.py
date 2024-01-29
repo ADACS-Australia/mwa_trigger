@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0024_observations_mwa_sub_arrays'),
+        ("trigger_app", "0024_observations_mwa_sub_arrays"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='event',
-            name='lvc_instruments',
+            model_name="event",
+            name="lvc_instruments",
             field=models.CharField(blank=True, max_length=64, null=True),
         ),
         migrations.AddField(
-            model_name='observations',
-            name='created_at',
+            model_name="observations",
+            name="created_at",
             field=models.DateTimeField(auto_now_add=True, null=True),
         ),
     ]

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0006_eventgroup_ignored'),
+        ("trigger_app", "0006_eventgroup_ignored"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='event',
-            name='self_generated_trig_id',
+            model_name="event",
+            name="self_generated_trig_id",
             field=models.BooleanField(default=True),
         ),
     ]

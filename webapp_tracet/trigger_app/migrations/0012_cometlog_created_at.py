@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0011_proposalsettings_priority'),
+        ("trigger_app", "0011_proposalsettings_priority"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='cometlog',
-            name='created_at',
+            model_name="cometlog",
+            name="created_at",
             field=models.DateTimeField(auto_now_add=True, null=True),
         ),
     ]

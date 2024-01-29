@@ -6,18 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('trigger_app', '0022_alter_proposalsettings_mwa_freqspecs_and_more'),
+        ("trigger_app", "0022_alter_proposalsettings_mwa_freqspecs_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='cometlog',
-            name='log',
+            model_name="cometlog",
+            name="log",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='proposalsettings',
-            name='observe_significant',
-            field=models.BooleanField(default=False, help_text='(1/month CBC < FAR', verbose_name='Only observe events with high significance (low FAR)'),
+            model_name="proposalsettings",
+            name="observe_significant",
+            field=models.BooleanField(
+                default=False,
+                help_text="(1/month CBC < FAR",
+                verbose_name="Only observe events with high significance (low FAR)",
+            ),
         ),
     ]

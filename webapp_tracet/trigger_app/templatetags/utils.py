@@ -9,12 +9,13 @@ from django.conf import settings
 
 register = template.Library()
 
+
 @register.simple_tag
-def url_switch(request, field, pair=['deg', 'arcmin']):
+def url_switch(request, field, pair=["deg", "arcmin"]):
     # Modified https://stackoverflow.com/questions/2272370/sortable-table-columns-in-django
     dict_ = request.GET.copy()
 
-    if field == 'poserr_unit' and field in dict_.keys():
+    if field == "poserr_unit" and field in dict_.keys():
         # Switch to other value
         if dict_[field] == pair[0]:
             dict_[field] = pair[1]
@@ -33,20 +34,25 @@ def multiply(qty, multiply_by, decimal_places, *args, **kwargs):
     # you would need to do any localization of the result here
     return round(qty * multiply_by, decimal_places)
 
+
 @register.simple_tag()
 def help_wrap(title, *args, **kwargs):
     # Will wrap the input with the html to make a nice hover over help question mark
-    return mark_safe(f'<span data-toggle=\'tooltip\' title=\'{title}\'><img width="25" height="25" src="{settings.STATIC_URL}trigger_app/question_mark.png" alt="?"/></span>')
+    return mark_safe(
+        f'<span data-toggle=\'tooltip\' title=\'{title}\'><img width="25" height="25" src="{settings.STATIC_URL}trigger_app/question_mark.png" alt="?"/></span>'
+    )
+
 
 @register.filter
 def index(indexable, i):
     return indexable[i]
 
+
 @register.filter
 def print_timestamp(timestamp):
     try:
-        #assume, that timestamp is given in seconds with decimal point
-        t = Time(timestamp, format='gps', scale='utc').isot
+        # assume, that timestamp is given in seconds with decimal point
+        t = Time(timestamp, format="gps", scale="utc").isot
     except ValueError:
         return None
-    return t.replace('T',' ').replace('.000','')
+    return t.replace("T", " ").replace(".000", "")
