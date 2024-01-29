@@ -42,11 +42,18 @@ We will run these in tmux so they persist through logout (and we can join/monito
 
 Restarting the server
 ---------------------
+The web server will auto-restart if it crashes or is killed, so you can force a restart via:
 
 .. code-block::
 
    kill -HUP `cat /tmp/project-master.pid`
 
+The following script is a lot cleaner as it will stop and restart both the web server and the kafka/voevent listeners.
+
+.. code-block::
+
+   cd ~/tracet/
+   ./restart-server.sh
 
 Stopping the server
 -------------------
@@ -59,7 +66,7 @@ Stopping the server
 Installing updates
 ------------------
 
-If the updates are small normally something as simple as the following will suffice:
+If the updates are small (no new dependencies or changes to database models), something as simple as the following will suffice:
 
 .. code-block:: bash
 
@@ -67,7 +74,7 @@ If the updates are small normally something as simple as the following will suff
    git pull
    kill -HUP `cat /tmp/project-master.pid`
 
-Larger update need more effort:
+If the update is larger then we have to bring everything down, pull changes, install requirements, migrate the database and then start it all up again:
 
 .. code-block:: bash
 
