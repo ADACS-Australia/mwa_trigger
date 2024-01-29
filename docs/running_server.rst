@@ -1,3 +1,5 @@
+.. _running_server:
+
 Running Server
 ==============
 
