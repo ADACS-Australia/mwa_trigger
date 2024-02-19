@@ -46,6 +46,7 @@ explanations of the software methodologies and layout (Developer Documentation) 
    database_installation
    webapp_installation
    running_server
+   restarting_nimbus
 
 
 .. toctree::
@@ -53,6 +54,7 @@ explanations of the software methodologies and layout (Developer Documentation) 
    :caption: Developer Documentation:
 
    developer_documentation
+   git_hooks
 
 
 .. toctree::

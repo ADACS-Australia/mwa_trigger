@@ -1,8 +1,8 @@
 Setting up the pre-push hook for tests
-==============
+======================================
 
 Install from requirements
----------------------------------------
+-------------------------
 
 .. code-block::
 
@@ -10,14 +10,14 @@ Install from requirements
 
 
 Install pre-push hook
--------------------
+---------------------
 
 .. code-block::
 
    pre-commit install --hook-type pre-push
 
 Test pre-push hook
--------------------
+------------------
 
 .. code-block::
 
