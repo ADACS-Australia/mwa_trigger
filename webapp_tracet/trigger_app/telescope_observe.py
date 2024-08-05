@@ -652,11 +652,11 @@ def trigger_mwa_observation(
                 dec=mwa_sub_arrays["dec"],
                 creator="VOEvent_Auto_Trigger",  # TODO grab version
                 obsname=obsname,
-                nobs=1,
+                nobs=prop_settings.mwa_inttime % 15,
                 # Assume always using 24 contiguous coarse frequency channels
                 freqspecs=prop_settings.mwa_freqspecs,
                 avoidsun=True,
-                inttime=prop_settings.mwa_inttime,
+                inttime=prop_settings.mwa_inttime // 15,
                 freqres=prop_settings.mwa_freqres,
                 exptime=prop_settings.mwa_exptime,
                 calibrator=True,
@@ -676,11 +676,11 @@ def trigger_mwa_observation(
                 az=proposal_decision_model.az,
                 creator="VOEvent_Auto_Trigger",  # TODO grab version
                 obsname=obsname,
-                nobs=1,
+                nobs=prop_settings.mwa_inttime % 15,
                 # Assume always using 24 contiguous coarse frequency channels
                 freqspecs=prop_settings.mwa_freqspecs,
                 avoidsun=True,
-                inttime=prop_settings.mwa_inttime,
+                inttime=prop_settings.mwa_inttime // 15,
                 freqres=prop_settings.mwa_freqres,
                 exptime=prop_settings.mwa_exptime,
                 calibrator=True,
