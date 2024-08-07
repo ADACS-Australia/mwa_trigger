@@ -92,16 +92,20 @@ WSGI_APPLICATION = "webapp_tracet.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+from decouple import config
+DB_SECRET_KEY = config('DB_SECRET_KEY', default='default-value-if-not-set')
+
 # Secret key and database defaults
-SECRET_KEY = os.environ.get("DB_SECRET_KEY", None)
+SECRET_KEY = DB_SECRET_KEY
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "trigger_db",
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": "localhost",
-        "PORT": "",
+        "NAME": config("DB_NAME", default="trigger_db"),
+        "USER": config("DB_USER", default="postgres"),
+        "PASSWORD": config("DB_PASSWORD", default="postgres"),
+        "HOST": config("DB_HOST", default="db"),
+        "PORT": config("DB_PORT", default="5432"),
     }
 }
 
