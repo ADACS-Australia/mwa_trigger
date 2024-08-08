@@ -2,39 +2,22 @@
 FROM python:3.10-slim
 
 # Set the working directory in the container
-WORKDIR /app/webapp_tracet
-
-# Copy the current directory contents into the container at /app
-COPY . /app/webapp_tracet
+WORKDIR /app
 
 # Install git and PostgreSQL client development libraries
 RUN apt-get update && \
     apt-get install -y git && \
-    apt-get install -y build-essential libpq-dev gcc netcat-openbsd
+    apt-get install -y build-essential libpq-dev gcc
 
-# Install any needed packages specified in requirements.txt
-RUN pip3 install --upgrade pip
-RUN pip3 install -r requirements.txt
-RUN pip3 install .
+# Copy requirements file and install dependencies
+COPY requirements_dev.txt .
+RUN pip install --upgrade pip
+RUN pip install -r requirements_dev.txt
 
-# Install uwsgi
-RUN pip3 install uwsgi
+# Copy the application code and install production dependencies
+COPY webapp_tracet/requirements.txt webapp_tracet/
+RUN pip install -r webapp_tracet/requirements.txt
 
-# Copy the additional requirements for the Django app
-RUN pip3 install -r webapp_tracet/requirements.txt
-
-# Copy the entrypoint script into the Docker image
-COPY entrypoint.sh /entrypoint.sh
-
-# Make sure the script is executable
-RUN chmod +x /entrypoint.sh
-
-# Make port 8000 available to the world outside this container
-EXPOSE 8000
-
-# Define environment variable
-ENV NAME World
-
-# Run uWSGI server
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["uwsgi", "--ini", "/app/webapp_tracet/webapp_tracet_uwsgi.ini"]
+# Run Django development server
+ENV PYTHONPATH="/app"
+CMD ["python3", "webapp_tracet/manage.py", "runserver", "0.0.0.0:8000"]

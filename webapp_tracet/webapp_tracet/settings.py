@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import os
+import environ
+from decouple import config
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -88,6 +90,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "webapp_tracet.wsgi.application"
 
+# Initialise environment variables
+env = environ.Env()
+
+# Calculate and print the path to verify
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
+# env_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
+
+print("Loading environment variables from:", env_path)
+
+# Update to read from .env
+environ.Env.read_env(env_path)
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -98,14 +111,15 @@ DB_SECRET_KEY = config('DB_SECRET_KEY', default='default-value-if-not-set')
 # Secret key and database defaults
 SECRET_KEY = DB_SECRET_KEY
 
+DEBUG = env.bool('DEBUG', default=False)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": config("DB_NAME", default="trigger_db"),
-        "USER": config("DB_USER", default="postgres"),
-        "PASSWORD": config("DB_PASSWORD", default="postgres"),
-        "HOST": config("DB_HOST", default="db"),
-        "PORT": config("DB_PORT", default="5432"),
+        "NAME": env("DB_NAME", default="trigger_db"),
+        "USER": env("DB_USER", default="postgres"),
+        "PASSWORD": env("DB_PASSWORD", default="postgres"),
+        "HOST": env("DB_HOST", default="db"),
+        "PORT": env("DB_PORT", default="5432"),
     }
 }
 
