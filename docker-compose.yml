@@ -26,7 +26,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: python3 webapp_tracet/manage.py runserver 0.0.0.0:8000
+    command: python webapp_tracet/manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
       - static_volume:/app/webapp_tracet/static_host
@@ -36,7 +36,7 @@ services:
     env_file:
       - .env
     environment:
-      - PYTHONPATH=/app
+      - PYTHONPATH=/app:/app/webapp_tracet
       - DB_SECRET_KEY=${DB_SECRET_KEY}
       - DJANGO_SETTINGS_MODULE=webapp_tracet.settings
       - DB_USER=${DB_USER}
