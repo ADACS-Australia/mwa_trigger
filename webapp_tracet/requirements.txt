@@ -57,3 +57,4 @@ gcn-kafka==0.3.0
 mhealpy
 ligo.skymap
 python-decouple==3.8
+django-environ==0.4.0

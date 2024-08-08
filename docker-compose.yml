@@ -13,6 +13,8 @@ services:
       - tracet-network
     ports:
       - "5432:5432"
+    env_file:
+      - .env
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 10s
@@ -21,15 +23,20 @@ services:
       timeout: 5s
 
   web:
-    build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python3 webapp_tracet/manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
       - static_volume:/app/webapp_tracet/static_host
       - media_volume:/app/webapp_tracet/media
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
+      - PYTHONPATH=/app
       - DB_SECRET_KEY=${DB_SECRET_KEY}
       - DJANGO_SETTINGS_MODULE=webapp_tracet.settings
       - DB_USER=${DB_USER}
