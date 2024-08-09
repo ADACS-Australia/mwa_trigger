@@ -1,3 +1,42 @@
+# Table of Contents
+- [Development Deployment](#development-deployment)
+  - [Project Structure](#project-structure)
+  - [Docker Containers](#docker-containers)
+  - [External Tools](#external-tools)
+  - [Docker Configuration](#docker-configuration)
+    - [Dockerfile](#dockerfile)
+    - [Docker-compose.yml](#docker-composeyml)
+  - [Advantages of Dockerization](#advantages-of-dockerization)
+    - [Consistency Across Environments](#consistency-across-environments) 
+- [Accessing the Database Inside the Docker Container](#accessing-the-database-inside-the-docker-container)
+   - [Checking Current Docker Container, Image, Database](#checking-current-docker-container-image-database)
+   - [Build Docker](#build-docker)
+     - [Check Migrations](#check-migrations)
+     - [Create Migrations](#create-migrations)
+     - [Apply Migrations](#apply-migrations)
+     - [Start Django Development Server](#start-django-development-server)
+   - [Database](#database)
+   - [Example](#example)
+- [Accessing the Database from Outside the Docker Container](#accessing-the-database-from-outside-the-docker-container)
+   - [Update docker-compose.yml](#update-docker-composeyml)
+   - [Update settings.py](#update-settingspy)
+   - [Configure PostgreSQL to Accept Remote Connections](#configure-postgresql-to-accept-remote-connections)
+     - [postgresql.conf](#postgresqlconf)
+     - [pg_hba.conf](#pg_hbaconf)
+   - [Restart PostgreSQL Container](#restart-postgresql-container)
+- [Accessing PostgreSQL from Outside](#accessing-postgresql-from-outside)
+   - [Example docker-compose.yml](#example-docker-composeyml)
+- [pgAdmin4](#pgadmin4)
+   - [Install pgAdmin4](#install-pgadmin4)
+   - [Update docker-compose.yml](#update-docker-composeyml)
+   - [Configure pgAdmin4](#configure-pgadmin4)
+   - [Troubleshooting](#troubleshooting)
+   - [View All Data in pgAdmin4](#view-all-data-in-pgadmin4)
+   - [Run SQL Queries (Optional)](#run-sql-queries-optional)
+- [Potential Errors](#potential-errors)
+- [Nginx](#nginx)
+- [References](#references)
+
 # Development deployment
 The development environment is a simplified version of the production environment and is intended to be run and accessed only from your local machine. This setup includes two primary containers: one for the Django web application and another for the PostgreSQL database. Additionally, PostgreSQL data can be accessed using pgAdmin4, running outside the Docker containers.
 
@@ -22,25 +61,28 @@ The Docker setup for TraceT includes the following key files:
 FROM python:3.10-slim
 
 # Set the working directory in the container
-WORKDIR /app/webapp_tracet
+WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app/webapp_tracet
-
-# Install necessary packages
+# Install git and PostgreSQL client development libraries
 RUN apt-get update && \
-    apt-get install -y build-essential libpq-dev gcc
+apt-get install -y git && \
+apt-get install -y build-essential libpq-dev gcc
 
-# Install Python packages
+# Copy requirements and install dependencies
+COPY requirements_dev.txt .
 RUN pip3 install --upgrade pip
-RUN pip3 install -r requirements.txt
-RUN pip3 install .
+RUN pip3 install -r requirements_dev.txt
 
-# Install uWSGI
-RUN pip3 install uwsgi
+# Install production dependencies
+COPY webapp_tracet/requirements.txt webapp_tracet/
 
-# Run uWSGI server
-CMD ["uwsgi", "--ini", "/app/webapp_tracet/webapp_tracet_uwsgi.ini"]
+# Copy the additional requirements for the Django app
+RUN pip3 install -r webapp_tracet/requirements.txt
+
+# Set the PYTHONPATH environment variable
+ENV PYTHONPATH="/app:/app/webapp_tracet"
+
+CMD ["python3", "webapp_tracet/manage.py", "runserver", "0.0.0.0:8000"] 
 ```
 
 ### docker-compose.yml
@@ -71,7 +113,7 @@ services:
 
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    command: python webapp_tracet/manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
       - static_volume:/app/webapp_tracet/static_host
@@ -376,10 +418,10 @@ Type "help" for help.
 
 trigger_db=# \dt
 ```
-- -h localhost specifies the host.
-- -U postgres specifies the username.
-- -d trigger_db specifies the database name.
-- -p 5432 specifies the port.
+- `-h` `localhost` specifies the host.
+- `-U` `postgres` specifies the username.
+- `-d` `trigger_db` specifies the database name.
+- `-p` `5432` specifies the port.
 
 #### Example docker-compose.yml
 Here’s an example of a complete docker-compose.yml with the necessary changes:
@@ -542,9 +584,9 @@ docker-compose up -d
     ```
 
 
-# Errors
+# Potential Errors
 
-## Run migration
+## 1. Run migration
 
 At the beginning you should do
 ```sh
@@ -559,36 +601,40 @@ Create Superuser (if necessary):
 ```sh
 docker-compose exec web python manage.py createsuperuser
 ```
-## Errors with Users
+## 2. Errors with Users
+- Check the docker container
 ```sh
-ids@ubunu ~/dev/tracet (main)$ docker ps
+$ docker ps
 CONTAINER ID   IMAGE         COMMAND                  CREATED       STATUS                 PORTS                                       NAMES
 22ec8a0fa989   tracet-web    "python manage.py ru…"   2 hours ago   Up 2 hours             0.0.0.0:8000->8000/tcp, :::8000->8000/tcp   tracet-web-1
 58d6e894efb5   postgres:14   "docker-entrypoint.s…"   2 hours ago   Up 2 hours (healthy)   0.0.0.0:5432->5432/tcp, :::5432->5432/tcp   tracet-db-1
-ids@ubunu ~/dev/tracet (main)$ docker exec -it tracet-db-1 psql -U postgres
+$ docker exec -it tracet-db-1 psql -U postgres
 psql (14.12 (Debian 14.12-1.pgdg120+1))
 Type "help" for help.
-
+postgres=# 
+```
+- Creating a new USER_NAME
+```postgres
 postgres=# \du
                                    List of roles
  Role name |                         Attributes                         | Member of 
 -----------+------------------------------------------------------------+-----------
  postgres  | Superuser, Create role, Create DB, Replication, Bypass RLS | {}
 
-postgres=# CREATE USER tamlamtracet WITH PASSWORD 'tamlamtracet';
+postgres=# CREATE USER <USER_NAME> WITH PASSWORD '<USER_NAME>';
 CREATE ROLE
-postgres=# ALTER USER tamlamtracet CREATEDB;
+postgres=# ALTER USER <USER_NAME> CREATEDB;
 ALTER ROLE
 postgres=# \du
                                      List of roles
   Role name   |                         Attributes                         | Member of 
 --------------+------------------------------------------------------------+-----------
  postgres     | Superuser, Create role, Create DB, Replication, Bypass RLS | {}
- tamlamtracet | Create DB                                                  | {}
+ <USER_NAME>  | Create DB                                                  | {}
 
 postgres=# 
 ```
-## Busy Port
+## 3. Busy Port
 
 #### Check if port 5432 is occupied by another service on your host machine
 ```sh
@@ -596,15 +642,20 @@ sudo lsof -i :5432
 ```
 - This will show any services listening on port 5432. If there’s no output, the port is free.
 - If it shows as below means the port is being used:
-  ```sh
-  $ sudo lsof -i :5432
-  COMMAND   PID     USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
-  postgres 8620 postgres    5u  IPv4  55880      0t0  TCP localhost:postgresql (LISTEN)
+```sh
+$ sudo lsof -i :5432
+COMMAND   PID     USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+postgres 8620 postgres    5u  IPv4  55880      0t0  TCP localhost:postgresql (LISTEN)
   ```
-Stop the Existing PostgreSQL Service: If you want to use port 5432 for your Docker container, you'll need to stop the existing PostgreSQL service. You can do this by stopping the PostgreSQL service on your host machine:
+- Stop the Existing PostgreSQL Service: If you want to use port 5432 for your Docker container, you'll need to stop the existing PostgreSQL service. You can do this by stopping the PostgreSQL service on your host machine:
 
 On Linux/Ubuntu:
 
 ```sh
 sudo systemctl stop postgresql
 ```
+# Nginx
+TBD
+
+# References
+- [Dockerizing Django with Postgres, Gunicorn, and Nginx](https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/#static-files)
