@@ -95,9 +95,6 @@ env = environ.Env()
 
 # Calculate and print the path to verify
 env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
-# env_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
-
-print("Loading environment variables from:", env_path)
 
 # Update to read from .env
 environ.Env.read_env(env_path)
