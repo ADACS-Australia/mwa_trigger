@@ -63,7 +63,7 @@ The Docker setup for TraceT includes the following key files:
 FROM python:3.10-slim
 
 # Set the working directory in the container
-WORKDIR /app
+WORKDIR /app/webapp_tracet
 
 # Install git and PostgreSQL client development libraries
 RUN apt-get update && \
@@ -84,7 +84,7 @@ RUN pip3 install -r webapp_tracet/requirements.txt
 # Set the PYTHONPATH environment variable
 ENV PYTHONPATH="/app:/app/webapp_tracet"
 
-CMD ["python3", "webapp_tracet/manage.py", "runserver", "0.0.0.0:8000"] 
+CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"] 
 ```
 
 ### docker-compose.yml
@@ -115,7 +115,7 @@ services:
 
   web:
     build: .
-    command: python webapp_tracet/manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
       - static_volume:/app/webapp_tracet/static_host
