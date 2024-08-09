@@ -28,7 +28,7 @@ services:
       dockerfile: Dockerfile
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/app/webapp_tracet
+      - .:/app
       - static_volume:/app/webapp_tracet/static_host
       - media_volume:/app/webapp_tracet/media
     ports:
