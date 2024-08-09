@@ -8,6 +8,8 @@
     - [Docker-compose.yml](#docker-composeyml)
   - [Advantages of Dockerization](#advantages-of-dockerization)
     - [Consistency Across Environments](#consistency-across-environments) 
+  - [Running Docker on Different Platforms](#running-docker-on-different-platforms)
+  - [Additional Features and Best Practices](#additional-features-and-best-practices)
 - [Accessing the Database Inside the Docker Container](#accessing-the-database-inside-the-docker-container)
    - [Checking Current Docker Container, Image, Database](#checking-current-docker-container-image-database)
    - [Build Docker](#build-docker)
