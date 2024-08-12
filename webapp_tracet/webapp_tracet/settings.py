@@ -11,9 +11,10 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import os
+from pathlib import Path
+
 import environ
 from decouple import config
-from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -94,7 +95,9 @@ WSGI_APPLICATION = "webapp_tracet.wsgi.application"
 env = environ.Env()
 
 # Calculate and print the path to verify
-env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
+env_path = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env'
+)
 
 # Update to read from .env
 environ.Env.read_env(env_path)
@@ -102,21 +105,17 @@ environ.Env.read_env(env_path)
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-from decouple import config
-DB_SECRET_KEY = config('DB_SECRET_KEY', default='default-value-if-not-set')
-
 # Secret key and database defaults
-SECRET_KEY = DB_SECRET_KEY
+SECRET_KEY = os.environ.get("DB_SECRET_KEY", None)
 
-DEBUG = env.bool('DEBUG', default=False)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": env("DB_NAME", default="trigger_db"),
-        "USER": env("DB_USER", default="postgres"),
-        "PASSWORD": env("DB_PASSWORD", default="postgres"),
-        "HOST": env("DB_HOST", default="db"),
-        "PORT": env("DB_PORT", default="5432"),
+        "NAME": os.getenv("POSTGRES_DB"),
+        "USER": os.getenv("POSTGRES_USER"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+        "HOST": os.getenv("POSTGRES_HOST"),
+        "PORT": os.getenv("POSTGRES_PORT"),
     }
 }
 
@@ -148,6 +147,7 @@ elif SYSTEM_ENV == "GITHUB_WORKFLOW":
     }
 elif SYSTEM_ENV == "DEVELOPMENT":
     DEBUG = True
+    STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")
 
 
 # Password validation
