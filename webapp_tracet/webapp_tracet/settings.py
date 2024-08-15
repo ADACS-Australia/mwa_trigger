@@ -147,7 +147,7 @@ elif SYSTEM_ENV == "GITHUB_WORKFLOW":
     }
 elif SYSTEM_ENV == "DEVELOPMENT":
     DEBUG = True
-    STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")
+    # STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")
 
 
 # Password validation
