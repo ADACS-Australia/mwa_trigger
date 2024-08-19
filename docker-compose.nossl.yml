@@ -52,26 +52,14 @@ services:
     build: ./nginx
     container_name: nginx-container
     volumes:
-      - ./nginx/conf.d.ssl/default.conf:/etc/nginx/conf.d/default.conf
-      #- /etc/letsencrypt:/etc/letsencrypt
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - ./nginx/conf.d:/etc/nginx/conf.d
       - static_volume:/home/app/staticfiles
       - media_volume:/home/app/mediafiles
+      # - /etc/letsencrypt:/home/app/certs:ro
     ports:
       - 80:80
     depends_on:
       - web
-    networks:
-      - tracet-network
-
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --force-renewal --email batbold.sanghi@gmail.com -d tracet.duckdns.org --agree-tos
     networks:
       - tracet-network
 
