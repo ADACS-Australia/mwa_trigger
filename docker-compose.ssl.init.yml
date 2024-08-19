@@ -30,6 +30,7 @@ services:
       - .:/app
       - static_volume:/app/webapp_tracet/static_host
       - media_volume:/app/webapp_tracet/media
+      - ./logs:/app/logs
     ports:
       - "8000:8000"
     env_file:
@@ -37,7 +38,7 @@ services:
     command: [
         "sh",
         "-c",
-        "gunicorn webapp_tracet.wsgi:application --bind 0.0.0.0:8000 --workers 2 & sleep 5s && echo 'Starting'
+        "gunicorn webapp_tracet.wsgi:application --bind 0.0.0.0:8000 --error-logfile /app/logs/gunicorn_error.log --access-logfile /app/logs/gunicorn_access.log --workers 8 & sleep 5s && echo 'Starting'
         && tmux new -s kafka -d './kafka_daemon.sh'
         && tmux new -s comet -d 'python3.10 twistd_comet_wrapper.py' && wait",
       ]
@@ -72,6 +73,15 @@ services:
     command: certonly --webroot -w /var/www/certbot --force-renewal --email batbold.sanghi@gmail.com -d tracet.duckdns.org --agree-tos
     networks:
       - tracet-network
+
+  autoheal:
+    image: willfarrell/autoheal
+    container_name: autoheal
+    restart: always
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=all
 
 # crontab -e
 # 0 5 1 */2 *  /usr/bin/docker compose -f docker-compose.ssl.init.yml up certbot
