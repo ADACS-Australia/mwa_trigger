@@ -3,12 +3,20 @@ FROM python:3.10-slim
 
 WORKDIR /app
 # Install git
+# Install required packages
 RUN apt-get update && \
-apt-get install -y git && \
-apt-get install -y build-essential libpq-dev gcc && \
-apt-get install -y tmux && \
-apt-get install -y librdkafka++1 librdkafka-dev librdkafka1 && \ 
-apt-get install -y libsasl2-modules-gssapi-mit
+    apt-get install -y --no-install-recommends \
+    git \
+    build-essential \
+    libpq-dev \
+    gcc \
+    tmux \
+    librdkafka++1 \
+    librdkafka-dev \
+    librdkafka1 \
+    libsasl2-modules-gssapi-mit && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install tracet dependencies
 COPY requirements.txt /app/

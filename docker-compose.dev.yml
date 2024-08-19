@@ -41,8 +41,7 @@ services:
         && tmux new -s comet -d 'python3.10 twistd_comet_wrapper.py' && wait",
       ]
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     networks:
       - tracet-network
 
