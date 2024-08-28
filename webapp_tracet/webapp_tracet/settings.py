@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from pathlib import Path
 
+import environ
+from decouple import config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -88,20 +91,31 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "webapp_tracet.wsgi.application"
 
+# Initialise environment variables
+env = environ.Env()
+
+# Calculate and print the path to verify
+env_path = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env'
+)
+
+# Update to read from .env
+environ.Env.read_env(env_path)
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 # Secret key and database defaults
 SECRET_KEY = os.environ.get("DB_SECRET_KEY", None)
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "trigger_db",
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": "localhost",
-        "PORT": "",
+        "NAME": os.getenv("POSTGRES_DB"),
+        "USER": os.getenv("POSTGRES_USER"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+        "HOST": os.getenv("POSTGRES_HOST"),
+        "PORT": os.getenv("POSTGRES_PORT"),
     }
 }
 
@@ -133,6 +147,7 @@ elif SYSTEM_ENV == "GITHUB_WORKFLOW":
     }
 elif SYSTEM_ENV == "DEVELOPMENT":
     DEBUG = True
+    # STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")
 
 
 # Password validation
