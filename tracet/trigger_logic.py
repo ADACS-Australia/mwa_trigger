@@ -1,41 +1,42 @@
 import datetime
 import logging
+
 import pytz
 
 logger = logging.getLogger(__name__)
 
 
 def worth_observing_grb(
-        # event values
-        event_duration=None,
-        fermi_most_likely_index=None,
-        fermi_detection_prob=None,
-        swift_rate_signif=None,
-        hess_significance=None,
-        pos_error=None,
-        dec=None,
-        # Thresholds
-        event_any_duration=False,
-        event_min_duration=0.256,
-        event_max_duration=1.023,
-        pending_min_duration_1=0.124,
-        pending_max_duration_1=0.255,
-        pending_min_duration_2=1.024,
-        pending_max_duration_2=2.048,
-        fermi_min_detection_prob=50,
-        swift_min_rate_signif=0.,
-        minimum_hess_significance=0.,
-        maximum_hess_significance=1.,
-        maximum_position_uncertainty=None,
-        atca_dec_min_1=None,
-        atca_dec_max_1=None,
-        atca_dec_min_2=None,
-        atca_dec_max_2=None,
-        # Other
-        proposal_telescope_id=None,
-        decision_reason_log="",
-        event_id=None,
-    ):
+    # event values
+    event_duration=None,
+    fermi_most_likely_index=None,
+    fermi_detection_prob=None,
+    swift_rate_signif=None,
+    hess_significance=None,
+    pos_error=None,
+    dec=None,
+    # Thresholds
+    event_any_duration=False,
+    event_min_duration=0.256,
+    event_max_duration=1.023,
+    pending_min_duration_1=0.124,
+    pending_max_duration_1=0.255,
+    pending_min_duration_2=1.024,
+    pending_max_duration_2=2.048,
+    fermi_min_detection_prob=50,
+    swift_min_rate_signif=0.0,
+    minimum_hess_significance=0.0,
+    maximum_hess_significance=1.0,
+    maximum_position_uncertainty=None,
+    atca_dec_min_1=None,
+    atca_dec_max_1=None,
+    atca_dec_min_2=None,
+    atca_dec_max_2=None,
+    # Other
+    proposal_telescope_id=None,
+    decision_reason_log="",
+    event_id=None,
+):
     """Decide if a GRB Event is worth observing.
 
     Parameters
@@ -82,16 +83,19 @@ def worth_observing_grb(
     debug_bool = False
     pending_bool = False
 
-
     if pos_error == 0.0:
-    # Ignore the inaccurate event
+        # Ignore the inaccurate event
         debug_bool = True
         decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {event_id}: The Events positions uncertainty is 0.0 which is likely an error so not observing. \n"
     elif maximum_position_uncertainty and (pos_error > maximum_position_uncertainty):
         # Ignore the inaccurate event
         debug_bool = True
         decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {event_id}: The Events positions uncertainty ({pos_error:.4f} deg) is greater than {maximum_position_uncertainty:.4f} so not observing. \n"
-    elif proposal_telescope_id == "ATCA" and not (dec > atca_dec_min_1 and dec < atca_dec_max_1) and not (dec > atca_dec_min_2 and dec < atca_dec_max_2):
+    elif (
+        proposal_telescope_id == "ATCA"
+        and not (dec > atca_dec_min_1 and dec < atca_dec_max_1)
+        and not (dec > atca_dec_min_2 and dec < atca_dec_max_2)
+    ):
         # Ignore the inaccurate event
         debug_bool = True
         decision_reason_log = f"{decision_reason_log}{datetime.datetime.utcnow()}: Event ID {event_id}: The Events declination ({ dec }) is outside limit 1 ({ atca_dec_min_1 } < dec < {atca_dec_max_1}) or limit 2 ({ atca_dec_min_2 } < dec < {atca_dec_max_2}). \n"
@@ -124,7 +128,10 @@ def worth_observing_grb(
             decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: SWIFT rate significance ({swift_rate_signif}) < swift_min_rate ({swift_min_rate_signif:.3f}) sigma so not triggering. \n"
 
     elif hess_significance is not None:
-        if hess_significance <= maximum_hess_significance and hess_significance >= minimum_hess_significance:
+        if (
+            hess_significance <= maximum_hess_significance
+            and hess_significance >= minimum_hess_significance
+        ):
             likely_bool = True
             decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: HESS rate significance is {minimum_hess_significance} <= ({hess_significance:.3f}) <= {maximum_hess_significance} sigma. \n"
         else:
@@ -153,19 +160,20 @@ def worth_observing_grb(
         else:
             debug_bool = True
             decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: Event duration outside of all time ranges so not triggering. \n"
-    
+
     return trigger_bool, debug_bool, pending_bool, decision_reason_log
 
+
 def worth_observing_nu(
-        # event values
-        antares_ranking=None,
-        telescope=None,
-        # Thresholds
-        antares_min_ranking=2,
-        # Other
-        decision_reason_log="",
-        event_id=None,
-    ):
+    # event values
+    antares_ranking=None,
+    telescope=None,
+    # Thresholds
+    antares_min_ranking=2,
+    # Other
+    decision_reason_log="",
+    event_id=None,
+):
     """Decide if a Neutrino Event is worth observing.
 
     Parameters
@@ -211,36 +219,37 @@ def worth_observing_nu(
 
     return trigger_bool, debug_bool, pending_bool, decision_reason_log
 
+
 def worth_observing_gw(
-        # event values
-        telescope=None,
-        lvc_significant=None,
-        lvc_binary_neutron_star_probability=None,
-        lvc_neutron_star_black_hole_probability=None,
-        lvc_binary_black_hole_probability=None,
-        lvc_terrestial_probability=None,
-        lvc_includes_neutron_star_probability=0.00,
-        lvc_false_alarm_rate=None,
-        # Thresholds
-        minimum_neutron_star_probability=0.01,
-        maximum_neutron_star_probability=1.0,
-        minimum_binary_neutron_star_probability=0.01,
-        maximum_binary_neutron_star_probability=1.0,
-        minimum_neutron_star_black_hole_probability=0.01,
-        maximum_neutron_star_black_hole_probability=1.0,
-        minimum_binary_black_hole_probability=0.01,
-        maximum_binary_black_hole_probability=1.0,
-        minimum_terrestial_probability=0.95,
-        maximum_terrestial_probability=0.95,
-        observe_significant=True,
-        event_type=None,
-        maximum_false_alarm_rate=None,
-        # Other
-        decision_reason_log="",
-        event_observed=datetime.datetime.now(datetime.timezone.utc),
-        event_id=None,
-        lvc_instruments=None
-    ):
+    # event values
+    telescope=None,
+    lvc_significant=None,
+    lvc_binary_neutron_star_probability=None,
+    lvc_neutron_star_black_hole_probability=None,
+    lvc_binary_black_hole_probability=None,
+    lvc_terrestial_probability=None,
+    lvc_includes_neutron_star_probability=0.00,
+    lvc_false_alarm_rate=None,
+    # Thresholds
+    minimum_neutron_star_probability=0.01,
+    maximum_neutron_star_probability=1.0,
+    minimum_binary_neutron_star_probability=0.01,
+    maximum_binary_neutron_star_probability=1.0,
+    minimum_neutron_star_black_hole_probability=0.01,
+    maximum_neutron_star_black_hole_probability=1.0,
+    minimum_binary_black_hole_probability=0.01,
+    maximum_binary_black_hole_probability=1.0,
+    minimum_terrestial_probability=0.95,
+    maximum_terrestial_probability=0.95,
+    observe_significant=True,
+    event_type=None,
+    maximum_false_alarm_rate=None,
+    # Other
+    decision_reason_log="",
+    event_observed=datetime.datetime.now(datetime.timezone.utc),
+    event_id=None,
+    lvc_instruments=None,
+):
     """Decide if a Gravity Wave Event is worth observing.
 
     Parameters
@@ -259,7 +268,7 @@ def worth_observing_gw(
         The terrestial probability of gw event. Default: None
     lvc_includes_neutron_star_probability : `float`, optional
         The terrestial probability of gw event. Default: None
-    
+
     minimum_neutron_star_probability : `float`, optional
         The minimum neutron star probability. Default: 0.01.
     maximum_neutron_star_probability : `float`, optional
@@ -316,13 +325,14 @@ def worth_observing_gw(
         except Exception as e:
             debug_bool = True
             decision_reason_log += f'{datetime.datetime.utcnow()}: Event ID {event_id}: The event FAR ({lvc_false_alarm_rate}) or proposal FAR ({maximum_false_alarm_rate}) could not be processed so not triggering. \n'
-       
+
     print(f"\nLogic event_type: {event_type}")
     print(f"\nLogic lvc_instruments: {lvc_instruments}")
 
- 
     # Check alert is less than 2 hours from the event time
-    two_hours_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=2)
+    two_hours_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        hours=2
+    )
 
     if telescope == "LVC" and event_type == "EarlyWarning":
         trigger_bool = True  # Always trigger on Early Warning events
@@ -330,11 +340,13 @@ def worth_observing_gw(
         lvc_neutron_star_black_hole_probability = 0.01
         lvc_binary_black_hole_probability = 0.01
         lvc_terrestial_probability = 0.01
-    if(event_observed < two_hours_ago):
+    if event_observed < two_hours_ago:
         debug_bool = True
-        trigger_bool = False  # don't trigger if the event was earlier than two_hours_ago
+        trigger_bool = (
+            False  # don't trigger if the event was earlier than two_hours_ago
+        )
         decision_reason_log += f'{datetime.datetime.utcnow()}: Event ID {event_id}: The event time {event_observed.strftime("%Y-%m-%dT%H:%M:%S+0000")} is more than 2 hours ago {two_hours_ago.strftime("%Y-%m-%dT%H:%M:%S+0000")} so not triggering. \n'
-    elif(lvc_instruments != None and len(lvc_instruments.split(',')) < 2):
+    elif lvc_instruments != None and len(lvc_instruments.split(',')) < 2:
         debug_bool = True
         decision_reason_log += f'{datetime.datetime.utcnow()}: Event ID {event_id}: The event has only {lvc_instruments} so not triggering. \n'
     elif telescope == "LVC" and event_type == "Retraction":
@@ -346,49 +358,87 @@ def worth_observing_gw(
         if lvc_false_alarm_rate and maximum_false_alarm_rate and FAR > FARThreshold:
             debug_bool = True
             decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The FAR is {lvc_false_alarm_rate} which is less than {maximum_false_alarm_rate} so not triggering. \n"
-        elif lvc_includes_neutron_star_probability:
+        elif lvc_includes_neutron_star_probability and (
+            lvc_includes_neutron_star_probability > maximum_neutron_star_probability
+            or lvc_includes_neutron_star_probability < minimum_neutron_star_probability
+        ):
             if lvc_includes_neutron_star_probability > maximum_neutron_star_probability:
                 debug_bool = True
                 decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The PROB_NS probability ({lvc_includes_neutron_star_probability}) is greater than {maximum_neutron_star_probability} so not triggering. \n"
-            elif lvc_includes_neutron_star_probability < minimum_neutron_star_probability:
+            elif (
+                lvc_includes_neutron_star_probability < minimum_neutron_star_probability
+            ):
                 debug_bool = True
                 decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The PROB_NS probability ({lvc_includes_neutron_star_probability}) is less than {minimum_neutron_star_probability} so not triggering. \n"
-        elif lvc_binary_neutron_star_probability:
-            if lvc_binary_neutron_star_probability > maximum_binary_neutron_star_probability:
+        elif lvc_binary_neutron_star_probability and (
+            lvc_binary_neutron_star_probability
+            > maximum_binary_neutron_star_probability
+            or lvc_binary_neutron_star_probability
+            < minimum_binary_neutron_star_probability
+        ):
+            if (
+                lvc_binary_neutron_star_probability
+                > maximum_binary_neutron_star_probability
+            ):
                 debug_bool = True
                 decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The PROB_BNS probability ({lvc_binary_neutron_star_probability}) is greater than {maximum_binary_neutron_star_probability} so not triggering. \n"
-            elif lvc_binary_neutron_star_probability < minimum_binary_neutron_star_probability:
+            elif (
+                lvc_binary_neutron_star_probability
+                < minimum_binary_neutron_star_probability
+            ):
                 debug_bool = True
                 decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The PROB_BNS probability ({lvc_binary_neutron_star_probability}) is less than {minimum_binary_neutron_star_probability} so not triggering. \n"
-        elif lvc_neutron_star_black_hole_probability:
-            if lvc_neutron_star_black_hole_probability > maximum_neutron_star_black_hole_probability:
+        elif lvc_neutron_star_black_hole_probability and (
+            lvc_neutron_star_black_hole_probability
+            > maximum_neutron_star_black_hole_probability
+            or lvc_neutron_star_black_hole_probability
+            < minimum_neutron_star_black_hole_probability
+        ):
+            if (
+                lvc_neutron_star_black_hole_probability
+                > maximum_neutron_star_black_hole_probability
+            ):
                 debug_bool = True
                 decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The PROB_NSBH probability ({lvc_neutron_star_black_hole_probability}) is greater than {maximum_neutron_star_black_hole_probability} so not triggering. \n"
-            elif lvc_neutron_star_black_hole_probability < minimum_neutron_star_black_hole_probability:
+            elif (
+                lvc_neutron_star_black_hole_probability
+                < minimum_neutron_star_black_hole_probability
+            ):
                 debug_bool = True
                 decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The PROB_NSBH probability ({lvc_neutron_star_black_hole_probability}) is less than {minimum_neutron_star_black_hole_probability} so not triggering. \n"
-        elif lvc_binary_black_hole_probability:
-            if lvc_binary_black_hole_probability > maximum_binary_black_hole_probability:
+        elif lvc_binary_black_hole_probability and (
+            lvc_binary_black_hole_probability > maximum_binary_black_hole_probability
+            or lvc_binary_black_hole_probability < minimum_binary_black_hole_probability
+        ):
+            if (
+                lvc_binary_black_hole_probability
+                > maximum_binary_black_hole_probability
+            ):
                 debug_bool = True
                 decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The PROB_BBH probability ({lvc_binary_black_hole_probability}) is greater than {maximum_binary_black_hole_probability} so not triggering. \n"
-            elif lvc_binary_black_hole_probability < minimum_binary_black_hole_probability:
+            elif (
+                lvc_binary_black_hole_probability
+                < minimum_binary_black_hole_probability
+            ):
                 debug_bool = True
                 decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The PROB_BBH probability ({lvc_binary_black_hole_probability}) is less than {minimum_binary_black_hole_probability} so not triggering. \n"
-        elif lvc_terrestial_probability:
+        elif lvc_terrestial_probability and (
+            lvc_terrestial_probability > maximum_terrestial_probability
+            or lvc_terrestial_probability < minimum_terrestial_probability
+        ):
             if lvc_terrestial_probability > maximum_terrestial_probability:
                 debug_bool = True
                 decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The PROB_Terre probability ({lvc_terrestial_probability}) is greater than {maximum_terrestial_probability} so not triggering. \n"
-            elif lvc_terrestial_probability< minimum_terrestial_probability:
+            elif lvc_terrestial_probability < minimum_terrestial_probability:
                 debug_bool = True
                 decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The PROB_Terre probability ({lvc_terrestial_probability}) is less than {minimum_terrestial_probability} so not triggering. \n"
-        
+
         elif lvc_significant == True and not observe_significant:
             debug_bool = True
             decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The GW significance ({lvc_significant}) is not observed because observe_significant is {observe_significant}. \n"
-            
+
         else:
             trigger_bool = True
             decision_reason_log += f"{datetime.datetime.utcnow()}: Event ID {event_id}: The probability looks good so triggering. \n"
-
 
     return trigger_bool, debug_bool, pending_bool, decision_reason_log
