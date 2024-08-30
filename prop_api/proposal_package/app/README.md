@@ -1,0 +1,37 @@
+# VOEvent trigger front end for scheduling MWA observations.
+
+## Credit
+
+This repository was developed for use on
+
+## Contents
+
+This repository is made up of the proposalsettings
+
+### proposalsettings
+
+This module contains useful functions such as:
+
+```
+.... -
+```
+
+The full documentation can be found [here](https://tracet.readthedocs.io/en/latest/)
+
+### Trigger webapp
+
+A web application that can automatically monitor for VOEvents and trigger observations based on the parameters the user has set. How to install and use the web app is explained in webapp_tracet/README.md.
+
+## Latency
+
+The MWA observing schedule is stored in a set of database tables on a PostgreSQL server on-site, with
+start and stop times stored as the number of seconds since the GPS epoch ('GPS seconds'). All
+observations must start and stop on an integer multiple of eight GPS seconds, so while an observation
+in progress can be truncated by changing it's stop time, the modulo 8 seconds constraint gives a natural
+latency of up to 8 seconds. In practice, the Monitor and Control system gives the various components of
+the telescope time to prepare, by sending their new configuration a few seconds ahead of the start of
+each observation. This means that a running observation cannot have its stop time changed to a value less
+than four seconds in the future, and a new observation can't be scheduled to start less than 4 seconds
+in the future. Including other processing delays, this gives a latency period of 8-16 seconds between
+the trigger time and the start
+of a triggered observation.
