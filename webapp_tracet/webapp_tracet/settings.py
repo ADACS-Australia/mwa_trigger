@@ -149,6 +149,7 @@ elif SYSTEM_ENV == "DEVELOPMENT":
     DEBUG = True
     # STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")
 
+CSRF_TRUSTED_ORIGINS = ['https://tracet.duckdns.org']
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
