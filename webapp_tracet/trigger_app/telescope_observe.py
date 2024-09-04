@@ -1,26 +1,26 @@
-from math import floor
-import astropy.units as u
-from astropy.coordinates import SkyCoord, EarthLocation, AltAz
-from astropy.time import Time
-from datetime import timedelta, datetime, timezone
-
+import logging
+import os
 import random
 import urllib.request
-from trigger_app.utils import (
+from datetime import datetime, timedelta, timezone
+from math import floor
+
+import astropy.units as u
+import atca_rapid_response_api as arrApi
+from astropy.coordinates import AltAz, EarthLocation, SkyCoord
+from astropy.table import Table
+from astropy.time import Time
+from astropy.utils.data import download_file
+from django.core.files import File
+from tracet.triggerservice import trigger
+from trigger_app.utils.utils_telescope import (
     getMWAPointingsFromSkymapFile,
     getMWARaDecFromAltAz,
     isClosePosition,
     subArrayMWAPointings,
 )
-from astropy.table import Table
-import atca_rapid_response_api as arrApi
-from astropy.utils.data import download_file
-from tracet.triggerservice import trigger
-from .models import Observations, Event, TRIGGER_ON, ATCAUser
-from django.core.files import File
-import os
 
-import logging
+from .models import TRIGGER_ON, ATCAUser, Event, Observations
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ def trigger_observation(
     decision_reason_log : `str`
         The updated trigger message to include an observation specific logs.
     """
-    print("Trigger observation")
+    print("DEBUG - Trigger observation")
     trigger_real_pretend = TRIGGER_ON[0][0]
     trigger_both = TRIGGER_ON[1][0]
     trigger_real = TRIGGER_ON[2][0]
@@ -74,505 +74,119 @@ def trigger_observation(
     )
     telescopes = []
     latestVoevent = voevents[0]
+
+    telescope_name = proposal_decision_model.proposal.telescope.name
+    context = {
+        "proposal_decision_model": proposal_decision_model,
+        "event_id": event_id,
+        "decision_reason_log": decision_reason_log,
+        "reason": reason,
+        "telescopes": telescopes,
+        "latestVoevent": latestVoevent,
+    }
+
+    context = check_mwa_horizon_and_prepare_context(context)
     # Check if source is above the horizon for MWA
-    if (
-        proposal_decision_model.proposal.telescope.name.startswith("MWA")
-        and proposal_decision_model.ra
-        and proposal_decision_model.dec
-    ):
-        print("Checking if is above the horizon for MWA")
-        # Create Earth location for the telescope
-        telescope = proposal_decision_model.proposal.telescope
-        location = EarthLocation(
-            lon=telescope.lon * u.deg,
-            lat=telescope.lat * u.deg,
-            height=telescope.height * u.m,
-        )
-        print("obtained earth location")
+    context["mwa_sub_arrays"] = None
 
-        obs_source = SkyCoord(
-            proposal_decision_model.ra,
-            proposal_decision_model.dec,
-            # equinox='J2000',
-            unit=(u.deg, u.deg),
-        )
-        print("obtained obs source location")
-        # Convert from RA/Dec to Alt/Az
-        obs_source_altaz_beg = obs_source.transform_to(
-            AltAz(obstime=Time.now(), location=location)
-        )
-        alt_beg = obs_source_altaz_beg.alt.deg
-        # Calculate alt at end of obs
-        end_time = Time.now() + timedelta(
-            seconds=proposal_decision_model.proposal.mwa_exptime
-        )
-        obs_source_altaz_end = obs_source.transform_to(
-            AltAz(obstime=end_time, location=location)
-        )
-        alt_end = obs_source_altaz_end.alt.deg
+    if context["proposal_decision_model"].proposal.telescope.name.startswith("MWA"):
 
-        print("converted obs for horizon")
+        context = prepare_observation_context(context, voevents)
 
-        if (
-            alt_beg < proposal_decision_model.proposal.mwa_horizon_limit
-            and alt_end < proposal_decision_model.proposal.mwa_horizon_limit
-        ):
-            horizon_message = f"{datetime.utcnow()}: Event ID {event_id}: Not triggering due to horizon limit: alt_beg {alt_beg:.4f} < {proposal_decision_model.proposal.mwa_horizon_limit:.4f} and alt_end {alt_end:.4f} < {proposal_decision_model.proposal.mwa_horizon_limit:.4f}. "
-            logger.debug(horizon_message)
-            return "I", decision_reason_log + horizon_message
-
-        elif alt_beg < proposal_decision_model.proposal.mwa_horizon_limit:
-            # Warn them in the log
-            decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: Warning: The source is below the horizion limit at the start of the observation alt_beg {alt_beg:.4f}. \n"
-
-        elif alt_end < proposal_decision_model.proposal.mwa_horizon_limit:
-            # Warn them in the log
-            decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: Warning: The source will set below the horizion limit by the end of the observation alt_end {alt_end:.4f}. \n"
-
-        # above the horizon so send off telescope specific set ups
-        decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: Above horizon so attempting to observe with {proposal_decision_model.proposal.telescope.name}. \n"
-
-        logger.debug(
-            f"Triggered observation at an elevation of {alt_beg} to elevation of {alt_end}"
-        )
-
-    mwa_sub_arrays = None
-
-    if proposal_decision_model.proposal.telescope.name.startswith("MWA"):
-
-        # If telescope ends in VCS then this proposal is for observing in VCS mode
-        vcsmode = proposal_decision_model.proposal.telescope.name.endswith("VCS")
-        if vcsmode:
-            print("VCS Mode")
-
-        # Create an observation name
-        # Collect event telescopes
-
-        print(proposal_decision_model.trig_id)
-
-        for voevent in voevents:
-            telescopes.append(voevent.telescope)
-        # Make sure they are unique and seperate with a _
-        telescopes = "_".join(list(set(telescopes)))
-        obsname = f"{telescopes}_{proposal_decision_model.trig_id}"
-
-        buffered = False
-
-        pretend = True
-        repoint = None
-
-        print(
-            f"proposal_decision_model.proposal.testing {proposal_decision_model.proposal.testing}"
-        )
-        print(f"latestVoevent {latestVoevent.__dict__}")
-        if (
-            latestVoevent.role == "test"
-            and proposal_decision_model.proposal.testing != trigger_both
-        ):
-            raise Exception("Invalid event observation and proposal setting")
-
-        if (
-            proposal_decision_model.proposal.testing == trigger_both
-            and latestVoevent.role != "test"
-        ):
-            pretend = False
-        if (
-            proposal_decision_model.proposal.testing == trigger_real
-            and latestVoevent.role != "test"
-        ):
-            pretend = False
-        print(f"pretend: {pretend}")
-
-        if proposal_decision_model.proposal.source_type == "GW":
+        if context["proposal_decision_model"].proposal.source_type == "GW":
 
             # Buffer dump if first event, use default array if early warning, process skymap if not early warning
             if len(voevents) == 1:
                 # Dump out the last ~3 mins of MWA buffer to try and catch event
-                print(f"DEBUG - DISABLED dumping MWA buffer")
-                reason = f"{latestVoevent.trig_id} - First event so sending dump MWA buffer request to MWA"
-                decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: First event so sending dump MWA buffer request to MWA\n"
-
-                buffered = True
-                request_sent_at = datetime.utcnow()
-                (
-                    decision_buffer,
-                    decision_reason_log_buffer,
-                    obsids_buffer,
-                    result_buffer,
-                ) = trigger_mwa_observation(
-                    proposal_decision_model,
-                    decision_reason_log,
-                    obsname=obsname,
-                    vcsmode=vcsmode,
-                    event_id=event_id,
-                    mwa_sub_arrays=mwa_sub_arrays,
-                    buffered=buffered,
-                    pretend=pretend,
+                context["reason"] = (
+                    f"{context['latestVoevent'].trig_id} - First event so sending dump MWA buffer request to MWA"
                 )
-                print(f"obsids_buffer: {obsids_buffer}")
-                decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Saving buffer observation result. \n"
-                if decision_buffer.find("T") > -1:
-                    saved_obs_1 = Observations.objects.create(
-                        trigger_id=result_buffer["trigger_id"]
+                context[
+                    "decision_reason_log"
+                ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: First event so sending dump MWA buffer request to MWA\n"
+
+                context["buffered"] = True
+                context["request_sent_at"] = datetime.utcnow()
+
+                (
+                    context["decision_buffer"],
+                    context["decision_reason_log_buffer"],
+                    context["obsids_buffer"],
+                    context["result_buffer"],
+                ) = trigger_mwa_observation(
+                    context["proposal_decision_model"],
+                    context["decision_reason_log"],
+                    obsname=context["obsname"],
+                    vcsmode=context["vcsmode"],
+                    event_id=context["event_id"],
+                    mwa_sub_arrays=context["mwa_sub_arrays"],
+                    buffered=context["buffered"],
+                    pretend=context["pretend"],
+                )
+
+                print(f"obsids_buffer: {context['obsids_buffer']}")
+                context[
+                    "decision_reason_log"
+                ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Saving buffer observation result.\n"
+
+                if context["decision_buffer"].find("T") > -1:
+                    context = save_observation(
+                        context,
+                        trigger_id=context["result_buffer"]["trigger_id"]
                         or random.randrange(10000, 99999),
-                        telescope=proposal_decision_model.proposal.telescope,
-                        proposal_decision_id=proposal_decision_model,
-                        reason=f"This is a buffer observation ID",
-                        website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids_buffer[0]}",
-                        mwa_sub_arrays=mwa_sub_arrays,
-                        event=latestVoevent,
-                        mwa_response=result_buffer,
-                        request_sent_at=request_sent_at,
+                        obsid=context["obsids_buffer"][0],
+                        reason="This is a buffer observation ID",
                     )
 
                 # Handle the unique case of the early warning
-                if latestVoevent.event_type == "EarlyWarning":
-                    ps = proposal_decision_model.proposal
-                    reason = f"{latestVoevent.trig_id} - First event is an Early Warning so ignoring skymap"
-
-                    print(f"DEBUG - ps {ps.__dict__}")
-
-                    sub1 = getMWARaDecFromAltAz(
-                        alt=ps.mwa_sub_alt_NE, az=ps.mwa_sub_az_NE, time=Time.now()
-                    )
-                    sub2 = getMWARaDecFromAltAz(
-                        alt=ps.mwa_sub_alt_NW, az=ps.mwa_sub_az_NW, time=Time.now()
-                    )
-                    sub3 = getMWARaDecFromAltAz(
-                        alt=ps.mwa_sub_alt_SE, az=ps.mwa_sub_az_SE, time=Time.now()
-                    )
-                    sub4 = getMWARaDecFromAltAz(
-                        alt=ps.mwa_sub_alt_SW, az=ps.mwa_sub_az_SW, time=Time.now()
-                    )
-
-                    print(f"DEBUG - sub1[1].value 2 { sub1[1].value }")
-
-                    mwa_sub_arrays = {
-                        "dec": [
-                            sub1[1].value,
-                            sub2[1].value,
-                            sub3[1].value,
-                            sub4[1].value,
-                        ],
-                        "ra": [
-                            sub1[0].value,
-                            sub2[0].value,
-                            sub3[0].value,
-                            sub4[0].value,
-                        ],
-                    }
-
-                    reason = f"{latestVoevent.trig_id} - Event is an early warning so using default sub arrays and early observation time"
-
-                    timeDiff = datetime.now(timezone.utc) - latestVoevent.event_observed
-
-                    if (
-                        timeDiff.total_seconds()
-                        < proposal_decision_model.proposal.early_observation_time_seconds
-                    ):
-                        estObsTime = round_to_nearest_modulo_8(
-                            proposal_decision_model.proposal.early_observation_time_seconds
-                            - timeDiff.total_seconds()
-                        )
-                        decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Event time was {timeDiff.total_seconds()} seconds ago, early observation proposal setting is {proposal_decision_model.proposal.early_observation_time_seconds} seconds so making an observation of {estObsTime} seconds \n"
-                        decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Sending observation request to MWA \n"
-                        request_sent_at = datetime.utcnow()
-                        # Only schedule a 15 min obs
-                        (
-                            decision,
-                            decision_reason_log_obs,
-                            obsids,
-                            result,
-                        ) = trigger_mwa_observation(
-                            proposal_decision_model,
-                            decision_reason_log,
-                            obsname,
-                            vcsmode=vcsmode,
-                            event_id=event_id,
-                            mwa_sub_arrays=mwa_sub_arrays,
-                            pretend=pretend,
-                        )
-                        print(f"result: {result}")
-                        decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Saving observation result. \n"
-                        if decision.find("T") > -1:
-                            saved_obs_2 = Observations.objects.create(
-                                trigger_id=result["trigger_id"]
-                                or random.randrange(10000, 99999),
-                                telescope=proposal_decision_model.proposal.telescope,
-                                proposal_decision_id=proposal_decision_model,
-                                reason=reason,
-                                mwa_sub_arrays=mwa_sub_arrays,
-                                website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
-                                event=latestVoevent,
-                                mwa_response=result,
-                                request_sent_at=request_sent_at,
-                            )
-                # else:
-                #     decision_reason_log=f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Event time was {timeDiff.total_seconds()} seconds ago, early_observation_time_seconds is {proposal_decision_model.proposal.early_observation_time_seconds} so not making an observation \n"
-                ## If first event is not early warning and has a skymap
+                if context["latestVoevent"].event_type == "EarlyWarning":
+                    context = handle_early_warning(context)
                 elif (
-                    len(voevents) == 1
-                    and latestVoevent.lvc_skymap_fits != None
-                    and latestVoevent.event_type != "EarlyWarning"
+                    context["latestVoevent"].lvc_skymap_fits != None
+                    and context["latestVoevent"].event_type != "EarlyWarning"
                 ):
-                    reason = f"{latestVoevent.trig_id} - Event contains a skymap"
-                    print(f"DEBUG - skymap_fits_fits: {latestVoevent.lvc_skymap_fits}")
-                    try:
-                        event_filename = download_file(
-                            latestVoevent.lvc_skymap_fits, cache=True
-                        )
-                        skymap = Table.read(event_filename)
-                        # alt=[ps.mwa_sub_alt_NE, ps.mwa_sub_alt_NW, ps.mwa_sub_alt_SE, ps.mwa_sub_alt_SW],
-                        # az=[ps.mwa_sub_az_NE, ps.mwa_sub_az_NW, ps.mwa_sub_az_SE, ps.mwa_sub_az_SW],
-                        (skymap, time, pointings) = getMWAPointingsFromSkymapFile(
-                            skymap
-                        )
-                        print(pointings)
-
-                        mwa_sub_arrays = {
-                            "dec": [
-                                pointings[0][4].value,
-                                pointings[1][4].value,
-                                pointings[2][4].value,
-                                pointings[3][4].value,
-                            ],
-                            "ra": [
-                                pointings[0][3].value,
-                                pointings[1][3].value,
-                                pointings[2][3].value,
-                                pointings[3][3].value,
-                            ],
-                        }
-                        reason = f"{latestVoevent.trig_id} - Event has position so using skymap pointings"
-
-                        timeDiff = (
-                            datetime.now(timezone.utc) - latestVoevent.event_observed
-                        )
-                        print(f"timediff - {timeDiff}")
-                        print(timeDiff.total_seconds())
-                        print(
-                            proposal_decision_model.proposal.maximum_observation_time_seconds
-                        )
-                        if (
-                            timeDiff.total_seconds()
-                            < proposal_decision_model.proposal.maximum_observation_time_seconds
-                        ):
-                            estObsTime = round_to_nearest_modulo_8(
-                                proposal_decision_model.proposal.maximum_observation_time_seconds
-                                - timeDiff.total_seconds()
-                            )
-                            decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Event time was {timeDiff.total_seconds()} seconds ago, maximum_observation_time_second is {proposal_decision_model.proposal.maximum_observation_time_seconds} seconds so making an observation of {estObsTime} seconds \n"
-                            # Only schedule a 15 min obs
-                            proposal_decision_model.proposal.mwa_nobs = floor(
-                                estObsTime
-                                / proposal_decision_model.proposal.mwa_exptime
-                            )
-                            decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Sending sub array observation request to MWA\n"
-                            request_sent_at = datetime.utcnow()
-                            (
-                                decision,
-                                decision_reason_log_obs,
-                                obsids,
-                                result,
-                            ) = trigger_mwa_observation(
-                                proposal_decision_model,
-                                decision_reason_log,
-                                obsname,
-                                vcsmode=vcsmode,
-                                event_id=event_id,
-                                mwa_sub_arrays=mwa_sub_arrays,
-                                pretend=pretend,
-                            )
-                            print(f"result: {result}")
-                            decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Saving observation result. \n"
-                            if decision.find("T") > -1:
-                                saved_obs_2 = Observations.objects.create(
-                                    trigger_id=result["trigger_id"]
-                                    or random.randrange(10000, 99999),
-                                    telescope=proposal_decision_model.proposal.telescope,
-                                    proposal_decision_id=proposal_decision_model,
-                                    reason=reason,
-                                    mwa_sub_arrays=mwa_sub_arrays,
-                                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
-                                    event=latestVoevent,
-                                    mwa_response=result,
-                                    request_sent_at=request_sent_at,
-                                )
-                        else:
-                            decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Event time was {timeDiff.total_seconds()} seconds ago, maximum_observation_time_second is {proposal_decision_model.proposal.maximum_observation_time_seconds} so not making an observation \n"
-
-                    except Exception as e:
-                        print(e)
-                        logger.error("Error getting MWA pointings from skymap")
-                        logger.error(e)
+                    context = handle_skymap_event(context)
 
             # Repoint if there is a newer skymap with different positions
-            if len(voevents) > 1 and latestVoevent.lvc_skymap_fits != None:
-                reason = f"{latestVoevent.trig_id} - Event has a skymap"
-
-                print(f"DEBUG - checking to update position")
-                print(
-                    f"DEBUG - proposal_decision_model.__dict__ {proposal_decision_model.__dict__}"
+            if len(voevents) > 1 and context["latestVoevent"].lvc_skymap_fits:
+                print(f"DEBUG - checking to repoint")
+                context["reason"] = (
+                    f"{context['latestVoevent'].trig_id} - Event has a skymap"
                 )
 
-                latestObs = (
-                    Observations.objects.filter(
-                        telescope=proposal_decision_model.proposal.telescope
-                    )
-                    .order_by("-created_at")
-                    .first()
-                )
+                latest_obs = get_latest_observation(context["proposal_decision_model"])
 
-                print(f"DEBUG - latestObs {latestObs}")
-
-                if latestObs.mwa_sub_arrays is not None:
-                    print(f"DEBUG - skymap_fits_fits: {latestVoevent.lvc_skymap_fits}")
-                    decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: New event has skymap \n"
+                if latest_obs and latest_obs.mwa_sub_arrays:
+                    context[
+                        "decision_reason_log"
+                    ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: New event has skymap \n"
 
                     try:
-                        skymap = Table.read(latestVoevent.lvc_skymap_fits)
-
-                        (skymap, time, pointings) = getMWAPointingsFromSkymapFile(
-                            skymap
-                        )
-                        print(pointings)
-                        current_arrays_dec = latestObs.mwa_sub_arrays["dec"]
-                        current_arrays_ra = latestObs.mwa_sub_arrays["ra"]
-
-                        repoint = False
-
-                        pointings_dec = []
-                        pointings_ra = []
-                        for res in pointings:
-                            pointings_ra.append(res[3])
-                            pointings_dec.append(res[4])
-
-                            repoint = True
-                            for index, val in enumerate(current_arrays_dec):
-                                print(f"index: {index}")
-                                ra1 = current_arrays_ra[index] * u.deg
-                                dec1 = current_arrays_dec[index] * u.deg
-                                ra2 = res[3]
-                                dec2 = res[4]
-
-                                if isClosePosition(ra1, dec1, ra2, dec2):
-                                    repoint = False
-                        print(f"repoint: {repoint}")
-                        print(current_arrays_dec)
-                        print(pointings_dec)
-                        print(current_arrays_ra)
-                        print(pointings_ra)
-                        if repoint:
-                            decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: New skymap is more than 4 degrees of previous observation pointing. \n"
-                            reason = f"{latestVoevent.trig_id} - Updating observation positions based on event."
-                            mwa_sub_arrays = {
-                                "dec": [
-                                    pointings[0][4].value,
-                                    pointings[1][4].value,
-                                    pointings[2][4].value,
-                                    pointings[3][4].value,
-                                ],
-                                "ra": [
-                                    pointings[0][3].value,
-                                    pointings[1][3].value,
-                                    pointings[2][3].value,
-                                    pointings[3][3].value,
-                                ],
-                            }
-                            decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Sending sub array observation request to MWA\n"
-                            request_sent_at = datetime.utcnow()
-                            (
-                                decision,
-                                decision_reason_log_obs,
-                                obsids,
-                                result,
-                            ) = trigger_mwa_observation(
-                                proposal_decision_model,
-                                decision_reason_log,
-                                obsname,
-                                vcsmode=vcsmode,
-                                event_id=event_id,
-                                mwa_sub_arrays=mwa_sub_arrays,
-                                pretend=pretend,
-                            )
-                            print(f"result: {result}")
-                            decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Saving observation result. \n"
-                            request_sent_at = datetime.utcnow()
-                            if decision.find("T") > -1:
-                                saved_obs_2 = Observations.objects.create(
-                                    trigger_id=result["trigger_id"]
-                                    or random.randrange(10000, 99999),
-                                    telescope=proposal_decision_model.proposal.telescope,
-                                    proposal_decision_id=proposal_decision_model,
-                                    reason=reason,
-                                    mwa_sub_arrays=mwa_sub_arrays,
-                                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
-                                    event=latestVoevent,
-                                    mwa_response=result,
-                                    request_sent_at=request_sent_at,
-                                )
-                        else:
-                            decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: New skymap is NOT more than 4 degrees of previous observation pointing. \n"
-                            return "T", decision_reason_log
+                        context = update_position_based_on_skymap(context, latest_obs)
                     except Exception as e:
                         print(e)
                         logger.error("Error getting MWA pointings from skymap")
                         logger.error(e)
                 else:
                     print(f"DEBUG - no sub arrays on previous obs")
-                    decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Could not find sub array position on previous observation. \n"
+                    context[
+                        "decision_reason_log"
+                    ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Could not find sub array position on previous observation. \n"
 
+            print("Decision: ", context)
         else:
-            print("Not a GW so ignoring GW logic")
-            decision, decision_reason_log_obs, obsids, result = trigger_mwa_observation(
-                proposal_decision_model,
-                decision_reason_log,
-                obsname,
-                vcsmode=vcsmode,
-                event_id=event_id,
-                mwa_sub_arrays=mwa_sub_arrays,
-                pretend=pretend,
-            )
-            print(f"result: {result}")
-            decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Saving observation result. \n"
-            request_sent_at = datetime.utcnow()
-            if decision.find("T") > -1:
-                saved_obs = Observations.objects.create(
-                    trigger_id=result["trigger_id"] or random.randrange(10000, 99999),
-                    telescope=proposal_decision_model.proposal.telescope,
-                    proposal_decision_id=proposal_decision_model,
-                    reason=reason,
-                    mwa_sub_arrays=mwa_sub_arrays,
-                    website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsids[0]}",
-                    event=latestVoevent,
-                    mwa_response=result,
-                    request_sent_at=request_sent_at,
-                )
-                print(saved_obs)
+            print("passed Non-GW check")
+            context = handle_non_gw_observation(context)
 
-    elif proposal_decision_model.proposal.telescope.name == "ATCA":
+    elif context["proposal_decision_model"].proposal.telescope.name == "ATCA":
         # Check if you can observe and if so send off mwa observation
-        obsname = f"{proposal_decision_model.trig_id}"
-        decision, decision_reason_log, obsids = trigger_atca_observation(
-            proposal_decision_model,
-            decision_reason_log,
-            obsname,
-            event_id=event_id,
-        )
-        for obsid in obsids:
-            # Create new obsid model
-            Observations.objects.create(
-                trigger_id=obsid,
-                telescope=proposal_decision_model.proposal.telescope,
-                proposal_decision_id=proposal_decision_model,
-                reason=reason,
-                event=latestVoevent,
-                # TODO see if atca has a nice observation details webpage
-                # website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
-            )
+        context = handle_atca_observation(context)
     else:
-        decision_reason_log = f"{decision_reason_log}{datetime.utcnow()}: Event ID {event_id}: Not making an MWA observation. \n"
-    return decision, decision_reason_log
+        context["decision_reason_log"] = (
+            f"{context['decision_reason_log']}{datetime.utcnow()}: Event ID {context['event_id']}: Not making an MWA observation. \n"
+        )
+
+    return context["decision"], context["decision_reason_log"]
 
 
 def trigger_mwa_observation(
@@ -616,6 +230,10 @@ def trigger_mwa_observation(
     print(f"DEBUG - proposal: {prop_settings.__dict__}")
     # Not below horizon limit so observer
     logger.info(f"Triggering MWA at UTC time {Time.now()} ...")
+
+    if prop_settings.project_id.password is None:
+        return "T", decision_reason_log, [], None
+
     # Handle early warning events without position using sub arrays
     try:
         if prop_settings.source_type == "GW" and buffered == True and vcsmode == True:
@@ -765,6 +383,9 @@ def trigger_atca_observation(
     # Not below horizon limit so observer
     logger.info(f"Triggering  ATCA at UTC time {Time.now()} ...")
 
+    if prop_obj.project_id.password is None:
+        return "T", decision_reason_log, []
+
     rq = {
         "source": prop_obj.source_type,
         "rightAscension": proposal_decision_model.ra_hms,
@@ -840,3 +461,574 @@ def trigger_atca_observation(
     #     return 'E', decision_reason_log, []
 
     return "T", decision_reason_log, [response["id"]]
+
+
+def check_mwa_horizon_and_prepare_context(context):
+
+    proposal_decision_model = context["proposal_decision_model"]
+    event_id = context["event_id"]
+    decision_reason_log = context["decision_reason_log"]
+
+    if (
+        proposal_decision_model.proposal.telescope.name.startswith("MWA")
+        and proposal_decision_model.ra
+        and proposal_decision_model.dec
+    ):
+        print("Checking if is above the horizon for MWA")
+        # Create Earth location for the telescope
+        telescope = proposal_decision_model.proposal.telescope
+        location = EarthLocation(
+            lon=telescope.lon * u.deg,
+            lat=telescope.lat * u.deg,
+            height=telescope.height * u.m,
+        )
+        print("obtained earth location")
+
+        obs_source = SkyCoord(
+            proposal_decision_model.ra,
+            proposal_decision_model.dec,
+            # equinox='J2000',
+            unit=(u.deg, u.deg),
+        )
+        print("obtained obs source location")
+        # Convert from RA/Dec to Alt/Az
+        obs_source_altaz_beg = obs_source.transform_to(
+            AltAz(obstime=Time.now(), location=location)
+        )
+        alt_beg = obs_source_altaz_beg.alt.deg
+        # Calculate alt at end of obs
+        end_time = Time.now() + timedelta(
+            seconds=proposal_decision_model.proposal.mwa_exptime
+        )
+        obs_source_altaz_end = obs_source.transform_to(
+            AltAz(obstime=end_time, location=location)
+        )
+        alt_end = obs_source_altaz_end.alt.deg
+
+        print("converted obs for horizon")
+
+        if (
+            alt_beg < proposal_decision_model.proposal.mwa_horizon_limit
+            and alt_end < proposal_decision_model.proposal.mwa_horizon_limit
+        ):
+            horizon_message = f"{datetime.utcnow()}: Event ID {event_id}: Not triggering due to horizon limit: alt_beg {alt_beg:.4f} < {proposal_decision_model.proposal.mwa_horizon_limit:.4f} and alt_end {alt_end:.4f} < {proposal_decision_model.proposal.mwa_horizon_limit:.4f}. "
+            logger.debug(horizon_message)
+            return "I", decision_reason_log + horizon_message
+
+        elif alt_beg < proposal_decision_model.proposal.mwa_horizon_limit:
+            # Warn them in the log
+            decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: Warning: The source is below the horizion limit at the start of the observation alt_beg {alt_beg:.4f}. \n"
+
+        elif alt_end < proposal_decision_model.proposal.mwa_horizon_limit:
+            # Warn them in the log
+            decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: Warning: The source will set below the horizion limit by the end of the observation alt_end {alt_end:.4f}. \n"
+
+        # above the horizon so send off telescope specific set ups
+        decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: Above horizon so attempting to observe with {proposal_decision_model.proposal.telescope.name}. \n"
+
+        logger.debug(
+            f"Triggered observation at an elevation of {alt_beg} to elevation of {alt_end}"
+        )
+
+    context["decision_reason_log"] = decision_reason_log
+    context["event_id"] = event_id
+    context["proposal_decision_model"] = proposal_decision_model
+
+    return context
+
+
+def prepare_observation_context(context, voevents):
+
+    proposal_decision_model = context["proposal_decision_model"]
+    telescopes = context["telescopes"]
+    latestVoevent = context["latestVoevent"]
+
+    trigger_both = TRIGGER_ON[1][0]
+    trigger_real = TRIGGER_ON[2][0]
+
+    vcsmode = proposal_decision_model.proposal.telescope.name.endswith("VCS")
+    if vcsmode:
+        print("VCS Mode")
+
+    # Create an observation name
+    # Collect event telescopes
+
+    print(proposal_decision_model.trig_id)
+
+    for voevent in voevents:
+        telescopes.append(voevent.telescope)
+    # Make sure they are unique and seperate with a _
+    telescopes = "_".join(list(set(telescopes)))
+    obsname = f"{telescopes}_{proposal_decision_model.trig_id}"
+
+    buffered = False
+
+    pretend = True
+    repoint = None
+
+    print(
+        f"proposal_decision_model.proposal.testing {proposal_decision_model.proposal.testing}"
+    )
+    print(f"latestVoevent {latestVoevent.__dict__}")
+    if (
+        latestVoevent.role == "test"
+        and proposal_decision_model.proposal.testing != trigger_both
+    ):
+        raise Exception("Invalid event observation and proposal setting")
+
+    if (
+        proposal_decision_model.proposal.testing == trigger_both
+        and latestVoevent.role != "test"
+    ):
+        pretend = False
+    if (
+        proposal_decision_model.proposal.testing == trigger_real
+        and latestVoevent.role != "test"
+    ):
+        pretend = False
+    print(f"pretend: {pretend}")
+
+    context["buffered"] = buffered
+    context["pretend"] = pretend
+    context["repoint"] = repoint
+    context["vcsmode"] = vcsmode
+    context["obsname"] = obsname
+    context["telescopes"] = telescopes
+
+    return context
+
+
+def handle_first_event(context):
+    context["reason"] = (
+        f"{context['latestVoevent'].trig_id} - First event so sending dump MWA buffer request to MWA"
+    )
+    context[
+        "decision_reason_log"
+    ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: First event so sending dump MWA buffer request to MWA\n"
+
+    context["buffered"] = True
+    context["request_sent_at"] = datetime.utcnow()
+
+    (
+        context["decision_buffer"],
+        context["decision_reason_log_buffer"],
+        context["obsids_buffer"],
+        context["result_buffer"],
+    ) = trigger_mwa_observation(
+        context["proposal_decision_model"],
+        context["decision_reason_log"],
+        obsname=context["obsname"],
+        vcsmode=context["vcsmode"],
+        event_id=context["event_id"],
+        mwa_sub_arrays=context["mwa_sub_arrays"],
+        buffered=context["buffered"],
+        pretend=context["pretend"],
+    )
+
+    print(f"obsids_buffer: {context['obsids_buffer']}")
+    context[
+        "decision_reason_log"
+    ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Saving buffer observation result.\n"
+
+    if context["decision_buffer"].find("T") > -1:
+        context = save_observation(
+            context,
+            trigger_id=context["result_buffer"]["trigger_id"]
+            or random.randrange(10000, 99999),
+            obsid=context["obsids_buffer"][0],
+            reason="This is a buffer observation ID",
+        )
+
+    return context
+
+
+def save_observation(context, trigger_id, obsid, reason=None):
+    """Save the observation result in the Observations model."""
+    Observations.objects.create(
+        trigger_id=trigger_id,
+        telescope=context["proposal_decision_model"].proposal.telescope,
+        proposal_decision_id=context["proposal_decision_model"],
+        reason=reason or context["reason"],
+        mwa_sub_arrays=context["mwa_sub_arrays"],
+        website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
+        event=context["latestVoevent"],
+        mwa_response=context.get("result") or context.get("result_buffer"),
+        request_sent_at=context["request_sent_at"],
+    )
+
+    return context
+
+
+def get_default_sub_arrays(ps):
+    """Get default sub arrays based on proposal settings."""
+    return {
+        "dec": [
+            getMWARaDecFromAltAz(
+                alt=ps.mwa_sub_alt_NE, az=ps.mwa_sub_az_NE, time=Time.now()
+            )[1].value,
+            getMWARaDecFromAltAz(
+                alt=ps.mwa_sub_alt_NW, az=ps.mwa_sub_az_NW, time=Time.now()
+            )[1].value,
+            getMWARaDecFromAltAz(
+                alt=ps.mwa_sub_alt_SE, az=ps.mwa_sub_az_SE, time=Time.now()
+            )[1].value,
+            getMWARaDecFromAltAz(
+                alt=ps.mwa_sub_alt_SW, az=ps.mwa_sub_az_SW, time=Time.now()
+            )[1].value,
+        ],
+        "ra": [
+            getMWARaDecFromAltAz(
+                alt=ps.mwa_sub_alt_NE, az=ps.mwa_sub_az_NE, time=Time.now()
+            )[0].value,
+            getMWARaDecFromAltAz(
+                alt=ps.mwa_sub_alt_NW, az=ps.mwa_sub_az_NW, time=Time.now()
+            )[0].value,
+            getMWARaDecFromAltAz(
+                alt=ps.mwa_sub_alt_SE, az=ps.mwa_sub_az_SE, time=Time.now()
+            )[0].value,
+            getMWARaDecFromAltAz(
+                alt=ps.mwa_sub_alt_SW, az=ps.mwa_sub_az_SW, time=Time.now()
+            )[0].value,
+        ],
+    }
+
+
+def handle_early_warning(context):
+    """Handle early warning events."""
+    ps = context["proposal_decision_model"].proposal
+    context["reason"] = (
+        f"{context['latestVoevent'].trig_id} - First event is an Early Warning so ignoring skymap"
+    )
+    context["mwa_sub_arrays"] = get_default_sub_arrays(ps)
+
+    timeDiff = datetime.now(timezone.utc) - context["latestVoevent"].event_observed
+
+    if timeDiff.total_seconds() < ps.early_observation_time_seconds:
+        estObsTime = round_to_nearest_modulo_8(
+            ps.early_observation_time_seconds - timeDiff.total_seconds()
+        )
+        context[
+            "decision_reason_log"
+        ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Event time was {timeDiff.total_seconds()} seconds ago, early observation proposal setting is {ps.early_observation_time_seconds} seconds so making an observation of {estObsTime} seconds.\n"
+        context[
+            "decision_reason_log"
+        ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Sending observation request to MWA.\n"
+        context["request_sent_at"] = datetime.utcnow()
+
+        (
+            context["decision"],
+            context["decision_reason_log_obs"],
+            context["obsids"],
+            context["result"],
+        ) = trigger_mwa_observation(
+            context["proposal_decision_model"],
+            context["decision_reason_log"],
+            obsname=context["obsname"],
+            vcsmode=context["vcsmode"],
+            event_id=context["event_id"],
+            mwa_sub_arrays=context["mwa_sub_arrays"],
+            pretend=context["pretend"],
+        )
+
+        print(f"result: {context['result']}")
+        context[
+            "decision_reason_log"
+        ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Saving observation result.\n"
+
+        if context["decision"].find("T") > -1:
+            context = save_observation(
+                context,
+                trigger_id=context["result"]["trigger_id"]
+                or random.randrange(10000, 99999),
+                obsid=context["obsids"][0],
+            )
+
+    return context
+
+
+def get_skymap_pointings(skymap_fits):
+    """Download and process skymap FITS file to get pointings."""
+    event_filename = download_file(skymap_fits, cache=True)
+    skymap = Table.read(event_filename)
+    (skymap, time, pointings) = getMWAPointingsFromSkymapFile(skymap)
+    return skymap, pointings
+
+
+def get_skymap_pointings_from_cache(skymap_fits):
+    skymap = Table.read(skymap_fits)
+    (skymap, time, pointings) = getMWAPointingsFromSkymapFile(skymap)
+    return skymap, pointings
+
+
+def generate_sub_arrays_from_skymap(pointings):
+    """Generate sub arrays from skymap pointings."""
+    return {
+        "dec": [pointings[i][4].value for i in range(4)],
+        "ra": [pointings[i][3].value for i in range(4)],
+    }
+
+
+def handle_skymap_event(context):
+    """Handle events with skymap data."""
+    context["reason"] = f"{context['latestVoevent'].trig_id} - Event contains a skymap"
+    print(f"DEBUG - skymap_fits_fits: {context['latestVoevent'].lvc_skymap_fits}")
+
+    try:
+        skymap, pointings = get_skymap_pointings(
+            context["latestVoevent"].lvc_skymap_fits
+        )
+        context["mwa_sub_arrays"] = generate_sub_arrays_from_skymap(pointings)
+
+        time_diff = datetime.now(timezone.utc) - context["latestVoevent"].event_observed
+
+        print(f"timediff - {time_diff}")
+        print(time_diff.total_seconds())
+        print(
+            context["proposal_decision_model"].proposal.maximum_observation_time_seconds
+        )
+
+        if (
+            time_diff.total_seconds()
+            < context[
+                "proposal_decision_model"
+            ].proposal.maximum_observation_time_seconds
+        ):
+            est_obs_time = round_to_nearest_modulo_8(
+                context[
+                    "proposal_decision_model"
+                ].proposal.maximum_observation_time_seconds
+                - time_diff.total_seconds()
+            )
+            context["proposal_decision_model"].proposal.mwa_nobs = floor(
+                est_obs_time / context["proposal_decision_model"].proposal.mwa_exptime
+            )
+            context[
+                "decision_reason_log"
+            ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Event time was {time_diff.total_seconds()} seconds ago, maximum_observation_time_seconds is {context['proposal_decision_model'].proposal.maximum_observation_time_seconds} seconds so making an observation of {est_obs_time} seconds.\n"
+            context[
+                "decision_reason_log"
+            ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Sending sub array observation request to MWA.\n"
+            context["request_sent_at"] = datetime.utcnow()
+
+            (
+                context["decision"],
+                context["decision_reason_log_obs"],
+                context["obsids"],
+                context["result"],
+            ) = trigger_mwa_observation(
+                context["proposal_decision_model"],
+                context["decision_reason_log"],
+                obsname=context["obsname"],
+                vcsmode=context["vcsmode"],
+                event_id=context["event_id"],
+                mwa_sub_arrays=context["mwa_sub_arrays"],
+                pretend=context["pretend"],
+            )
+
+            print(f"result: {context['result']}")
+            context[
+                "decision_reason_log"
+            ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Saving observation result.\n"
+
+            if context["decision"].find("T") > -1:
+                save_observation(
+                    context,
+                    trigger_id=context["result"]["trigger_id"]
+                    or random.randrange(10000, 99999),
+                    obsid=context["obsids"][0],
+                )
+
+        else:
+            context["decision_reason_log"] = (
+                f"{context['decision_reason_log']}{datetime.utcnow()}: Event ID {context['event_id']}: Event time was {time_diff.total_seconds()} seconds ago, maximum_observation_time_second is {context['proposal_decision_model'].proposal.maximum_observation_time_seconds} so not making an observation \n"
+            )
+
+    except Exception as e:
+        print(e)
+        logger.error("Error getting MWA pointings from skymap")
+        logger.error(e)
+
+
+def get_latest_observation(proposal_decision_model):
+    """Retrieve the latest observation for the given telescope."""
+    return (
+        Observations.objects.filter(
+            telescope=proposal_decision_model.proposal.telescope
+        )
+        .order_by("-created_at")
+        .first()
+    )
+
+
+def update_position_based_on_skymap(context, latest_obs):
+    """Update observation position based on the new skymap."""
+    skymap, pointings = get_skymap_pointings_from_cache(
+        context["latestVoevent"].lvc_skymap_fits
+    )
+    print("DEBUG - pointings : ", pointings)
+    current_arrays_dec = latest_obs.mwa_sub_arrays["dec"]
+    current_arrays_ra = latest_obs.mwa_sub_arrays["ra"]
+
+    repoint = should_repoint(current_arrays_ra, current_arrays_dec, pointings)
+    print(f"DEBUG - repoint: {repoint}")
+
+    if repoint:
+        context[
+            "decision_reason_log"
+        ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: New skymap is more than 4 degrees of previous observation pointing. \n"
+        context["reason"] = (
+            f"{context['latestVoevent'].trig_id} - Updating observation positions based on event."
+        )
+        context["mwa_sub_arrays"] = generate_sub_arrays_from_skymap(pointings)
+
+        trigger_and_save_observation(context)
+    else:
+        context[
+            "decision_reason_log"
+        ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: New skymap is NOT more than 4 degrees of previous observation pointing. \n"
+        return "T", context["decision_reason_log"]
+
+
+def should_repoint(current_arrays_ra, current_arrays_dec, pointings):
+    """Determine whether repointing is necessary based on the new skymap."""
+    repoint = False
+
+    pointings_dec = []
+    pointings_ra = []
+    for res in pointings:
+        pointings_ra.append(res[3])
+        pointings_dec.append(res[4])
+
+        repoint = True
+        for index, val in enumerate(current_arrays_dec):
+            print(f"index: {index}")
+            ra1 = current_arrays_ra[index] * u.deg
+            dec1 = current_arrays_dec[index] * u.deg
+            ra2 = res[3]
+            dec2 = res[4]
+
+            if isClosePosition(ra1, dec1, ra2, dec2):
+                repoint = False
+
+    print(f"DEBUG - current_arrays_dec : {current_arrays_dec}")
+    print(f"DEBUG - pointings_dec : {pointings_dec}")
+    print(f"DEBUG - current_arrays_ra : {current_arrays_ra}")
+    print(f"DEBUG - pointings_ra : {pointings_ra}")
+
+    return repoint
+
+
+def trigger_and_save_observation(context):
+    """Trigger an observation and save the result."""
+    context[
+        "decision_reason_log"
+    ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Sending sub array observation request to MWA\n"
+    context["request_sent_at"] = datetime.utcnow()
+
+    (
+        context["decision"],
+        context["decision_reason_log_obs"],
+        context["obsids"],
+        context["result"],
+    ) = trigger_mwa_observation(
+        context["proposal_decision_model"],
+        context["decision_reason_log"],
+        obsname=context["obsname"],
+        vcsmode=context["vcsmode"],
+        event_id=context["event_id"],
+        mwa_sub_arrays=context["mwa_sub_arrays"],
+        pretend=context["pretend"],
+    )
+
+    print(f"result: {context['result']}")
+    context[
+        "decision_reason_log"
+    ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Saving observation result. \n"
+    context["request_sent_at"] = datetime.utcnow()
+
+    if context["decision"].find("T") > -1:
+        save_observation(
+            context,
+            trigger_id=context["result"]["trigger_id"]
+            or random.randrange(10000, 99999),
+            obsid=context["obsids"][0],
+        )
+
+    return context
+
+
+def handle_non_gw_observation(context):
+    """Handle the logic for non-GW observations."""
+    if context["proposal_decision_model"].proposal.source_type != "GW":
+        print("DEBUG - Not a GW so ignoring GW logic")
+
+        (
+            context["decision"],
+            context["decision_reason_log_obs"],
+            context['obsids'],
+            context['result'],
+        ) = trigger_mwa_observation(
+            context["proposal_decision_model"],
+            context["decision_reason_log"],
+            obsname=context["obsname"],
+            vcsmode=context["vcsmode"],
+            event_id=context["event_id"],
+            mwa_sub_arrays=context["mwa_sub_arrays"],
+            pretend=context["pretend"],
+        )
+
+        print(f"result: {context['result']}")
+        context[
+            "decision_reason_log"
+        ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Saving observation result.\n"
+        context["request_sent_at"] = datetime.utcnow()
+
+        if context["decision"].find("T") > -1:
+            save_observation(
+                context,
+                trigger_id=context["result"]["trigger_id"]
+                or random.randrange(10000, 99999),
+                obsid=context["obsids"][0],
+                reason=context["reason"],
+            )
+
+    return context
+
+
+def handle_atca_observation(context):
+    """Handle the logic for ATCA observations."""
+    if context["proposal_decision_model"].proposal.telescope.name == "ATCA":
+        obsname = f"{context['proposal_decision_model'].trig_id}"
+        (context["decision"], context["decision_reason_log"], context["obsids"]) = (
+            trigger_atca_observation(
+                context["proposal_decision_model"],
+                context["decision_reason_log"],
+                obsname,
+                event_id=context["event_id"],
+            )
+        )
+
+        context = save_atca_observations(context)
+
+    return context
+
+
+def save_atca_observations(context):
+    """Save the ATCA observation results."""
+    for obsid in context["obsids"]:
+        Observations.objects.create(
+            trigger_id=obsid,
+            telescope=context["proposal_decision_model"].proposal.telescope,
+            proposal_decision_id=context["proposal_decision_model"],
+            reason=context["reason"],
+            event=context["latestVoevent"],
+            # TODO see if ATCA has a nice observation details webpage
+            # website_link=f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
+        )
+
+        context[
+            "decision_reason_log"
+        ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Saving observation result for ATCA.\n"
+        context["request_sent_at"] = datetime.utcnow()
+
+    return context
