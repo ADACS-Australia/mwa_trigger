@@ -136,29 +136,28 @@ class TelescopeProjectId(BaseModel):
         extra = "forbid"  # This forbids any extra fields t
 
 
-class BaseProposalSettings(BaseModel, ABC):
-    id: int
+class BaseTelescopeSettings(BaseModel, ABC):
+    # id: int
     telescope: Telescope
-    project_id: TelescopeProjectId
-    event_telescope: Optional[EventTelescope]
-    proposal_id: str = Field(
-        max_length=16,
-        description="A short identifier of the proposal of maximum length 16 characters.",
-    )
-    proposal_description: str = Field(
-        max_length=513,
-        description="A brief description of the proposal. Only needs to be enough to distinguish it from the other proposals.",
-    )
+    # project_id: TelescopeProjectId
+    # event_telescope: Optional[EventTelescope]
+    # proposal_id: str = Field(
+    #     max_length=16,
+    #     description="A short identifier of the proposal of maximum length 16 characters.",
+    # )
+    # proposal_description: str = Field(
+    #     max_length=513,
+    #     description="A brief description of the proposal. Only needs to be enough to distinguish it from the other proposals.",
+    # )
+    # priority: int = Field(
+    #     DEFAULT_PRIORITY,
+    #     description="Set proposal processing priority (lower is better).",
+    # )
 
     maximum_observation_time_seconds: int = Field(
         DEFAULT_MAX_OBSERVATION_TIME_SECONDS,
         description="Set maximum observation time based off event time. Setting to 0 disables this check.",
     )
-    priority: int = Field(
-        DEFAULT_PRIORITY,
-        description="Set proposal processing priority (lower is better).",
-    )
-
     event_any_duration: bool = Field(
         DEFAULT_EVENT_ANY_DURATION,
         description="Will trigger on events with any duration, which includes if they have None.",
@@ -201,24 +200,25 @@ class BaseProposalSettings(BaseModel, ABC):
         DEFAULT_REPOINTING_LIMIT,
         description="An updated position must be at least this far away from a current observation before repointing.",
     )
-    testing: Optional[TriggerOnChoices] = Field(
-        None, description="What events will this proposal trigger on?"
-    )
-    source_type: Optional[SourceChoices] = Field(
-        None,
-        description="The type of source to trigger on. Must be one of ['GRB', 'NU', 'GW', 'FS'].",
-    )
     # GW custom logic
     observe_significant: bool = Field(
         DEFAULT_OBSERVE_SIGNIFICANT,
         description="Only observe events with high significance (low FAR).",
     )
 
+    # testing: Optional[TriggerOnChoices] = Field(
+    #     None, description="What events will this proposal trigger on?"
+    # )
+    # source_type: Optional[SourceChoices] = Field(
+    #     None,
+    #     description="The type of source to trigger on. Must be one of ['GRB', 'NU', 'GW', 'FS'].",
+    # )
+
     class Config:
         extra = "forbid"  # This forbids any extra fields t
 
 
-class MWAProposalSettings(BaseProposalSettings):
+class MWATelescopeSettings(BaseTelescopeSettings):
     start_observation_at_high_sensitivity: bool = Field(
         DEFAULT_START_OBSERVATION_AT_HIGH_SENSITIVITY,
         description="Without positional data, start observations with MWA sub array at high sensitivity area.",
@@ -278,12 +278,16 @@ class MWAProposalSettings(BaseProposalSettings):
         DEFAULT_MWA_HORIZON_LIMIT,
         description="The minimum elevation of the source to observe (in degrees).",
     )
+    mwa_nobs: float = Field(
+        None,
+        description="Number of observations to make.",
+    )
 
     class Config:
         extra = "forbid"  # This forbids any extra fields t
 
 
-class ATCAProposalSettings(BaseProposalSettings):
+class ATCATelescopeSettings(BaseTelescopeSettings):
     # ATCA setting
     atca_band_3mm: bool = Field(
         DEFAULT_ATCA_BAND_3MM, description="Use 3mm Band (83-105 GHz)?"
@@ -382,7 +386,7 @@ class SourceSettings(BaseModel, ABC):
         self,
         event: Event,
         telescope_settings: Union[
-            BaseProposalSettings, MWAProposalSettings, ATCAProposalSettings
+            BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
         ],
         **kwargs,
     ) -> bool:
@@ -460,11 +464,11 @@ class GWSourceSettings(SourceSettings):
         self,
         event: Event,
         telescope_settings: Union[
-            BaseProposalSettings, MWAProposalSettings, ATCAProposalSettings
+            BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
         ],
         **kwargs,
     ) -> Tuple[bool, bool, bool, str]:
-        print('DEBUG - worth_observing_gw')
+        print("DEBUG - worth_observing_gw")
 
         # Initialize the context with the event and default values
         context = utils_gw.initialize_context(event, kwargs)
@@ -474,7 +478,6 @@ class GWSourceSettings(SourceSettings):
 
         context = utils_gw.update_event_parameters(context)
 
-        # print('DEBUG - context', context)
         # two hour check
         context = utils_gw.check_event_time(context)
 
@@ -484,13 +487,13 @@ class GWSourceSettings(SourceSettings):
 
         context = utils_gw.check_probabilities(telescope_settings, self, context)
 
-        print('DEBUG - context', context)
+        print("DEBUG - context", context)
 
         return (
-            context['trigger_bool'],
-            context['debug_bool'],
-            context['pending_bool'],
-            context['decision_reason_log'],
+            context["trigger_bool"],
+            context["debug_bool"],
+            context["pending_bool"],
+            context["decision_reason_log"],
         )
 
 
@@ -502,11 +505,11 @@ class GrbSourceSettings(SourceSettings):
         self,
         event: Event,
         telescope_settings: Union[
-            BaseProposalSettings, MWAProposalSettings, ATCAProposalSettings
+            BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
         ],
         **kwargs,
     ) -> Tuple[bool, bool, bool, str]:
-        print('DEBUG - worth_observing_grb')
+        print("DEBUG - worth_observing_grb")
 
         # Initialize the context with the event and default values
         context = utils_grb.initialize_context(event, kwargs)
@@ -521,7 +524,7 @@ class GrbSourceSettings(SourceSettings):
         context = utils_grb.check_atca_declination_limits(telescope_settings, context)
 
         # Check the events likelyhood data
-        context['stop_processing'] = False
+        context["stop_processing"] = False
 
         context = utils_grb.check_fermi_likelihood(telescope_settings, context)
 
@@ -533,7 +536,7 @@ class GrbSourceSettings(SourceSettings):
 
         # Check the duration of the event
         # since new if starts, initialize the stop_processing flag
-        context['stop_processing'] = False
+        context["stop_processing"] = False
 
         context = utils_grb.check_any_event_duration(telescope_settings, context)
 
@@ -542,10 +545,10 @@ class GrbSourceSettings(SourceSettings):
         context = utils_grb.check_duration_with_limits(telescope_settings, context)
 
         return (
-            context['trigger_bool'],
-            context['debug_bool'],
-            context['pending_bool'],
-            context['decision_reason_log'],
+            context["trigger_bool"],
+            context["debug_bool"],
+            context["pending_bool"],
+            context["decision_reason_log"],
         )
 
 
@@ -556,7 +559,7 @@ class NuSourceSettings(SourceSettings):
         self,
         event: Event,
         telescope_settings: Union[
-            BaseProposalSettings, MWAProposalSettings, ATCAProposalSettings
+            BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
         ],
         **kwargs,
     ):
@@ -587,9 +590,9 @@ class NuSourceSettings(SourceSettings):
             A log of all the decisions made so far so a user can understand why the source was(n't) observed.
         """
 
-        print('DEBUG - WORTH OBSERVING NU')
+        print("DEBUG - WORTH OBSERVING NU")
 
-        decision_reason_log = kwargs.get('decision_reason_log')
+        decision_reason_log = kwargs.get("decision_reason_log")
 
         # Setup up defaults
         trigger_bool = False
@@ -613,8 +616,30 @@ class NuSourceSettings(SourceSettings):
 
 class ProposalSettings(BaseModel):
     id: int
-    proposal_id: str
-    telescope_settings: BaseProposalSettings
+    project_id: TelescopeProjectId
+    event_telescope: Optional[EventTelescope]
+    proposal_id: str = Field(
+        max_length=16,
+        description="A short identifier of the proposal of maximum length 16 characters.",
+    )
+    proposal_description: str = Field(
+        max_length=513,
+        description="A brief description of the proposal. Only needs to be enough to distinguish it from the other proposals.",
+    )
+    priority: int = Field(
+        DEFAULT_PRIORITY,
+        description="Set proposal processing priority (lower is better).",
+    )
+
+    testing: Optional[TriggerOnChoices] = Field(
+        None, description="What events will this proposal trigger on?"
+    )
+    source_type: Optional[SourceChoices] = Field(
+        None,
+        description="The type of source to trigger on. Must be one of ['GRB', 'NU', 'GW', 'FS'].",
+    )
+
+    telescope_settings: BaseTelescopeSettings
     source_settings: SourceSettings
 
     class Config:
