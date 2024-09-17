@@ -220,7 +220,7 @@ class ObservationSchema(BaseModel):
     created_at: datetime
     request_sent_at: Optional[datetime] = None
     mwa_sky_map_pointings: Optional[str] = None
-    mwa_response: Optional[MWAResponseSchema] = None
+    mwa_response: Optional[MWAResponseSimpleSchema] = None
 
     class Config:
         from_attributes = True

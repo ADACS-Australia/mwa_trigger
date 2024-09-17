@@ -36,11 +36,6 @@ from propsettings_app.utils.utils_telescope_observe import (
 )
 from pydantic import BaseModel, Field
 
-# from .factories import (
-#     TelescopeFactory,
-#     TelescopeProjectIdFactory,
-# )
-# from .pydmodels import ATCATelescopeSettings, GWProposalSettings, MWATelescopeSettings
 from .schemas import (
     TRIGGER_ON,
     EventGroupSchema,
@@ -169,27 +164,13 @@ def api_trigger_observation(request, data: TriggerObservationRequest):
     reason = data.reason
     event_id = data.event_id
 
-    decision, decision_reason_log = trigger_observation(
-        prop_dec_pyd, voevents_pyd, decision_reason_log, reason, event_id
-    )
-
-    return {"decision": "T", "decision_reason_log": decision_reason_log}
-
-
-def trigger_observation(
-    proposal_decision_model,
-    voevents,
-    decision_reason_log,
-    reason="First Observation",
-    event_id=None,
-):
-    print("DEBUG - Trigger observation")
-
     telescopes = []
-    latestVoevent = voevents[0]
+    latestVoevent = voevents_pyd[0]
+
+    print("latestVoevent:", latestVoevent)
 
     context = {
-        "proposal_decision_model": proposal_decision_model,
+        "proposal_decision_model": prop_dec_pyd,
         "event_id": event_id,
         "decision_reason_log": decision_reason_log,
         "reason": reason,
@@ -198,13 +179,26 @@ def trigger_observation(
         "mwa_sub_arrays": None,
         "stop_processing": False,
         "decision": None,
+        "voevents": voevents_pyd,
     }
 
-    print("source_settings:", proposal_decision_model.proposal.source_settings)
+    print("source_settings:", proposal.source_settings)
     print(
         "telescope_settings:",
-        proposal_decision_model.proposal.telescope_settings.telescope,
+        proposal.telescope_settings.telescope,
     )
+
+    # decision, decision_reason_log = trigger_observation(context, voevents_pyd)
+
+    decision, decision_reason_log = proposal.trigger_gen_observation(context)
+
+    decision = decision if decision else "I"
+
+    return {"decision": decision, "decision_reason_log": decision_reason_log}
+
+
+def trigger_observation(context, voevents):
+    print("DEBUG - Trigger observation")
 
     context = check_mwa_horizon_and_prepare_context(context)
 
@@ -247,7 +241,7 @@ def trigger_observation(
                 print("DEBUG - MWA telescope - GW - Repoint")
                 context = handle_gw_voevents(context)
 
-            print("Decision: ", context)
+            # print("Decision: ", context)
         else:
             print("passed Non-GW check")
             context = handle_non_gw_observation(context)
