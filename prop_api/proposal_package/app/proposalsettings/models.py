@@ -232,6 +232,15 @@ class BaseTelescopeSettings(BaseModel, ABC):
         """This is an abstract method that must be implemented by subclasses."""
         pass
 
+    @abstractmethod
+    def save_observation(
+        self,
+        context,
+        **kwargs,
+    ) -> Dict:
+        """This is an abstract method that must be implemented by subclasses."""
+        pass
+
 
 class MWATelescopeSettings(BaseTelescopeSettings):
     start_observation_at_high_sensitivity: bool = Field(
@@ -474,6 +483,64 @@ class MWATelescopeSettings(BaseTelescopeSettings):
 
         return "T", decision_reason_log, obsids, result
 
+    def save_observation(
+        self,
+        context,
+        **kwargs,
+    ) -> Dict:
+        """Save the observation result through the API."""
+        print("DEBUG - saving MWA observation")
+
+        trigger_id = context["result_buffer"]["trigger_id"] or random.randrange(
+            10000, 99999
+        )
+        obsid = context["obsids_buffer"][0]
+        reason = context["reason"]
+
+        api_url = f"http://web:8000/api/create-observation/"
+        trigger_id = str(random.randrange(10000, 99999))
+
+        # Prepare the payload
+        payload = {
+            "trigger_id": trigger_id,
+            "telescope_name": context[
+                "proposal_decision_model"
+            ].proposal.telescope_settings.telescope.name,
+            "proposal_decision_id": context["proposal_decision_model"].id,
+            "event_id": context["latestVoevent"].id,
+            "reason": reason or context["reason"],
+            "website_link": f"http://ws.mwatelescope.org/observation/obs/?obsid={obsid}",
+            # "mwa_response": context.get("result") or context.get("result_buffer"),
+            "request_sent_at": (
+                context["request_sent_at"].isoformat()
+                if context["request_sent_at"]
+                else None
+            ),
+            "mwa_sub_arrays": (
+                context.get("mwa_sub_arrays") if context.get("mwa_sub_arrays") else None
+            ),
+            "mwa_sky_map_pointings": (
+                context.get("mwa_sky_map_pointings")
+                if context.get("mwa_sky_map_pointings")
+                else None
+            ),
+        }
+
+        print("DEBUG - payload starts: \n")
+        print(payload)
+        print("DEBUG - payload ends \n")
+
+        try:
+            response = requests.post(api_url, json=payload)
+            response.raise_for_status()
+            result = response.json()
+            print(f"Observation created: {result}")
+
+        except requests.RequestException as e:
+            print(f"Error creating observation: {e}")
+
+        return result
+
 
 class ATCATelescopeSettings(BaseTelescopeSettings):
     # ATCA setting
@@ -701,6 +768,45 @@ class ATCATelescopeSettings(BaseTelescopeSettings):
         #     return 'E', decision_reason_log, []
 
         return "T", decision_reason_log, [response["id"]]
+
+    def save_observation(
+        self,
+        context,
+        **kwargs,
+    ) -> Dict:
+        """Save the observation result through the API."""
+        print("DEBUG - saving ATCA observation")
+        trigger_id = kwargs.get("trigger_id")
+        reason = kwargs.get("reason")
+
+        api_url = f"http://web:8000/api/create-observation/"
+        # trigger_id = str(random.randrange(10000, 99999))
+
+        # Prepare the payload
+        payload = {
+            "trigger_id": trigger_id,
+            "telescope_name": context[
+                "proposal_decision_model"
+            ].proposal.telescope_settings.telescope.name,
+            "proposal_decision_id": context["proposal_decision_model"].id,
+            "event_id": context["latestVoevent"].id,
+            "reason": reason or context["reason"],
+        }
+
+        print("DEBUG - payload starts: \n")
+        print(payload)
+        print("DEBUG - payload ends \n")
+
+        try:
+            response = requests.post(api_url, json=payload)
+            response.raise_for_status()
+            result = response.json()
+            print(f"Observation created: {result}")
+
+        except requests.RequestException as e:
+            print(f"Error creating observation: {e}")
+
+        return result
 
 
 # Settings for Source Type class
