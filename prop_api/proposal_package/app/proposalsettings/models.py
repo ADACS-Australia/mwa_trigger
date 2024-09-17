@@ -1,16 +1,20 @@
 import datetime as dt
 import logging
+import random
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import atca_rapid_response_api as arrApi
 import requests
+from astropy.time import Time
 from pydantic import BaseModel, Field
 
 from .consts import *
 from .utils import utils_grb, utils_gw
 from .utils import utils_telescope_observe as utils_tel
+from .utils.utils_triggerservice import trigger
 
 logger = logging.getLogger(__name__)
 
@@ -217,7 +221,16 @@ class BaseTelescopeSettings(BaseModel, ABC):
     # )
 
     class Config:
-        extra = "forbid"  # This forbids any extra fields t
+        extra = "forbid"  # This forbids any extra fields
+
+    @abstractmethod
+    def trigger_telescope(
+        self,
+        context,
+        **kwargs,
+    ) -> Tuple[str, str, List[Union[int, str]], Optional[str]]:
+        """This is an abstract method that must be implemented by subclasses."""
+        pass
 
 
 class MWATelescopeSettings(BaseTelescopeSettings):
@@ -280,6 +293,7 @@ class MWATelescopeSettings(BaseTelescopeSettings):
         DEFAULT_MWA_HORIZON_LIMIT,
         description="The minimum elevation of the source to observe (in degrees).",
     )
+    # TODO check mwa_nobs
     mwa_nobs: float = Field(
         None,
         description="Number of observations to make.",
@@ -287,6 +301,178 @@ class MWATelescopeSettings(BaseTelescopeSettings):
 
     class Config:
         extra = "forbid"  # This forbids any extra fields t
+
+    def trigger_telescope(
+        self,
+        context,
+        **kwargs,
+    ) -> Tuple[str, str, List[Union[int, str]], str]:
+        """Check if the MWA can observe then send it off the observation.
+
+        Parameters
+        ----------
+        proposal_decision_model : `django.db.models.Model`
+            The Django ProposalDecision model object.
+        decision_reason_log : `str`
+            A log of all the decisions made so far so a user can understand why the source was(n't) observed.
+        obsname : `str`
+            The name of the observation.
+        vcsmode : `boolean`, optional
+            True to observe in VCS mode and False to observe in correlator/imaging mode. Default: False
+        event_id : `int`, optional
+            An Event ID that will be recorded in the decision_reason_log. Default: None.
+
+        Returns
+        -------
+        result : `str`
+            The results of the attempt to observer where 'T' means it was triggered, 'I' means it was ignored and 'E' means there was an error.
+        decision_reason_log : `str`
+            The updated trigger message to include an observation specific logs.
+        observations : `list`
+            A list of observations that were scheduled by MWA.
+        result : `object`
+            Result from mwa
+        """
+
+        # return "T", decision_reason_log, [], {}
+        proposal_decision_model = context["proposal_decision_model"]
+        prop_settings = context["proposal_decision_model"].proposal
+        decision_reason_log = context["decision_reason_log"]
+        obsname = context["obsname"]
+        vcsmode = context["vcsmode"]
+        event_id = context["event_id"]
+        mwa_sub_arrays = context["mwa_sub_arrays"]
+        buffered = context["buffered"]
+        pretend = context["pretend"]
+
+        print("DEBUG - triggering MWA")
+        print(f"DEBUG - proposal: {prop_settings.__dict__}")
+        # Not below horizon limit so observer
+        logger.info(f"Triggering MWA at UTC time {Time.now()} ...")
+
+        # if True:
+        #     return "T", decision_reason_log, [], None
+
+        # Handle early warning events without position using sub arrays
+        try:
+            if (
+                prop_settings.source_type == "GW"
+                and buffered == True
+                and vcsmode == True
+            ):
+                print("DEBUG - Dumping buffer")
+                print("DEBUG - Using nobs = 1, exptime = 8")
+
+                result = trigger(
+                    project_id=prop_settings.project_id.id,
+                    secure_key=prop_settings.project_id.password,
+                    pretend=pretend,
+                    creator="VOEvent_Auto_Trigger",  # TODO grab version
+                    obsname=obsname,
+                    nobs=1,
+                    # Assume always using 24 contiguous coarse frequency channels
+                    freqspecs=prop_settings.telescope_settings.mwa_freqspecs,
+                    avoidsun=True,
+                    inttime=prop_settings.telescope_settings.mwa_inttime,
+                    freqres=prop_settings.telescope_settings.mwa_freqres,
+                    exptime=8,
+                    vcsmode=vcsmode,
+                    buffered=buffered,
+                )
+                print(f"buffered result: {result}")
+
+            elif prop_settings.source_type == "GW" and mwa_sub_arrays != None:
+                print("DEBUG - Scheduling an ra/dec sub array observation")
+
+                result = trigger(
+                    project_id=prop_settings.project_id.id,
+                    secure_key=prop_settings.project_id.password,
+                    pretend=pretend,
+                    subarray_list=["all_ne", "all_nw", "all_se", "all_sw"],
+                    ra=mwa_sub_arrays["ra"],
+                    dec=mwa_sub_arrays["dec"],
+                    creator="VOEvent_Auto_Trigger",  # TODO grab version
+                    obsname=obsname,
+                    nobs=1,
+                    # Assume always using 24 contiguous coarse frequency channels
+                    freqspecs=prop_settings.telescope_settings.mwa_freqspecs,
+                    avoidsun=True,
+                    inttime=prop_settings.telescope_settings.mwa_inttime,
+                    freqres=prop_settings.telescope_settings.mwa_freqres,
+                    exptime=prop_settings.telescope_settings.mwa_exptime,
+                    calibrator=True,
+                    calexptime=prop_settings.telescope_settings.mwa_calexptime,
+                    vcsmode=vcsmode,
+                )
+            else:
+                print("DEBUG - Scheduling an ra/dec observation")
+
+                result = trigger(
+                    project_id=prop_settings.project_id.id,
+                    secure_key=prop_settings.project_id.password,
+                    pretend=pretend,
+                    ra=proposal_decision_model.ra,
+                    dec=proposal_decision_model.dec,
+                    alt=proposal_decision_model.alt,
+                    az=proposal_decision_model.az,
+                    creator="VOEvent_Auto_Trigger",  # TODO grab version
+                    obsname=obsname,
+                    nobs=1,
+                    # Assume always using 24 contiguous coarse frequency channels
+                    freqspecs=prop_settings.telescope_settings.mwa_freqspecs,
+                    avoidsun=True,
+                    inttime=prop_settings.telescope_settings.mwa_inttime,
+                    freqres=prop_settings.telescope_settings.mwa_freqres,
+                    exptime=prop_settings.telescope_settings.mwa_exptime,
+                    calibrator=True,
+                    calexptime=prop_settings.telescope_settings.mwa_calexptime,
+                    vcsmode=vcsmode,
+                )
+        except Exception as e:
+            print(f"DEBUG - Error exception scheduling observation {e}")
+            decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: Exception trying to schedule event {e}\n "
+            return "E", decision_reason_log, [], []
+
+        print(f"result: {result}")
+        logger.debug(f"result: {result}")
+        # Check if succesful
+        if result is None:
+            print("DEBUG - Error: no result from scheduling observation")
+            decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: Web API error, possible server error.\n "
+            return "E", decision_reason_log, [], result
+        if not result["success"]:
+            print("DEBUG - Error: failed to schedule observation")
+            # Observation not succesful so record why
+            for err_id in result["errors"]:
+                decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: {result['errors'][err_id]}.\n "
+            # Return an error as the trigger status
+            return "E", decision_reason_log, [], result
+
+        # Output the results
+        logger.info(f"Trigger sent: {result['success']}")
+        logger.info(f"Trigger params: {result['success']}")
+        if "stdout" in result["schedule"].keys():
+            if result["schedule"]["stdout"]:
+                logger.info(f"schedule' stdout: {result['schedule']['stdout']}")
+        if "stderr" in result["schedule"].keys():
+            if result["schedule"]["stderr"]:
+                logger.info(f"schedule' stderr: {result['schedule']['stderr']}")
+
+        # Grab the obsids (sometimes we will send of several observations)
+        obsids = []
+        if "obsid_list" in result.keys() and len(result["obsid_list"]) > 0:
+            obsids = result["obsid_list"]
+        else:
+            for r in result["schedule"]["stderr"].split("\n"):
+                if r.startswith("INFO:Schedule metadata for"):
+                    obsids.append(r.split(" for ")[1][:-1])
+                elif r.startswith("Pretending: commands not run"):
+                    obsids.append(f"P{random.randint(1000,9999)}")
+
+        # TODO please remove it when not testing it
+        # result = DEFAULT_MWA_RESPONSE
+
+        return "T", decision_reason_log, obsids, result
 
 
 class ATCATelescopeSettings(BaseTelescopeSettings):
@@ -374,6 +560,147 @@ class ATCATelescopeSettings(BaseTelescopeSettings):
 
     class Config:
         extra = "forbid"  # This forbids any extra fields t
+
+    def trigger_telescope(
+        self,
+        context,
+        **kwargs,
+    ) -> Tuple[str, str, List[Union[int, str]]]:
+        """Check if the ATCA telescope can observe, send it off the observation and return any errors.
+
+        Parameters
+        ----------
+        proposal_decision_model : `django.db.models.Model`
+            The Django ProposalDecision model object.
+        decision_reason_log : `str`
+            A log of all the decisions made so far so a user can understand why the source was(n't) observed.
+        obsname : `str`
+            The name of the observation.
+        event_id : `int`, optional
+            An Event ID that will be recorded in the decision_reason_log. Default: None.
+
+        Returns
+        -------
+        result : `str`
+            The results of the attempt to observer where 'T' means it was triggered, 'I' means it was ignored and 'E' means there was an error.
+        decision_reason_log : `str`
+            The updated trigger message to include an observation specific logs.
+        observations : `list`
+            A list of observations that were scheduled by ATCA (currently there is no functionality to record this so will be empty).
+        """
+
+        proposal_decision_model = context["proposal_decision_model"]
+        decision_reason_log = context["decision_reason_log"]
+        event_id = context["event_id"]
+
+        prop_obj = proposal_decision_model.proposal
+
+        # TODO add any schedule checks or observation parsing here
+        print("DEBUG - trigger_atca_observation")
+        # Not below horizon limit so observer
+        logger.info(f"Triggering  ATCA at UTC time {Time.now()} ...")
+
+        rq = {
+            "source": prop_obj.source_type,
+            "rightAscension": proposal_decision_model.ra_hms,
+            "declination": proposal_decision_model.dec_dms,
+            "project": prop_obj.project_id.id,
+            "maxExposureLength": str(
+                timedelta(minutes=prop_obj.telescope_settings.atca_max_exptime)
+            ),
+            "minExposureLength": str(
+                timedelta(minutes=prop_obj.telescope_settings.atca_min_exptime)
+            ),
+            "scanType": "Dwell",
+            "3mm": {
+                "use": prop_obj.telescope_settings.atca_band_3mm,
+                "exposureLength": str(
+                    timedelta(minutes=prop_obj.telescope_settings.atca_band_3mm_exptime)
+                ),
+                "freq1": prop_obj.telescope_settings.atca_band_3mm_freq1,
+                "freq2": prop_obj.telescope_settings.atca_band_3mm_freq2,
+            },
+            "7mm": {
+                "use": prop_obj.telescope_settings.atca_band_7mm,
+                "exposureLength": str(
+                    timedelta(minutes=prop_obj.telescope_settings.atca_band_7mm_exptime)
+                ),
+                "freq1": prop_obj.telescope_settings.atca_band_7mm_freq1,
+                "freq2": prop_obj.telescope_settings.atca_band_7mm_freq2,
+            },
+            "15mm": {
+                "use": prop_obj.telescope_settings.atca_band_15mm,
+                "exposureLength": str(
+                    timedelta(
+                        minutes=prop_obj.telescope_settings.atca_band_15mm_exptime
+                    )
+                ),
+                "freq1": prop_obj.telescope_settings.atca_band_15mm_freq1,
+                "freq2": prop_obj.telescope_settings.atca_band_15mm_freq2,
+            },
+            "4cm": {
+                "use": prop_obj.telescope_settings.atca_band_4cm,
+                "exposureLength": str(
+                    timedelta(minutes=prop_obj.telescope_settings.atca_band_4cm_exptime)
+                ),
+                "freq1": prop_obj.telescope_settings.atca_band_4cm_freq1,
+                "freq2": prop_obj.telescope_settings.atca_band_4cm_freq2,
+            },
+            "16cm": {
+                "use": prop_obj.telescope_settings.atca_band_16cm,
+                "exposureLength": str(
+                    timedelta(
+                        minutes=prop_obj.telescope_settings.atca_band_16cm_exptime
+                    )
+                ),
+                # Only frequency available due to limited bandwidth
+                "freq1": 2100,
+                "freq2": 2100,
+            },
+        }
+
+        # We have our request now, so we need to craft the service request to submit it to
+        # the rapid response service.
+        rapidObj = {"requestDict": rq}
+        rapidObj["authenticationToken"] = prop_obj.project_id.password
+        rapidObj["email"] = prop_obj.project_id.atca_email
+        trigger_real_pretend = utils_tel.TRIGGER_ON[0][0]
+
+        # user = ATCAUser.objects.all().first()
+
+        # rapidObj["httpAuthUsername"] = user.httpAuthUsername
+        # rapidObj["httpAuthPassword"] = user.httpAuthPassword
+
+        rapidObj["httpAuthUsername"] = "TestUser"
+        rapidObj["httpAuthPassword"] = "TestPassword"
+
+        rapidObj["serverProtocol"] = "http://"
+        rapidObj["serverName"] = "test-api:8000"
+        rapidObj["apiEndpoint"] = "/api/atca_proposal_request/"
+
+        if prop_obj.testing == trigger_real_pretend:
+            rapidObj["test"] = True
+            rapidObj["noTimeLimit"] = True
+            rapidObj["noScoreLimit"] = True
+
+        print("DEBUG - rapidObj : ", rapidObj)
+        request = arrApi.api(rapidObj)
+        try:
+            response = request.send()
+        except Exception as r:
+            logger.error(f"ATCA error message: {r}")
+            decision_reason_log += (
+                f"{datetime.utcnow()}: Event ID {event_id}: ATCA error message: {r}\n "
+            )
+            return "E", decision_reason_log, []
+
+        # # Check for errors
+        # if  (not response["authenticationToken"]["received"]) or (not response["authenticationToken"]["verified"]) or \
+        #     (not response["schedule"]["received"]) or (not response["schedule"]["verified"]):
+        #     decision_reason_log += f"ATCA return message: {r}\n "
+        #     return 'E', decision_reason_log, []
+
+        return "T", decision_reason_log, [response["id"]]
 
 
 # Settings for Source Type class
