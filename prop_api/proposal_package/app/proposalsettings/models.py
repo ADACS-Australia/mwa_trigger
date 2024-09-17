@@ -3,12 +3,14 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
+import requests
 from pydantic import BaseModel, Field
 
 from .consts import *
 from .utils import utils_grb, utils_gw
+from .utils import utils_telescope_observe as utils_tel
 
 logger = logging.getLogger(__name__)
 
@@ -393,6 +395,24 @@ class SourceSettings(BaseModel, ABC):
         """This is an abstract method that must be implemented by subclasses."""
         pass
 
+    @abstractmethod
+    def trigger_atca_observation(
+        self,
+        context,
+        **kwargs,
+    ) -> bool:
+        """This is an abstract method that must be implemented by subclasses."""
+        pass
+
+    @abstractmethod
+    def trigger_mwa_observation(
+        self,
+        context,
+        **kwargs,
+    ) -> bool:
+        """This is an abstract method that must be implemented by subclasses."""
+        pass
+
 
 class GWSourceSettings(SourceSettings):
     # GW settings
@@ -496,6 +516,77 @@ class GWSourceSettings(SourceSettings):
             context["decision_reason_log"],
         )
 
+    def trigger_atca_observation(
+        self,
+        context: Dict,
+        **kwargs,
+    ) -> Tuple[str, str]:
+        print("DEBUG - Trigger ATCA observation for GW source")
+        telescope_name = context[
+            "proposal_decision_model"
+        ].proposal.telescope_settings.telescope.name
+
+        if context["stop_processing"]:
+            return context
+
+        if telescope_name.startswith("ATCA") is False:
+            return context
+
+        context = utils_tel.handle_atca_observation(context)
+
+        return context
+
+    def trigger_mwa_observation(
+        self,
+        context: Dict,
+        **kwargs,
+    ) -> Tuple[str, str]:
+        print("DEBUG - Trigger MWA observation for GW source")
+        voevents = context["voevents"]
+        telescope_name = context[
+            "proposal_decision_model"
+        ].proposal.telescope_settings.telescope.name
+
+        if context["stop_processing"]:
+            return context
+
+        if telescope_name.startswith("MWA") is False:
+            return context
+
+        context = utils_tel.prepare_observation_context(context, voevents)
+
+        if len(voevents) == 1:
+            # Dump out the last ~3 mins of MWA buffer to try and catch event
+            context = utils_tel.handle_first_observation(context)
+
+            # Handle the unique case of the early warning
+            if context["latestVoevent"].event_type == "EarlyWarning":
+                print("DEBUG - MWA telescope - GW - EarlyWarning")
+                context = utils_tel.handle_early_warning(context)
+            elif (
+                context["latestVoevent"].lvc_skymap_fits != None
+                and context["latestVoevent"].event_type != "EarlyWarning"
+            ):
+                print("DEBUG - MWA telescope - GW - Skymap")
+                context = utils_tel.handle_skymap_event(context)
+                print("DEBUG - MWA telescope - GW - Skymap Calculated")
+
+        # Repoint if there is a newer skymap with different positions
+        if len(voevents) > 1 and context["latestVoevent"].lvc_skymap_fits:
+            print("DEBUG - MWA telescope - GW - Repoint")
+
+            # get latest event for MWA
+            print(f"DEBUG - checking to repoint")
+            context["reason"] = (
+                f"{context['latestVoevent'].trig_id} - Event has a skymap"
+            )
+
+            latest_obs = get_latest_observation(context["proposal_decision_model"])
+
+            context = utils_tel.handle_gw_voevents(context, latest_obs)
+
+        return context
+
 
 class GrbSourceSettings(SourceSettings):
     # GRB settings
@@ -550,6 +641,50 @@ class GrbSourceSettings(SourceSettings):
             context["pending_bool"],
             context["decision_reason_log"],
         )
+
+    def trigger_atca_observation(
+        self,
+        context: Dict,
+        **kwargs,
+    ) -> Tuple[str, str]:
+        print("DEBUG - Trigger ATCA observation for GRB source")
+        telescope_name = context[
+            "proposal_decision_model"
+        ].proposal.telescope_settings.telescope.name
+
+        if context["stop_processing"]:
+            return context
+
+        if telescope_name.startswith("ATCA") is False:
+            return context
+
+        context = utils_tel.handle_atca_observation(context)
+
+        return context
+
+    def trigger_mwa_observation(
+        self,
+        context: Dict,
+        **kwargs,
+    ) -> Tuple[str, str]:
+        print("DEBUG - Trigger MWA observation for GRB source")
+        voevents = context["voevents"]
+        telescope_name = context[
+            "proposal_decision_model"
+        ].proposal.telescope_settings.telescope.name
+
+        if context["stop_processing"]:
+            return context
+
+        if telescope_name.startswith("MWA") is False:
+            return context
+
+        context = utils_tel.prepare_observation_context(context, voevents)
+
+        print("passed Non - GW check")
+        context = utils_tel.handle_non_gw_observation(context)
+
+        return context
 
 
 class NuSourceSettings(SourceSettings):
@@ -613,6 +748,50 @@ class NuSourceSettings(SourceSettings):
 
         return trigger_bool, debug_bool, pending_bool, decision_reason_log
 
+    def trigger_atca_observation(
+        self,
+        context: Dict,
+        **kwargs,
+    ) -> Tuple[str, str]:
+        print("DEBUG - Trigger ATCA observation for NU source")
+        telescope_name = context[
+            "proposal_decision_model"
+        ].proposal.telescope_settings.telescope.name
+
+        if context["stop_processing"]:
+            return context
+
+        if telescope_name.startswith("ATCA") is False:
+            return context
+
+        context = utils_tel.handle_atca_observation(context)
+
+        return context
+
+    def trigger_mwa_observation(
+        self,
+        context: Dict,
+        **kwargs,
+    ) -> Tuple[str, str]:
+        print("DEBUG - Trigger MWA observation for NU source")
+        voevents = context["voevents"]
+        telescope_name = context[
+            "proposal_decision_model"
+        ].proposal.telescope_settings.telescope.name
+
+        if context["stop_processing"]:
+            return context
+
+        if telescope_name.startswith("MWA") is False:
+            return context
+
+        context = utils_tel.prepare_observation_context(context, voevents)
+
+        print("passed Non - GW check")
+        context = utils_tel.handle_non_gw_observation(context)
+
+        return context
+
 
 class ProposalSettings(BaseModel):
     id: int
@@ -650,3 +829,103 @@ class ProposalSettings(BaseModel):
         return self.source_settings.worth_observing(
             event, self.telescope_settings, **kwargs
         )
+
+    def trigger_gen_observation(self, context: Dict) -> Tuple[str, str]:
+        print("DEBUG - Trigger observation")
+
+        context = utils_tel.check_mwa_horizon_and_prepare_context(context)
+
+        # TODO: Remove this when we stop testing
+        print("stop_processing:", context["stop_processing"])
+        # context["stop_processing"] = False
+
+        if context["stop_processing"]:
+            return context["decision"], context["decision_reason_log"]
+
+        context = self.source_settings.trigger_mwa_observation(context)
+
+        context = self.source_settings.trigger_atca_observation(context)
+
+        if (
+            self.telescope_settings.telescope.name.startswith("ATCA") is False
+            and self.telescope_settings.telescope.name.startswith("MWA") is False
+        ):
+            context["decision_reason_log"] = (
+                f"{context['decision_reason_log']}{datetime.utcnow()}: Event ID {context['event_id']}: Not making an MWA observation. \n"
+            )
+
+        return context["decision"], context["decision_reason_log"]
+
+
+class ProposalDecision(BaseModel):
+    id: int
+    decision: str
+    decision_reason: Optional[str]
+    proposal: Optional[int]  # Assuming this is the ID of the related ProposalSettings
+    event_group_id: EventGroup  # event_group: EventGroupSchema
+    trig_id: Optional[str]
+    duration: Optional[float]
+    ra: Optional[float]
+    dec: Optional[float]
+    alt: Optional[float]
+    az: Optional[float]
+    ra_hms: Optional[str]
+    dec_dms: Optional[str]
+    pos_error: Optional[float]
+    recieved_data: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class MWAResponseSimple(BaseModel):
+    clear: Dict[str, Any] = None
+    errors: Dict[str, Any] = None
+    params: Dict[str, Any] = None
+    success: bool = None
+    schedule: Dict[str, Any] = None
+    obsid_list: List[int] = None
+    trigger_id: Union[int, str] = None
+
+
+class MWASubArrays(BaseModel):
+    ra: List[float]
+    dec: List[float]
+
+
+class Observations(BaseModel):
+
+    telescope: Telescope
+    proposal_decision_id: ProposalDecision
+    event: Event
+    trigger_id: str
+    website_link: Optional[str] = None
+    reason: Optional[str] = None
+    mwa_sub_arrays: Optional[MWASubArrays] = None
+    created_at: datetime
+    request_sent_at: Optional[datetime] = None
+    mwa_sky_map_pointings: Optional[str] = None
+    mwa_response: Optional[MWAResponseSimple] = None
+
+    class Config:
+        from_attributes = True
+
+
+def get_latest_observation(proposal_decision_model):
+    """Retrieve the latest observation for the given telescope via API."""
+    telescope_id = proposal_decision_model.proposal.telescope_settings.telescope.name
+    api_url = f"http://web:8000/api/latest-observation/{telescope_id}/"
+
+    try:
+        response = requests.get(api_url)
+        response.raise_for_status()  # Raises an HTTPError for bad responses
+        observation_data = response.json()
+
+        # Create and return a Pydantic instance
+        return Observations.parse_obj(observation_data)
+    except requests.RequestException as e:
+        print(f"Error fetching latest observation: {e}")
+        return None
+    except ValueError as e:
+        print(f"Error parsing observation data: {e}")
+        return None
