@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
-from ninja import ModelSchema
+from ninja import ModelSchema, Schema
 from propsettings_app.models import Telescope, TelescopeProjectID
 from pydantic import BaseModel, Field
 
@@ -21,54 +21,6 @@ TRIGGER_ON = (
     ("BOTH", "Real events (Real Obs) and test events (Pretend Obs)"),
     ("REAL_ONLY", "Real events only (Real Obs)"),
 )
-
-
-# class TelescopeSchema(ModelSchema):
-#     class Meta:
-#         model = Telescope
-#         fields = ["id", "name", "lon", "lat", "height"]
-
-
-class CommandResultSchema(BaseModel):
-    stderr: str
-    stdout: str
-    command: Optional[str] = None
-    retcode: int
-
-
-class MWAResponseParamsSchema(BaseModel):
-    nobs: int
-    azlist: Optional[List[float]] = None
-    pretty: int
-    ralist: List[float]
-    altlist: Optional[List[float]] = None
-    calname: str
-    creator: str
-    declist: List[float]
-    exptime: int
-    freqres: float
-    inttime: float
-    obsname: str
-    pretend: bool
-    avoidsun: bool
-    group_id: Optional[int] = None
-    freqspecs: List[str]
-    subarrays: List[str]
-    calexptime: int
-    project_id: str
-    secure_key: str
-    sourcelist: Optional[List[str]] = None
-    subarraylist: List[str]
-
-
-class MWAResponseSchema(BaseModel):
-    clear: CommandResultSchema
-    errors: Dict[str, Any]
-    params: MWAResponseParamsSchema
-    success: bool
-    schedule: CommandResultSchema
-    obsid_list: List[int] = None
-    trigger_id: Union[int, str] = None
 
 
 class MWAResponseSimpleSchema(BaseModel):
@@ -92,14 +44,6 @@ class TelescopeSchema(BaseModel):
     lon: float
     lat: float
     height: float
-
-
-class TelescopeProjectIDSchema(ModelSchema):
-    telescope: TelescopeSchema | None = None
-
-    class Meta:
-        model = TelescopeProjectID
-        fields = ["id", "password", "description", "atca_email", "telescope"]
 
 
 class EventGroupSchema(BaseModel):
@@ -190,24 +134,6 @@ class EventSchema(BaseModel):
         from_attributes = True
 
 
-class LatestObservationSchema(BaseModel):
-
-    telescope: TelescopeSchema
-    proposal_decision_id: ProposalDecisionSchema
-    event: EventSchema
-    trigger_id: str
-    website_link: Optional[str] = None
-    reason: Optional[str] = None
-    mwa_sub_arrays: Optional[MWASubArraysSchema] = None
-    created_at: datetime
-    request_sent_at: Optional[datetime] = None
-    mwa_sky_map_pointings: Optional[str] = None
-    mwa_response: Optional[MWAResponseSimpleSchema] = None
-
-    class Config:
-        from_attributes = True
-
-
 class ObservationSchema(BaseModel):
 
     telescope: TelescopeSchema
@@ -224,3 +150,17 @@ class ObservationSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ProposalObservationRequest(Schema):
+    prop_dec: ProposalDecisionSchema
+    voevent: EventSchema
+    observation_reason: str = "First observation"
+
+
+class TriggerObservationRequest(Schema):
+    prop_dec: ProposalDecisionSchema
+    voevents: List[EventSchema]
+    decision_reason_log: str
+    reason: str = "First Observation"
+    event_id: int = None
