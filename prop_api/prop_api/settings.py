@@ -10,6 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import logging
+import os
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +23,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-76l=i(ugeadebtw3^78x2di1rjw9b6r=pd3-#bbx&_95r^1@s("
+# SECRET_KEY = "django-insecure-ou8@)1@puvqsx+!u44k9u-+*m&@^)gnzm%lg@2$b7k0c81hkv)"
+SECRET_KEY = os.environ.get("DB_SECRET_KEY", None)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "www.mwa-trigger.duckdns.org",
+    "mwa-trigger.duckdns.org",
+    "www.tracet.duckdns.org",
+    "tracet.duckdns.org",
+    "146.118.70.58",
+    "web",
+    "api",
+    "test-api",
+]
 
 
 # Application definition
@@ -37,6 +52,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "propsettings_app",
+    "django_extensions",
+    "corsheaders",
+    "ninja_extra",
+    "ninja_jwt",
 ]
 
 MIDDLEWARE = [
@@ -73,13 +93,51 @@ WSGI_APPLICATION = "prop_api.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": os.getenv("POSTGRES_DB"),
+        "USER": os.getenv("POSTGRES_USER"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+        "HOST": os.getenv("POSTGRES_HOST"),
+        "PORT": os.getenv("POSTGRES_PORT"),
     }
 }
 
+STATIC_URL = "/static/"
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static/"),)
+STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")
+
+# Based on the SYSTEM_ENV decide if DEBUG should be on or off
+# and override secret key and databases for github actions testing
+SYSTEM_ENV = os.environ.get("SYSTEM_ENV", None)
+if SYSTEM_ENV == "PRODUCTION" or SYSTEM_ENV == "STAGING":
+    DEBUG = False
+    CSRF_COOKIE_SECURE = True
+    # STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")
+elif SYSTEM_ENV == "GITHUB_WORKFLOW":
+    DEBUG = True
+    SECRET_KEY = "TESTING_KEY"
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "NAME": "github_actions",
+            "USER": "postgres",
+            "PASSWORD": "postgres",
+            "HOST": "127.0.0.1",
+            "PORT": "5432",
+        }
+    }
+elif SYSTEM_ENV == "DEVELOPMENT":
+    DEBUG = True
+    CSRF_COOKIE_SECURE = False
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -121,3 +179,78 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# logger
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{thread:d} {asctime} \n{message}\n",
+            "style": "{",
+        },
+        'json_formatter': {
+            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+            'fmt': '%(asctime)s %(name)s %(levelname)s %(message)s %(pathname)s %(lineno)d',
+        },
+    },
+    "filters": {
+        "event_create": {
+            "()": "log_filters.EventCreateFilter",
+        },
+    },
+    "handlers": {
+        "debug-file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "formatter": "verbose",
+            "filename": os.path.join(BASE_DIR, "logs/debug.log"),
+        },
+        "event_create-file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/event_create.log"),
+            "formatter": "verbose",
+            "filters": ["event_create"],
+        },
+        'json_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, "logs/json_debug.log"),
+            'formatter': 'json_formatter',
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["debug-file"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+        'django_json': {
+            'handlers': ['json_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        "root": {
+            "handlers": ["event_create-file"],
+            "level": "INFO",
+            "filters": ["event_create"],
+            "propagate": True,
+        },
+    },
+}
+
+
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+AUTH_USERNAME = os.getenv("AUTH_USERNAME")
+AUTH_PASSWORD = os.getenv("AUTH_PASSWORD")
+
+NINJA_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=365),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=365*2),
+    "ALGORITHM": "HS256",  # Make sure both web and API use the same algorithm
+    "SIGNING_KEY": JWT_SECRET_KEY,  # Shared secret key
+    "VERIFYING_KEY": JWT_SECRET_KEY,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}

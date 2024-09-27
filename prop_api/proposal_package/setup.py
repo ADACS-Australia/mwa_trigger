@@ -12,6 +12,10 @@ setup(
     description="VOEvent handling daemon and library for gen",
     package_dir={"": "app"},
     packages=find_packages(where="app"),
+    include_package_data=True,
+    package_data={
+        'proposalsettings': ['utils/*.txt'],
+    },
     long_description=long_description,
     url="https://github.com/ADACS-Australia/proposal_factory.git",
     # long_description=read('README.md'),
