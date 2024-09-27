@@ -11,10 +11,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
-
-import environ
-from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,6 +30,9 @@ ALLOWED_HOSTS = [
     "www.tracet.duckdns.org",
     "tracet.duckdns.org",
     "146.118.70.58",
+    "web",
+    "api",
+    "test-api",
 ]
 
 # Remote broadcasters we subscribe to for VOEvents
@@ -58,6 +59,10 @@ INSTALLED_APPS = [
     "django_apscheduler",
     "django_filters",
     "trigger_app",
+    "rest_framework",
+    "django_extensions",
+    "ninja_extra",
+    "ninja_jwt",
 ]
 
 MIDDLEWARE = [
@@ -91,21 +96,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "webapp_tracet.wsgi.application"
 
-# Initialise environment variables
-env = environ.Env()
-
-# Calculate and print the path to verify
-env_path = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env'
-)
-
-# Update to read from .env
-environ.Env.read_env(env_path)
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 # Secret key and database defaults
+# DB_SECRET_KEY = 'django-insecure-_cwc&r*gy2)kr=4jal7z2d#r9-i(ts3h_&+ob%1sj1sclzh4e_'
+# SECRET_KEY = DB_SECRET_KEY
 SECRET_KEY = os.environ.get("DB_SECRET_KEY", None)
 
 DATABASES = {
@@ -124,6 +121,7 @@ DATABASES = {
 
 STATIC_URL = "/static/"
 STATICFILES_DIRS = (os.path.join(BASE_DIR, "static/"),)
+STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")
 
 # Based on the SYSTEM_ENV decide if DEBUG should be on or off
 # and override secret key and databases for github actions testing
@@ -131,7 +129,7 @@ SYSTEM_ENV = os.environ.get("SYSTEM_ENV", None)
 if SYSTEM_ENV == "PRODUCTION" or SYSTEM_ENV == "STAGING":
     DEBUG = False
     CSRF_COOKIE_SECURE = True
-    STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")
+    # STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")
 elif SYSTEM_ENV == "GITHUB_WORKFLOW":
     DEBUG = True
     SECRET_KEY = "TESTING_KEY"
@@ -147,7 +145,6 @@ elif SYSTEM_ENV == "GITHUB_WORKFLOW":
     }
 elif SYSTEM_ENV == "DEVELOPMENT":
     DEBUG = True
-    # STATIC_ROOT = os.path.join(BASE_DIR, "static_host/")
 
 
 # Password validation
@@ -234,6 +231,10 @@ LOGGING = {
             "format": "{thread:d} {asctime} \n{message}\n",
             "style": "{",
         },
+        'json_formatter': {
+            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+            'fmt': '%(asctime)s %(name)s %(levelname)s %(message)s %(pathname)s %(lineno)d',
+        },
     },
     "filters": {
         "event_create": {
@@ -254,12 +255,23 @@ LOGGING = {
             "formatter": "verbose",
             "filters": ["event_create"],
         },
+        'json_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, "logs/json_debug.log"),
+            'formatter': 'json_formatter',
+        },
     },
     "loggers": {
         "django": {
             "handlers": ["debug-file"],
             "level": "DEBUG",
             "propagate": True,
+        },
+        'django_json': {
+            'handlers': ['json_file'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
         "root": {
             "handlers": ["event_create-file"],
@@ -268,4 +280,19 @@ LOGGING = {
             "propagate": True,
         },
     },
+}
+
+
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+AUTH_USERNAME = os.getenv("AUTH_USERNAME")
+AUTH_PASSWORD = os.getenv("AUTH_PASSWORD")
+
+NINJA_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=365),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=365*2),
+    "ALGORITHM": "HS256",  # Make sure both web and API use the same algorithm
+    "SIGNING_KEY": JWT_SECRET_KEY,  # Shared secret key
+    "VERIFYING_KEY": JWT_SECRET_KEY,
+    "AUTH_HEADER_TYPES": ("Bearer",),
 }
