@@ -1,26 +1,23 @@
+import datetime
 import time
-from django.test import TestCase
 from unittest.mock import patch
+
+import astropy.units as u
 import pytest
 import pytz
-import datetime
 import requests
-
-from .models import (
-    EventGroup,
-    Event,
-    ProposalSettings,
-    ProposalDecision,
-    Observations,
-    User,
-    ATCAUser,
-)
-from yaml import load, Loader, safe_load
-
-from tracet.parse_xml import parsed_VOEvent
-import astropy.units as u
-from astropy.coordinates import Angle, SkyCoord, EarthLocation
+from astropy.coordinates import Angle, EarthLocation, SkyCoord
 from astropy.time import Time
+from django.contrib.auth.models import User
+from django.test import TestCase
+from tracet.parse_xml import parsed_VOEvent
+from yaml import Loader, load, safe_load
+
+from ..models.event import Event, EventGroup
+from ..models.observation import Observations
+from ..models.proposal import ProposalDecision
+from ..models.telescope import Telescope
+from ..models.user import ATCAUser
 
 
 def create_voevent_wrapper(trig, ra_dec, dec_alter=True):

@@ -7,7 +7,9 @@ from astropy.coordinates import AltAz, EarthLocation, SkyCoord
 from astropy.time import Time
 from django.conf import settings
 from django.core.mail import send_mail
-from trigger_app.models import AlertPermission, Event, Observations, UserAlerts
+from trigger_app.models.alert import AlertPermission, UserAlerts
+from trigger_app.models.event import Event
+from trigger_app.models.observation import Observations
 from twilio.rest import Client
 
 logger = logging.getLogger(__name__)
@@ -26,6 +28,9 @@ def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_mo
     voevents = Event.objects.filter(
         event_group_id=proposal_decision_model.event_group_id
     )
+
+    # print(f"\nDEBUG - send email - checking events\n")
+
     telescopes = []
     for voevent in voevents:
         telescopes.append(voevent.telescope)
@@ -39,6 +44,9 @@ def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_mo
         lat=telescope.lat * u.deg,
         height=telescope.height * u.m,
     )
+
+    # print(f"\nDEBUG - send email - checking telescope location\n")
+
     if proposal_decision_model.ra and proposal_decision_model.dec:
         obs_source = SkyCoord(
             proposal_decision_model.ra,
@@ -46,13 +54,20 @@ def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_mo
             # equinox='J2000',
             unit=(u.deg, u.deg),
         )
+        # print(f"\nDEBUG - send email - obs_source calculated \n")
         # Convert from RA/Dec to Alt/Az
         # 24 hours in 5 min increments
         delta_24h = np.linspace(0, 1440, 288) * u.min
         next_24h = obstime = Time.now() + delta_24h
+
+        # print(f"\nDEBUG - send email - obstime calculated\n")
+
         obs_source_altaz = obs_source.transform_to(
             AltAz(obstime=next_24h, location=location)
         )
+
+        # print(f"\nDEBUG - send email - obs_source_altaz calculated\n")
+
         # capture circumpolar source case
         set_time_utc = None
         for altaz, time in zip(obs_source_altaz, next_24h):
@@ -63,6 +78,9 @@ def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_mo
 
     # Get all admin alert permissions for this project
     logger.info("Get all admin alert permissions for this project")
+
+    # print(f"\nDEBUG - send email - Get all admin alert permissions for this project\n")
+
     alert_permissions = AlertPermission.objects.filter(
         proposal=proposal_decision_model.proposal
     )

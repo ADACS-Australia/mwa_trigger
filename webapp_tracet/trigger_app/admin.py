@@ -1,20 +1,14 @@
-from django.contrib import admin
-from trigger_app.models import (
-    Event,
-    AlertPermission,
-    ProposalSettings,
-    ProposalDecision,
-    Telescope,
-    Status,
-    EventGroup,
-    TelescopeProjectID,
-    UserAlerts,
-    Observations,
-    ATCAUser,
-)
-from trigger_app.forms import ProjectSettingsForm, TelescopeProjectIDForm
-
 from django import forms
+from django.contrib import admin
+from trigger_app.forms import ProjectSettingsForm, TelescopeProjectIDForm
+from trigger_app.models.alert import AlertPermission, UserAlerts
+from trigger_app.models.event import Event, EventGroup
+from trigger_app.models.observation import Observations
+from trigger_app.models.proposal import ProposalDecision, ProposalSettings
+from trigger_app.models.status import Status
+from trigger_app.models.telescope import (EventTelescope, Telescope,
+                                          TelescopeProjectID)
+from trigger_app.models.user import ATCAUser
 
 
 class ProposalSettingsAdmin(admin.ModelAdmin):
@@ -130,3 +124,4 @@ admin.site.register(Telescope)
 admin.site.register(Status)
 admin.site.register(Observations)
 admin.site.register(ATCAUser, AtcaAdmin)
+admin.site.register(EventTelescope)

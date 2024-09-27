@@ -1,23 +1,20 @@
 # import the standard Django Forms
 # from built-in library
-from django import forms
-
 import os
-from twilio.rest import Client
-from twilio.base.exceptions import TwilioRestException
 
-from .models import UserAlerts, ProposalSettings, TelescopeProjectID
-from .validators import (
-    atca_proposal_id,
-    atca_freq_bands,
-    mwa_proposal_id,
-    mwa_freqspecs,
-    mwa_horizon_limit,
-)
+from django import forms
+from trigger_app.models.alert import UserAlerts
+from trigger_app.models.proposal import ProposalSettings, TelescopeProjectID
+from twilio.base.exceptions import TwilioRestException
+from twilio.rest import Client
+
+from .validators import (atca_freq_bands, atca_proposal_id, mwa_freqspecs,
+                         mwa_horizon_limit, mwa_proposal_id)
 
 account_sid = os.environ.get("TWILIO_ACCOUNT_SID", None)
 auth_token = os.environ.get("TWILIO_AUTH_TOKEN", None)
 my_number = os.environ.get("TWILIO_PHONE_NUMBER", None)
+
 
 # creating a form
 class UserAlertForm(forms.ModelForm):

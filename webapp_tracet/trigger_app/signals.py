@@ -1,68 +1,41 @@
-import datetime
-import json
 import logging
-import os
+import time
 from functools import partial
-from operator import itemgetter
 
-import numpy as np
-import requests
-from astropy import units as u
-from astropy.coordinates import AltAz, EarthLocation, SkyCoord
-from astropy.time import Time
-from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import Signal, receiver
 
-from .models import AlertPermission  # ProposalSettingsNoTable,
-from .models import (
-    TRIGGER_ON,
-    Event,
-    EventGroup,
-    EventTelescope,
-    Observations,
-    ProposalDecision,
-    ProposalSettings,
-    Status,
-    Telescope,
-    TelescopeProjectID,
-    UserAlerts,
-)
-from .schemas import EventSchema, ProposalDecisionSchema, PydProposalSettings
-from .telescope_observe import trigger_observation
-from .utils.utils_signals import (
-    calculate_sky_coordinates,
-    check_if_ignored,
-    check_testing,
-    create_initial_proposal_decisions,
-    fetch_proposal_decisions,
-    link_event_to_group,
-    log_and_initialize,
-    log_initial_debug_info,
-    make_api_request,
-    prepare_instance_data,
-    process_api_response,
-    process_proposal_decision_func,
-    save_prop_dec,
-    update_event_group,
-    update_or_create_event_group,
-)
+from .models.alert import AlertPermission
+from .models.event import Event
+from .models.proposal import ProposalSettings
+from .models.status import Status
+from .utils.utils_signals import (calculate_sky_coordinates, check_if_ignored,
+                                  link_event_to_group, log_initial_debug_info,
+                                  prepare_event_data, process_all_proposals,
+                                  update_or_create_event_group)
 
 logger = logging.getLogger(__name__)
 
-# account_sid = os.environ.get("TWILIO_ACCOUNT_SID", None)
-# auth_token = os.environ.get("TWILIO_AUTH_TOKEN", None)
-# my_number = os.environ.get("TWILIO_PHONE_NUMBER", None)
+json_logger = logging.getLogger('django_json')
 
 
 @receiver(post_save, sender=Event)
 def group_trigger(sender, instance, **kwargs):
     """Check if the latest Event has already been observered or if it is new and update the models accordingly"""
+    json_logger.info(
+        "signal triggered",
+        extra={
+            "function": "group_trigger",
+            "event_id": instance.id,
+        },
+    )
+
+    start_time = time.time()
+
     context = log_initial_debug_info(instance)
 
-    context = prepare_instance_data(context)
+    context = prepare_event_data(context)
 
     context = update_or_create_event_group(context)
 
@@ -72,41 +45,22 @@ def group_trigger(sender, instance, **kwargs):
     if context is None:
         return
 
+    json_logger.info(
+        "signal not ignored",
+        extra={
+            "function": "group_trigger",
+            "event_id": instance.id,
+        },
+    )
+
     context = calculate_sky_coordinates(context)
 
-    print(context)
+    # print(context)
     # Getting proposal decisions
     context = process_all_proposals(context)
 
-
-# Main processing function using context
-def process_all_proposals(context):
-    event_group = context["event_group"]
-    instance = context["instance"]
-    event_coord = context.get("event_coord")
-
-    proposal_decisions = fetch_proposal_decisions(event_group)
-
-    if proposal_decisions.exists():
-        logger.info(
-            "Loop over all proposals settings and see if it's worth reobserving"
-        )
-
-        process_proposal_decision = partial(process_proposal_decision_func)
-        # Process each proposal decision
-        for prop_dec in proposal_decisions:
-            context["prop_dec"] = prop_dec
-            context = process_proposal_decision(context)
-
-        # Update the event group after processing
-        context["event_group"] = update_event_group(event_group, instance)
-    else:
-        logger.info("First unignored event so create proposal decisions objects")
-        context["event_group"] = create_initial_proposal_decisions(
-            event_group, instance
-        )
-
-    return context
+    end_time = time.time()
+    print(f"Execution time: {end_time - start_time} seconds")
 
 
 @receiver(post_save, sender=User)

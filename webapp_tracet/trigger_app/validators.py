@@ -1,16 +1,16 @@
-from django.core.exceptions import ValidationError
-from django import forms
-from django.utils.translation import gettext
-
-import os
 import logging
-import astropy.units as u
-from astropy.coordinates import SkyCoord, EarthLocation
-from astropy.time import Time
+import os
 
-from tracet.triggerservice import trigger
+import astropy.units as u
 import atca_rapid_response_api as arrApi
-from .models import ATCAUser
+from astropy.coordinates import EarthLocation, SkyCoord
+from astropy.time import Time
+from django import forms
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext
+from tracet.triggerservice import trigger
+
+from .models.user import ATCAUser
 
 logger = logging.getLogger(__name__)
 

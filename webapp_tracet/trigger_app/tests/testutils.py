@@ -1,9 +1,12 @@
-from django.test import TestCase
-from trigger_app.utils import getMWAPointingsFromSkymapFile, isClosePosition
 from astropy import units as u
+from astropy.coordinates import EarthLocation, SkyCoord
 from astropy.table import Table
-from astropy.coordinates import SkyCoord, EarthLocation
 from astropy.time import Time
+from django.test import TestCase
+from trigger_app.utils.utils_telescope import (
+    getMWAPointingsFromSkymapFile,
+    isClosePosition,
+)
 
 
 class test_skymap_parsing_to_mwa(TestCase):
