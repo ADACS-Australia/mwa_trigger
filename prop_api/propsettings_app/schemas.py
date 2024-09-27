@@ -1,26 +1,8 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
-from ninja import ModelSchema, Schema
-from propsettings_app.models import Telescope, TelescopeProjectID
-from pydantic import BaseModel, Field
-
-GRB = "GRB"
-FS = "FS"
-NU = "NU"
-GW = "GW"
-SOURCE_CHOICES = (
-    (GRB, "Gamma-ray burst"),
-    (FS, "Flare star"),
-    (NU, "Neutrino"),
-    (GW, "Gravitational wave"),
-)
-
-TRIGGER_ON = (
-    ("PRETEND_REAL", "Real events only (Pretend Obs)"),
-    ("BOTH", "Real events (Real Obs) and test events (Pretend Obs)"),
-    ("REAL_ONLY", "Real events only (Real Obs)"),
-)
+from ninja import Schema
+from pydantic import BaseModel
 
 
 class MWAResponseSimpleSchema(BaseModel):
