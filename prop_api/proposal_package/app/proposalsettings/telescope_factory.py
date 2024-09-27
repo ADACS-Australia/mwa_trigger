@@ -1,4 +1,4 @@
-from .models import Telescope
+from .models.telescope import Telescope
 
 
 class TelescopeFactory:

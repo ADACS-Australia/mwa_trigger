@@ -1,11 +1,15 @@
+import datetime as dt
+import logging
 from datetime import datetime, timedelta
 from functools import partial
 from typing import Tuple, Union
 
+json_logger = logging.getLogger("django_json")
 
 # Initialize the context with the event and defaults
 def initialize_context(event, kwargs) -> dict:
     # print('DEBUG - event:', event)
+    proposal_decision_model = kwargs.get("proposal_decision_model")
 
     return {
         "event": event,
@@ -16,6 +20,7 @@ def initialize_context(event, kwargs) -> dict:
         "FAR": None,
         "FARThreshold": None,
         "stop_processing": False,  # New flag to control short-circuiting
+        "trig_id": proposal_decision_model.trig_id,
     }
 
 
@@ -27,13 +32,33 @@ def process_false_alarm_rate(self, context) -> dict:
         try:
             context["FAR"] = float(event.lvc_false_alarm_rate)
             context["FARThreshold"] = float(self.maximum_false_alarm_rate)
+
+            json_logger.debug(
+                "FAR processed successfully",
+                extra={
+                    "function": "process_false_alarm_rate",
+                    "event_id": event.id,
+                    "trig_id": context["trig_id"],
+                },
+            )
+
         except Exception as e:
             context["debug_bool"] = True
             context["stop_processing"] = True
             context["decision_reason_log"] += (
-                f"{datetime.utcnow()}: Event ID {event.id}: The event FAR ({event.lvc_false_alarm_rate}) "
+                f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The event FAR ({event.lvc_false_alarm_rate}) "
                 f"or proposal FAR ({self.maximum_false_alarm_rate}) could not be processed so not triggering. \n"
             )
+
+            json_logger.debug(
+                "FAR processing failed",
+                extra={
+                    "function": "process_false_alarm_rate",
+                    "event_id": event.id,
+                    "trig_id": context["trig_id"],
+                },
+            )
+
     return context
 
 
@@ -48,20 +73,44 @@ def update_event_parameters(context):
 
         context["event"] = event
 
+        json_logger.debug(
+            "Event parameters updated successfully",
+            extra={
+                "function": "update_event_parameters",
+                "event_id": event.id,
+                "trig_id": context["trig_id"],
+            },
+        )
+
     return context
 
 
 # Check event time against a threshold of 2 hours ago
 def check_event_time(context) -> dict:
     event = context["event"]
-    two_hours_ago = datetime.utcnow() - timedelta(hours=2)
+    two_hours_ago = datetime.now(dt.timezone.utc) - dt.timedelta(hours=2)
+    print('DEBUG - event.event_observed:', event.event_observed)
+    print('DEBUG - two_hours_ago:', two_hours_ago)
+    print('DEBUG - event.event_observed < two_hours_ago:', event.event_observed < two_hours_ago)
+    
     if event.event_observed < two_hours_ago:
         context["stop_processing"] = True
         context["trigger_bool"] = False
         context["decision_reason_log"] += (
-            f'{datetime.utcnow()}: Event ID {event.id}: The event time {event.event_observed.strftime("%Y-%m-%dT%H:%M:%S+0000")} '
+            f'{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The event time {event.event_observed.strftime("%Y-%m-%dT%H:%M:%S+0000")} '
             f'is more than 2 hours ago {two_hours_ago.strftime("%Y-%m-%dT%H:%M:%S+0000")} so not triggering. \n'
         )
+
+        json_logger.debug(
+            "event more than 2 hours ago",
+            extra={
+                "function": "check_event_time",
+                "event_id": event.id,
+                "trig_id": context["trig_id"],
+            },
+        )
+        
+        
 
     return context
 
@@ -78,7 +127,17 @@ def check_lvc_instruments(context) -> dict:
         context["debug_bool"] = True
         context[
             "decision_reason_log"
-        ] += f"{datetime.utcnow()}: Event ID {event.id}: The event has only {event.lvc_instruments} so not triggering. \n"
+        ] += f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The event has only {event.lvc_instruments} so not triggering. \n"
+
+        json_logger.debug(
+            "event has only one instrument - not triggering",
+            extra={
+                "function": "check_lvc_instruments",
+                "event_id": event.id,
+                "trig_id": context["trig_id"],
+            },
+        )
+        
     return context
 
 
@@ -94,7 +153,16 @@ def handle_event_types(context) -> dict:
         context["debug_bool"] = True
         context[
             "decision_reason_log"
-        ] += f"{datetime.utcnow()}: Event ID {event.id}: Retraction, scheduling no capture observation (WIP, ignoring for now). \n"
+        ] += f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: Retraction, scheduling no capture observation (WIP, ignoring for now). \n"
+
+        json_logger.debug(
+            "event is a retraction",
+            extra={
+                "function": "handle_event_types",
+                "event_id": event.id,
+                "trig_id": context["trig_id"],
+            },
+        )
 
     return context
 
@@ -119,7 +187,16 @@ def check_probabilities(telescope_settings, self, context) -> dict:
         context["trigger_bool"] = True
         context[
             "decision_reason_log"
-        ] += f"{datetime.utcnow()}: Event ID {context['event'].id}: The probability looks good so triggering. \n"
+        ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event'].id}: The probability looks good so triggering. \n"
+        
+        json_logger.debug(
+            "event is worth observing",
+            extra={
+                "function": "check_probabilities",
+                "event_id": event.id,
+                "trig_id": context["trig_id"],
+            },
+        )
 
     return context
 
@@ -134,9 +211,19 @@ def check_far_against_threshold(context) -> dict:
             context["stop_processing"] = True
             context["debug_bool"] = True
             context["decision_reason_log"] += (
-                f"{datetime.utcnow()}: Event ID {context['event'].id}: The FAR is {context['FAR']} "
+                f"{datetime.now(dt.timezone.utc)}: Event ID {context['event'].id}: The FAR is {context['FAR']} "
                 f"which is greater than the threshold {context['FARThreshold']} so not triggering. \n"
             )
+            
+        json_logger.debug(
+            "FAR is greater than threshold. Not triggering",
+            extra={
+                "function": "check_far_against_threshold",
+                "event_id": context["event"].id,
+                "trig_id": context["trig_id"],
+            }
+        )
+
     return context
 
 
@@ -154,8 +241,17 @@ def check_ns_probability(self, context) -> dict:
             context["stop_processing"] = True
             context["debug_bool"] = True
             context["decision_reason_log"] += (
-                f"{datetime.utcnow()}: Event ID {event.id}: The PROB_NS probability ({event.lvc_includes_neutron_star_probability}) "
+                f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_NS probability ({event.lvc_includes_neutron_star_probability}) "
                 f"is greater than {self.maximum_neutron_star_probability} so not triggering. \n"
+            )
+            
+            json_logger.debug(
+                "NS probability is greater than maximum. Not triggering",
+                extra={
+                    "function": "check_ns_probability",
+                    "event_id": event.id,
+                    "trig_id": context["trig_id"],
+                },
             )
         elif (
             event.lvc_includes_neutron_star_probability
@@ -164,9 +260,19 @@ def check_ns_probability(self, context) -> dict:
             context["stop_processing"] = True
             context["debug_bool"] = True
             context["decision_reason_log"] += (
-                f"{datetime.utcnow()}: Event ID {event.id}: The PROB_NS probability ({event.lvc_includes_neutron_star_probability}) "
+                f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_NS probability ({event.lvc_includes_neutron_star_probability}) "
                 f"is less than {self.minimum_neutron_star_probability} so not triggering. \n"
             )
+            
+            json_logger.debug(
+                "NS probability is less than minimum. Not triggering",
+                extra={
+                    "function": "check_ns_probability",
+                    "event_id": event.id,
+                    "trig_id": context["trig_id"],
+                },
+            )
+            
     return context
 
 
@@ -184,9 +290,19 @@ def check_bns_probability(self, context) -> dict:
             context["stop_processing"] = True
             context["debug_bool"] = True
             context["decision_reason_log"] += (
-                f"{datetime.utcnow()}: Event ID {event.id}: The PROB_BNS probability ({event.lvc_binary_neutron_star_probability}) "
+                f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_BNS probability ({event.lvc_binary_neutron_star_probability}) "
                 f"is greater than {self.maximum_binary_neutron_star_probability} so not triggering. \n"
             )
+            
+            json_logger.debug(
+                "BNS probability is greater than maximum. Not triggering",
+                extra={
+                    "function": "check_bns_probability",
+                    "event_id": event.id,
+                    "trig_id": context["trig_id"],
+                },
+            )
+            
         elif (
             event.lvc_binary_neutron_star_probability
             < self.minimum_binary_neutron_star_probability
@@ -194,8 +310,17 @@ def check_bns_probability(self, context) -> dict:
             context["stop_processing"] = True
             context["debug_bool"] = True
             context["decision_reason_log"] += (
-                f"{datetime.utcnow()}: Event ID {event.id}: The PROB_BNS probability ({event.lvc_binary_neutron_star_probability}) "
+                f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_BNS probability ({event.lvc_binary_neutron_star_probability}) "
                 f"is less than {self.minimum_binary_neutron_star_probability} so not triggering. \n"
+            )
+            
+            json_logger.debug(
+                "BNS probability is less than minimum. Not triggering",
+                extra={
+                    "function": "check_bns_probability",
+                    "event_id": event.id,
+                    "trig_id": context["trig_id"],
+                },
             )
 
     return context
@@ -214,9 +339,19 @@ def check_nsb_h_probability(self, context) -> dict:
             context["stop_processing"] = True
             context["debug_bool"] = True
             context["decision_reason_log"] += (
-                f"{datetime.utcnow()}: Event ID {event.id}: The PROB_NSBH probability ({event.lvc_neutron_star_black_hole_probability}) "
+                f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_NSBH probability ({event.lvc_neutron_star_black_hole_probability}) "
                 f"is greater than {self.maximum_neutron_star_black_hole_probability} so not triggering. \n"
             )
+            
+            json_logger.debug(
+                "NSBH probability is greater than maximum. Not triggering",
+                extra={
+                    "function": "check_nsb_h_probability",
+                    "event_id": event.id,
+                    "trig_id": context["trig_id"],
+                },
+            )
+            
         elif (
             event.lvc_neutron_star_black_hole_probability
             < self.minimum_neutron_star_black_hole_probability
@@ -224,8 +359,17 @@ def check_nsb_h_probability(self, context) -> dict:
             context["stop_processing"] = True
             context["debug_bool"] = True
             context["decision_reason_log"] += (
-                f"{datetime.utcnow()}: Event ID {event.id}: The PROB_NSBH probability ({event.lvc_neutron_star_black_hole_probability}) "
+                f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_NSBH probability ({event.lvc_neutron_star_black_hole_probability}) "
                 f"is less than {self.minimum_neutron_star_black_hole_probability} so not triggering. \n"
+            )
+            
+            json_logger.debug(
+                "NSBH probability is less than minimum. Not triggering",
+                extra={
+                    "function": "check_nsb_h_probability",
+                    "event_id": event.id,
+                    "trig_id": context["trig_id"],
+                },
             )
     return context
 
@@ -244,9 +388,19 @@ def check_bbh_probability(self, context) -> dict:
             context["stop_processing"] = True
             context["debug_bool"] = True
             context["decision_reason_log"] += (
-                f"{datetime.utcnow()}: Event ID {event.id}: The PROB_BBH probability ({event.lvc_binary_black_hole_probability}) "
+                f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_BBH probability ({event.lvc_binary_black_hole_probability}) "
                 f"is greater than {self.maximum_binary_black_hole_probability} so not triggering. \n"
             )
+            
+            json_logger.debug(
+                "BBH probability is greater than maximum. Not triggering",
+                extra={
+                    "function": "check_bbh_probability",
+                    "event_id": event.id,
+                    "trig_id": context["trig_id"],
+                },
+            )
+            
         elif (
             event.lvc_binary_black_hole_probability
             < self.minimum_binary_black_hole_probability
@@ -254,9 +408,19 @@ def check_bbh_probability(self, context) -> dict:
             context["stop_processing"] = True
             context["debug_bool"] = True
             context["decision_reason_log"] += (
-                f"{datetime.utcnow()}: Event ID {event.id}: The PROB_BBH probability ({event.lvc_binary_black_hole_probability}) "
+                f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_BBH probability ({event.lvc_binary_black_hole_probability}) "
                 f"is less than {self.minimum_binary_black_hole_probability} so not triggering. \n"
             )
+            
+            json_logger.debug(
+                "BBH probability is less than minimum. Not triggering",
+                extra={
+                    "function": "check_bbh_probability",
+                    "event_id": event.id,
+                    "trig_id": context["trig_id"],
+                },
+            )
+            
     return context
 
 
@@ -270,15 +434,33 @@ def check_terrestrial_probability(self, context) -> dict:
             context["stop_processing"] = True
             context["debug_bool"] = True
             context["decision_reason_log"] += (
-                f"{datetime.utcnow()}: Event ID {event.id}: The PROB_Terre probability ({event.lvc_terrestial_probability}) "
+                f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_Terre probability ({event.lvc_terrestial_probability}) "
                 f"is greater than {self.maximum_terrestial_probability} so not triggering. \n"
+            )
+            
+            json_logger.debug(
+                "Terrestrial probability is greater than maximum. Not triggering",
+                extra={
+                    "function": "check_terrestrial_probability",
+                    "event_id": event.id,
+                    "trig_id": context["trig_id"],
+                },
             )
         elif event.lvc_terrestial_probability < self.minimum_terrestial_probability:
             context["stop_processing"] = True
             context["debug_bool"] = True
             context["decision_reason_log"] += (
-                f"{datetime.utcnow()}: Event ID {event.id}: The PROB_Terre probability ({event.lvc_terrestial_probability}) "
+                f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_Terre probability ({event.lvc_terrestial_probability}) "
                 f"is less than {self.minimum_terrestial_probability} so not triggering. \n"
+            )
+            
+            json_logger.debug(
+                "Terrestrial probability is less than minimum. Not triggering",
+                extra={
+                    "function": "check_terrestrial_probability",
+                    "event_id": event.id,
+                    "trig_id": context["trig_id"],
+                },
             )
     return context
 
@@ -292,7 +474,16 @@ def check_significance(telescope_settings, context) -> dict:
         context["stop_processing"] = True
         context["debug_bool"] = True
         context["decision_reason_log"] += (
-            f"{datetime.utcnow()}: Event ID {event.id}: The GW significance ({event.lvc_significant}) "
+            f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The GW significance ({event.lvc_significant}) "
             f"is not observed because observe_significant is {telescope_settings.observe_significant}. \n"
+        )
+        
+        json_logger.debug(
+            "GW significance is not observed. Not triggering",
+            extra={
+                "function": "check_significance",
+                "event_id": event.id,
+                "trig_id": context["trig_id"],
+            },
         )
     return context

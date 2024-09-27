@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from .models import EventTelescope
+from .models.telescope import EventTelescope
 
 
 class EventTelescopeFactory:

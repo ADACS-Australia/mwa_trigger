@@ -1,25 +1,40 @@
+import datetime as dt
+import logging
 import random
 from datetime import datetime, timezone
 from math import floor
 
 from .utils_telescope_helper import *
 
+json_logger = logging.getLogger("django_json")
+
 
 def handle_first_observation(telescope_settings, context):
     "Handle the first observation of an event."
-    print("DEBUG - handle_first_observation")
+
     if context["stop_processing"]:
         return context
+
+    print("DEBUG - handle_first_observation")
+
+    json_logger.info(
+        f"handle_first_observation",
+        extra={
+            "function": "handle_first_observation",
+            "trig_id": context["proposal_decision_model"].trig_id,
+            "event_id": context["event_id"],
+        },
+    )
 
     context["reason"] = (
         f"{context['latestVoevent'].trig_id} - First event so sending dump MWA buffer request to MWA"
     )
     context[
         "decision_reason_log"
-    ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: First event so sending dump MWA buffer request to MWA\n"
+    ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: First event so sending dump MWA buffer request to MWA\n"
 
     context["buffered"] = True
-    context["request_sent_at"] = datetime.utcnow()
+    context["request_sent_at"] = datetime.now(dt.timezone.utc)
 
     (
         context["decision_buffer"],
@@ -31,7 +46,16 @@ def handle_first_observation(telescope_settings, context):
     print(f"obsids_buffer: {context['obsids_buffer']}")
     context[
         "decision_reason_log"
-    ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Saving buffer observation result.\n"
+    ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Saving buffer observation result.\n"
+
+    json_logger.debug(
+        f"decision_buffer: {context['decision_buffer']}",
+        extra={
+            "function": "handle_first_observation",
+            "trig_id": context["proposal_decision_model"].trig_id,
+            "event_id": context["event_id"],
+        },
+    )
 
     if context["decision_buffer"].find("T") > -1:
         saved_obs_1 = telescope_settings.save_observation(
@@ -54,6 +78,15 @@ def handle_early_warning(telescope_settings, context):
     if context["stop_processing"]:
         return context
 
+    json_logger.info(
+        f"handle early warning events",
+        extra={
+            "function": "handle_early_warning",
+            "trig_id": context["proposal_decision_model"].trig_id,
+            "event_id": context["event_id"],
+        },
+    )
+
     ps = context["proposal_decision_model"].proposal
     context["reason"] = (
         f"{context['latestVoevent'].trig_id} - First event is an Early Warning so ignoring skymap"
@@ -70,17 +103,26 @@ def handle_early_warning(telescope_settings, context):
     )
     print(f"DEBUG - timeDiff.total_seconds(): {timeDiff.total_seconds()}")
 
+    json_logger.debug(
+        f"timeDiff.total_seconds(): {timeDiff.total_seconds()}",
+        extra={
+            "function": "handle_early_warning",
+            "trig_id": context["proposal_decision_model"].trig_id,
+            "event_id": context["event_id"],
+        },
+    )
+
     if timeDiff.total_seconds() < ps.source_settings.early_observation_time_seconds:
         estObsTime = round_to_nearest_modulo_8(
             ps.source_settings.early_observation_time_seconds - timeDiff.total_seconds()
         )
         context[
             "decision_reason_log"
-        ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Event time was {timeDiff.total_seconds()} seconds ago, early observation proposal setting is {ps.source_settings.early_observation_time_seconds} seconds so making an observation of {estObsTime} seconds.\n"
+        ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Event time was {timeDiff.total_seconds()} seconds ago, early observation proposal setting is {ps.source_settings.early_observation_time_seconds} seconds so making an observation of {estObsTime} seconds.\n"
         context[
             "decision_reason_log"
-        ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Sending observation request to MWA.\n"
-        context["request_sent_at"] = datetime.utcnow()
+        ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Sending observation request to MWA.\n"
+        context["request_sent_at"] = datetime.now(dt.timezone.utc)
 
         (
             context["decision"],
@@ -92,7 +134,16 @@ def handle_early_warning(telescope_settings, context):
         print(f"result: {context['result']}")
         context[
             "decision_reason_log"
-        ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Saving observation result.\n"
+        ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Saving observation result.\n"
+
+        json_logger.debug(
+            f"decision: {context['decision']}",
+            extra={
+                "function": "handle_early_warning",
+                "trig_id": context["proposal_decision_model"].trig_id,
+                "event_id": context["event_id"],
+            },
+        )
 
         if context["decision"].find("T") > -1:
             saved_obs_2 = telescope_settings.save_observation(
@@ -113,6 +164,15 @@ def handle_skymap_event(telescope_settings, context):
     if context["stop_processing"]:
         return context
 
+    json_logger.info(
+        f"handle skymap event",
+        extra={
+            "function": "handle_skymap_event",
+            "trig_id": context["proposal_decision_model"].trig_id,
+            "event_id": context["event_id"],
+        },
+    )
+
     context["reason"] = f"{context['latestVoevent'].trig_id} - Event contains a skymap"
     print(f"DEBUG - skymap_fits_fits: {context['latestVoevent'].lvc_skymap_fits}")
 
@@ -132,6 +192,15 @@ def handle_skymap_event(telescope_settings, context):
             context[
                 "proposal_decision_model"
             ].proposal.telescope_settings.maximum_observation_time_seconds
+        )
+
+        json_logger.debug(
+            f"time_diff.total_seconds(): {time_diff.total_seconds()} and maximum_observation_time_seconds: {telescope_settings.maximum_observation_time_seconds}",
+            extra={
+                "function": "handle_skymap_event",
+                "trig_id": context["proposal_decision_model"].trig_id,
+                "event_id": context["event_id"],
+            },
         )
 
         if (
@@ -164,11 +233,11 @@ def handle_skymap_event(telescope_settings, context):
 
             context[
                 "decision_reason_log"
-            ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Event time was {time_diff.total_seconds()} seconds ago, maximum_observation_time_seconds is {context['proposal_decision_model'].proposal.telescope_settings.maximum_observation_time_seconds} seconds so making an observation of {est_obs_time} seconds.\n"
+            ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Event time was {time_diff.total_seconds()} seconds ago, maximum_observation_time_seconds is {context['proposal_decision_model'].proposal.telescope_settings.maximum_observation_time_seconds} seconds so making an observation of {est_obs_time} seconds.\n"
             context[
                 "decision_reason_log"
-            ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Sending sub array observation request to MWA.\n"
-            context["request_sent_at"] = datetime.utcnow()
+            ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Sending sub array observation request to MWA.\n"
+            context["request_sent_at"] = datetime.now(dt.timezone.utc)
 
             (
                 context["decision"],
@@ -180,7 +249,16 @@ def handle_skymap_event(telescope_settings, context):
             print(f"result: {context['result']}")
             context[
                 "decision_reason_log"
-            ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Saving observation result.\n"
+            ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Saving observation result.\n"
+
+            json_logger.debug(
+                f"decision: {context['decision']}",
+                extra={
+                    "function": "handle_skymap_event",
+                    "trig_id": context["proposal_decision_model"].trig_id,
+                    "event_id": context["event_id"],
+                },
+            )
 
             if context["decision"].find("T") > -1:
                 saved_obs_2 = telescope_settings.save_observation(
@@ -195,7 +273,16 @@ def handle_skymap_event(telescope_settings, context):
 
         else:
             context["decision_reason_log"] = (
-                f"{context['decision_reason_log']}{datetime.utcnow()}: Event ID {context['event_id']}: Event time was {time_diff.total_seconds()} seconds ago, maximum_observation_time_second is {context['proposal_decision_model'].proposal.telescope_settings.maximum_observation_time_seconds} so not making an observation \n"
+                f"{context['decision_reason_log']}{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Event time was {time_diff.total_seconds()} seconds ago, maximum_observation_time_second is {context['proposal_decision_model'].proposal.telescope_settings.maximum_observation_time_seconds} so not making an observation \n"
+            )
+
+            json_logger.debug(
+                f"decision: {context['decision']}",
+                extra={
+                    "function": "handle_skymap_event",
+                    "trig_id": context["proposal_decision_model"].trig_id,
+                    "event_id": context["event_id"],
+                },
             )
 
     except Exception as e:
@@ -203,10 +290,19 @@ def handle_skymap_event(telescope_settings, context):
         logger.error("Error getting MWA pointings from skymap")
         logger.error(e)
 
+        json_logger.error(
+            f"Error getting MWA pointings from skymap",
+            extra={
+                "function": "handle_skymap_event",
+                "trig_id": context["proposal_decision_model"].trig_id,
+                "event_id": context["event_id"],
+            },
+        )
+
     return context
 
 
-def trigger_and_save_observation(telescope_settings, context):
+def trigger_and_save_gw_voevents(telescope_settings, context):
 
     if context["stop_processing"]:
         return context
@@ -214,11 +310,20 @@ def trigger_and_save_observation(telescope_settings, context):
     if context["repoint"] is False:
         return context
 
+    json_logger.info(
+        f"trigger_and_save_gw_voevents",
+        extra={
+            "function": "trigger_and_save_gw_voevents",
+            "trig_id": context["proposal_decision_model"].trig_id,
+            "event_id": context["event_id"],
+        },
+    )
+
     """Trigger an observation and save the result."""
     context[
         "decision_reason_log"
-    ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Sending sub array observation request to MWA\n"
-    context["request_sent_at"] = datetime.utcnow()
+    ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Sending sub array observation request to MWA\n"
+    context["request_sent_at"] = datetime.now(dt.timezone.utc)
 
     (
         context["decision"],
@@ -230,8 +335,17 @@ def trigger_and_save_observation(telescope_settings, context):
     print(f"result: {context['result']}")
     context[
         "decision_reason_log"
-    ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Saving observation result. \n"
-    context["request_sent_at"] = datetime.utcnow()
+    ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Saving observation result. \n"
+    context["request_sent_at"] = datetime.now(dt.timezone.utc)
+
+    json_logger.debug(
+        f"decision: {context['decision']}",
+        extra={
+            "function": "trigger_and_save_gw_voevents",
+            "trig_id": context["proposal_decision_model"].trig_id,
+            "event_id": context["event_id"],
+        },
+    )
 
     if context["decision"].find("T") > -1:
         saved_obs_2 = telescope_settings.save_observation(
@@ -252,6 +366,15 @@ def update_position_based_on_skymap(context, latest_obs):
     if context["stop_processing"]:
         return context
 
+    json_logger.info(
+        f"update_position_based_on_skymap",
+        extra={
+            "function": "update_position_based_on_skymap",
+            "trig_id": context["proposal_decision_model"].trig_id,
+            "event_id": context["event_id"],
+        },
+    )
+
     skymap, pointings = get_skymap_pointings_from_cache(
         context["latestVoevent"].lvc_skymap_fits
     )
@@ -271,23 +394,41 @@ def update_position_based_on_skymap(context, latest_obs):
     if repoint is False:
         context[
             "decision_reason_log"
-        ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: New skymap is NOT more than 4 degrees of previous observation pointing. \n"
+        ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: New skymap is NOT more than 4 degrees of previous observation pointing. \n"
 
         # TODO : check if its right
         context["decision"] = "T"
         context["stop_processing"] = True
         context["repoint"] = False
+
+        json_logger.debug(
+            f"repoint: {repoint} and decision: {context['decision']}",
+            extra={
+                "function": "update_position_based_on_skymap",
+                "trig_id": context["proposal_decision_model"].trig_id,
+                "event_id": context["event_id"],
+            },
+        )
         return context
 
     context[
         "decision_reason_log"
-    ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: New skymap is more than 4 degrees of previous observation pointing. \n"
+    ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: New skymap is more than 4 degrees of previous observation pointing. \n"
     context["reason"] = (
         f"{context['latestVoevent'].trig_id} - Updating observation positions based on event."
     )
     context["mwa_sub_arrays"] = generate_sub_arrays_from_skymap(pointings)
 
     context["repoint"] = True
+
+    json_logger.debug(
+        f"repoint: {repoint} and mwa_sub_arrays: {context['mwa_sub_arrays']}",
+        extra={
+            "function": "update_position_based_on_skymap",
+            "trig_id": context["proposal_decision_model"].trig_id,
+            "event_id": context["event_id"],
+        },
+    )
 
     print("DEBUG - update_position_based_on_skymap : end")
     return context
@@ -298,6 +439,15 @@ def handle_gw_voevents(telescope_settings, context, latest_obs):
     if context["stop_processing"]:
         return context
 
+    json_logger.info(
+        f"handle_gw_voevents",
+        extra={
+            "function": "handle_gw_voevents",
+            "trig_id": context["proposal_decision_model"].trig_id,
+            "event_id": context["event_id"],
+        },
+    )
+
     # print(f"DEBUG - checking to repoint")
     # context["reason"] = f"{context['latestVoevent'].trig_id} - Event has a skymap"
     # latest_obs = get_latest_observation(context["proposal_decision_model"])
@@ -307,23 +457,32 @@ def handle_gw_voevents(telescope_settings, context, latest_obs):
         print(f"DEBUG - no sub arrays on previous obs")
         context[
             "decision_reason_log"
-        ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: Could not find sub array position on previous observation. \n"
+        ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Could not find sub array position on previous observation. \n"
         return context
 
     # (latest_obs and latest_obs.mwa_sub_arrays) is True
     context[
         "decision_reason_log"
-    ] += f"{datetime.utcnow()}: Event ID {context['event_id']}: New event has skymap \n"
+    ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: New event has skymap \n"
 
     try:
         context = update_position_based_on_skymap(context, latest_obs)
 
-        context = trigger_and_save_observation(
+        context = trigger_and_save_gw_voevents(
             telescope_settings=telescope_settings, context=context
         )
     except Exception as e:
         print(e)
         logger.error("Error getting MWA pointings from skymap")
         logger.error(e)
+
+        json_logger.error(
+            f"Error getting MWA pointings from skymap",
+            extra={
+                "function": "handle_gw_voevents",
+                "trig_id": context["proposal_decision_model"].trig_id,
+                "event_id": context["event_id"],
+            },
+        )
 
     return context

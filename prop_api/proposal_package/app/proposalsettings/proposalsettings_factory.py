@@ -1,14 +1,10 @@
 from .eventtelescope_factory import EventTelescopeFactory
-from .models import (
-    ATCATelescopeSettings,
-    GrbSourceSettings,
-    GWSourceSettings,
-    MWATelescopeSettings,
-    NuSourceSettings,
-    ProposalSettings,
-    SourceChoices,
-    TriggerOnChoices,
-)
+from .models.constants import SourceChoices, TriggerOnChoices
+from .models.proposal import ProposalSettings
+from .models.sourcesettings import (GrbSourceSettings, GWSourceSettings,
+                                    NuSourceSettings)
+from .models.telescopesettings import (ATCATelescopeSettings,
+                                       MWATelescopeSettings)
 from .telescope_factory import TelescopeFactory
 from .telescopeprojectid_factory import TelescopeProjectIdFactory
 
@@ -326,7 +322,49 @@ class ProposalSettingsFactory:
             source_settings=source_settings,
         )
         return prop_settings
+    
+    # @property
+    # def proposal_mwa_gw_nshh_mine(self):
+    #     # Creating the instance based on the data from id=14
+    #     telescope_settings = MWATelescopeSettings(
+    #         telescope=self.telescope_factory.telescope_mwa_vcs,
+    #         event_min_duration=0.512,  # Non-default value
+    #         event_max_duration=10000.0,  # Non-default value
+    #         pending_min_duration_1=1.0,  # Non-default value
+    #         pending_max_duration_1=1000.0,  # Non-default value
+    #         pending_min_duration_2=0.0,  # Non-default value
+    #         pending_max_duration_2=0.0,  # Non-default value
+    #         maximum_position_uncertainty=0.07,  # Non-default value
+    #         fermi_prob=60,  # Non-default value
+    #         swift_rate_signf=5.0,  # Non-default value
+    #         repointing_limit=3.0,  # Non-default value
+    #         observe_significant=True,  # Non-default value
+    #         maximum_observation_time_seconds=18000,  # Non-default value
+    #         # MWA specific settings
+    #         mwa_freqspecs="144,24",
+    #         mwa_exptime=7200,
+    #         mwa_calexptime=200.0,  # Non-default value
+    #         mwa_freqres=20.0,  # Non-default value
+    #         mwa_inttime=1.0,  # Non-default value
+    #         mwa_horizon_limit=20.0,  # Non-default value
+    #     )
 
+    #     source_settings = GWSourceSettings()
+    #     prop_settings = ProposalSettings(
+    #         id=15,
+    #         project_id=self.project_id_factory.telescope_project_g0094,
+    #         proposal_id="MWA_GW_NSBH_MINE",
+    #         proposal_description="MWA triggering on LIGO-Virgo-KAGRA BNS GW events detected during O4 using a multi-beam approach and the VCS",
+    #         priority=3,  # Non-default value
+    #         event_telescope=self.event_telescope_factory.event_telescope_lvc,
+    #         testing=TriggerOnChoices.REAL_ONLY,  # Non-default value
+    #         source_type=SourceChoices.GW,  # Non-default value
+    #         telescope_settings=telescope_settings,
+    #         source_settings=source_settings,
+    #     )
+    #     return prop_settings
+
+    # 
     @property
     def proposals(self):
         valid_classes = (ProposalSettings,)

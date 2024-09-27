@@ -1,3 +1,4 @@
+import datetime as dt
 import logging
 from datetime import datetime, timedelta
 from math import floor
@@ -9,13 +10,12 @@ from astropy.time import Time
 from astropy.utils.data import download_file
 
 # ATCAUser, Observations
-from propsettings_app.utils.utils_telescope import (
-    getMWAPointingsFromSkymapFile,
-    getMWARaDecFromAltAz,
-    isClosePosition,
-)
+from .utils_telescope import (getMWAPointingsFromSkymapFile,
+                              getMWARaDecFromAltAz, isClosePosition)
 
 logger = logging.getLogger(__name__)
+
+json_logger = logging.getLogger('django_json')
 
 GRB = "GRB"
 FS = "FS"
@@ -156,6 +156,25 @@ def check_mwa_horizon_and_prepare_context(context):
     event_id = context["event_id"]
     decision_reason_log = context["decision_reason_log"]
 
+    # condition to check if the telescope is MWA and if the ra and dec are not None
+    # stops
+    if (
+        proposal_decision_model.proposal.telescope_settings.telescope.name.startswith(
+            "MWA"
+        )
+        and proposal_decision_model.ra
+        and proposal_decision_model.dec
+    ) == False:
+        json_logger.debug(
+            "Not checking if above the horizon because the ra and dec are not set or telescope is not MWA",
+            extra={
+                "function": "check_mwa_horizon_and_prepare_context",
+                "trig_id": context["proposal_decision_model"].trig_id,
+                "event_id": context["event_id"],
+            },
+        )
+        return context
+
     if (
         proposal_decision_model.proposal.telescope_settings.telescope.name.startswith(
             "MWA"
@@ -163,7 +182,18 @@ def check_mwa_horizon_and_prepare_context(context):
         and proposal_decision_model.ra
         and proposal_decision_model.dec
     ):
+
+        json_logger.debug(
+            "Checking if is above the horizon for MWA",
+            extra={
+                "function": "check_mwa_horizon_and_prepare_context",
+                "trig_id": context["proposal_decision_model"].trig_id,
+                "event_id": context["event_id"],
+            },
+        )
+
         print("Checking if is above the horizon for MWA")
+
         # Create Earth location for the telescope
         telescope = proposal_decision_model.proposal.telescope_settings.telescope
         location = EarthLocation(
@@ -196,18 +226,37 @@ def check_mwa_horizon_and_prepare_context(context):
 
         print("converted obs for horizon")
 
+        json_logger.debug(
+            "converted obs for horizon",
+            extra={
+                "function": "check_mwa_horizon_and_prepare_context",
+                "trig_id": context["proposal_decision_model"].trig_id,
+                "event_id": context["event_id"],
+            },
+        )
+
         if (
             alt_beg
             < proposal_decision_model.proposal.telescope_settings.mwa_horizon_limit
             and alt_end
             < proposal_decision_model.proposal.telescope_settings.mwa_horizon_limit
         ):
-            horizon_message = f"{datetime.utcnow()}: Event ID {event_id}: Not triggering due to horizon limit: alt_beg {alt_beg:.4f} < {proposal_decision_model.proposal.telescope_settings.mwa_horizon_limit:.4f} and alt_end {alt_end:.4f} < {proposal_decision_model.proposal.telescope_settings.mwa_horizon_limit:.4f}. "
+            horizon_message = f"{datetime.now(dt.timezone.utc)}: Event ID {event_id}: Not triggering due to horizon limit: alt_beg {alt_beg:.4f} < {proposal_decision_model.proposal.telescope_settings.mwa_horizon_limit:.4f} and alt_end {alt_end:.4f} < {proposal_decision_model.proposal.telescope_settings.mwa_horizon_limit:.4f}. "
             logger.debug(horizon_message)
 
             context["stop_processing"] = True
             context["decision_reason_log"] = decision_reason_log + horizon_message
             context["decision"] = "I"
+
+            json_logger.debug(
+                horizon_message,
+                extra={
+                    "function": "check_mwa_horizon_and_prepare_context",
+                    "trig_id": context["proposal_decision_model"].trig_id,
+                    "event_id": context["event_id"],
+                },
+            )
+
             return context
 
         elif (
@@ -215,20 +264,47 @@ def check_mwa_horizon_and_prepare_context(context):
             < proposal_decision_model.proposal.telescope_settings.mwa_horizon_limit
         ):
             # Warn them in the log
-            decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: Warning: The source is below the horizion limit at the start of the observation alt_beg {alt_beg:.4f}. \n"
+            decision_reason_log += f"{datetime.now(dt.timezone.utc)}: Event ID {event_id}: Warning: The source is below the horizion limit at the start of the observation alt_beg {alt_beg:.4f}. \n"
+
+            json_logger.debug(
+                "Warning: The source is below the horizion limit at the start of the observation alt_beg {alt_beg:.4f}",
+                extra={
+                    "function": "check_mwa_horizon_and_prepare_context",
+                    "trig_id": context["proposal_decision_model"].trig_id,
+                    "event_id": context["event_id"],
+                },
+            )
 
         elif (
             alt_end
             < proposal_decision_model.proposal.telescope_settings.mwa_horizon_limit
         ):
             # Warn them in the log
-            decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: Warning: The source will set below the horizion limit by the end of the observation alt_end {alt_end:.4f}. \n"
+            decision_reason_log += f"{datetime.now(dt.timezone.utc)}: Event ID {event_id}: Warning: The source will set below the horizion limit by the end of the observation alt_end {alt_end:.4f}. \n"
+
+            json_logger.debug(
+                "Warning: The source will set below the horizion limit by the end of the observation alt_end {alt_end:.4f}",
+                extra={
+                    "function": "check_mwa_horizon_and_prepare_context",
+                    "trig_id": context["proposal_decision_model"].trig_id,
+                    "event_id": context["event_id"],
+                },
+            )
 
         # above the horizon so send off telescope specific set ups
-        decision_reason_log += f"{datetime.utcnow()}: Event ID {event_id}: Above horizon so attempting to observe with {proposal_decision_model.proposal.telescope_settings.telescope.name}. \n"
+        decision_reason_log += f"{datetime.now(dt.timezone.utc)}: Event ID {event_id}: Above horizon so attempting to observe with {proposal_decision_model.proposal.telescope_settings.telescope.name}. \n"
 
         logger.debug(
             f"Triggered observation at an elevation of {alt_beg} to elevation of {alt_end}"
+        )
+
+        json_logger.debug(
+            f"Triggered observation at an elevation of {alt_beg} to elevation of {alt_end}",
+            extra={
+                "function": "check_mwa_horizon_and_prepare_context",
+                "trig_id": context["proposal_decision_model"].trig_id,
+                "event_id": context["event_id"],
+            },
         )
 
     context["decision_reason_log"] = decision_reason_log
@@ -239,6 +315,15 @@ def check_mwa_horizon_and_prepare_context(context):
 
 
 def prepare_observation_context(context, voevents):
+
+    json_logger.debug(
+        "prepare_observation_context",
+        extra={
+            "function": "prepare_observation_context",
+            "trig_id": context["proposal_decision_model"].trig_id,
+            "event_id": context["event_id"],
+        },
+    )
 
     proposal_decision_model = context["proposal_decision_model"]
     telescopes = context["telescopes"]
@@ -279,7 +364,16 @@ def prepare_observation_context(context, voevents):
         latestVoevent.role == "test"
         and proposal_decision_model.proposal.testing != trigger_both
     ):
+        json_logger.error(
+            "Invalid event observation and proposal setting",
+            extra={
+                "function": "prepare_observation_context",
+                "trig_id": context["proposal_decision_model"].trig_id,
+                "event_id": context["event_id"],
+            },
+        )
         raise Exception("Invalid event observation and proposal setting")
+        
 
     if (
         proposal_decision_model.proposal.testing == trigger_both
@@ -299,5 +393,14 @@ def prepare_observation_context(context, voevents):
     context["vcsmode"] = vcsmode
     context["obsname"] = obsname
     context["telescopes"] = telescopes
+
+    json_logger.debug(
+        f"buffered: {buffered}, pretend: {pretend}, repoint: {repoint}, vcsmode: {vcsmode}, obsname: {obsname}, telescopes: {telescopes}",
+        extra={
+            "function": "prepare_observation_context",
+            "trig_id": context["proposal_decision_model"].trig_id,
+            "event_id": context["event_id"],
+        },
+    )
 
     return context
