@@ -7,19 +7,17 @@ import django
 
 # Import settings
 django.setup()
-from django.conf import settings
-
-from subprocess import Popen, PIPE, call
-import time
 import glob
-
-from trigger_app.models import CometLog, Status
+import logging
+import time
+from subprocess import PIPE, Popen, call
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from django.conf import settings
 from django_apscheduler.jobstores import DjangoJobStore
-
-import logging
+from trigger_app.models.log import CometLog
+from trigger_app.models.status import Status
 
 logger = logging.getLogger(__name__)
 
