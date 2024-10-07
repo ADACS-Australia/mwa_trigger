@@ -1,0 +1,111 @@
+DEFAULT_ATCA_RESPONSE = {
+    "authenticationToken": {"received": True, "verified": True},
+    "overrideProject": {"code": "C3204", "sufficientScore": True, "score": 5.1},
+    "scheduledProject": {
+        "codes": ["DT", "C3535"],
+        "emails": [
+            "",
+            [
+                "batbold.sangi@curtin.edu.au",
+            ],
+        ],
+        "startTimes": [0, 45099.020833333336],
+        "endTimes": [0, 45099.520833333336],
+    },
+    "schedule": {
+        "received": True,
+        "valid": True,
+        "targetName": "GRB",
+        "rightAscension": "19:30:07.752",
+        "declination": "-32:55:17.4",
+        "bandsRequested": ["4cm"],
+        "4cm": {"use": True, "exposureLength": "1:00:00", "freq1": 5500, "freq2": 9000},
+    },
+    "observations": {
+        "hoursRequested": 12.0,
+        "maxSearchHours": 100,
+        "hoursAllocated": 12.0,
+        "hoursRequestedMinimum": 2.0,
+        "projectHoursRemaining": 34.10138888878282,
+        "startDate": "2023-06-23 09:07:58",
+        "endDate": "2023-06-23 21:07:58",
+    },
+    "testMode": False,
+    "cancel": False,
+    "testing": {
+        "noScoreLimit": False,
+        "noTimeLimit": False,
+        "limitTimeHours": 0,
+        "CABBMode": "ca_2048_2048_2f",
+    },
+    "id": "p0mp37ttpvypwy00w56f",
+    "success": True,
+}
+
+DEFAULT_MWA_SUB_ARRAYS = {
+    "ra": [
+        160.98056334766878,
+        170.64022307355552,
+        142.21354752777387,
+        158.07131100480078,
+    ],
+    "dec": [
+        -0.8119384829596461,
+        11.041971100301296,
+        -30.680349417434424,
+        -14.467459215919664,
+    ],
+}
+
+DEFAULT_MWA_RESPONSE = {
+    "clear": {
+        "stderr": "Pretending: command not run",
+        "stdout": "Pretending: command not run",
+        "command": "/home/mwa/MandC/obssched/clear_schedule.py --stoptime=++1036 --force",
+        "retcode": 0,
+    },
+    "errors": {},
+    "params": {
+        "nobs": 1,
+        "azlist": None,
+        "pretty": 0,
+        "ralist": [
+            160.98056334766878,
+            170.64022307355552,
+            142.21354752777387,
+            158.07131100480078,
+        ],
+        "altlist": None,
+        "calname": "PicA",
+        "creator": "VOEvent_Auto_Trigger",
+        "declist": [
+            -0.8119384829596461,
+            11.041971100301296,
+            -30.680349417434424,
+            -14.467459215919664,
+        ],
+        "exptime": 900,
+        "freqres": 10,
+        "inttime": 0.5,
+        "obsname": "LVC_MS230908u",
+        "pretend": True,
+        "avoidsun": True,
+        "group_id": None,
+        "freqspecs": ["93,24"],
+        "subarrays": ["all_ne", "all_nw", "all_se", "all_sw"],
+        "calexptime": 120,
+        "project_id": "G0094",
+        "secure_key": "WibblyWobblyTimeyWimey",
+        "sourcelist": None,
+        "subarraylist": ["all_ne", "all_nw", "all_se", "all_sw"],
+    },
+    "success": True,
+    "schedule": {
+        "stderr": "Pretending: commands not run",
+        "stdout": "Pretending: commands not run",
+        "retcode": 0,
+        "commands": "/home/mwa/MandC/obssched/schedule_observation.py --starttime=1378241392 --rfstream=0 --tile=\"all_ne\" --stoptime=++900s --shifttime=904 --freq=\"93,24\" --obsname=\"LVC_MS230908u\" --creator=\"VOEvent_Auto_Trigger\" --mode=MWAX_VCS --project=G0094 --groupid=1378241392 --ra=160.98056335 --dec=-0.811938 --verbose --numeric --force --ut ;\n/home/mwa/MandC/obssched/schedule_observation.py --starttime=1378241392 --rfstream=1 --tile=\"all_nw\" --stoptime=++900s --shifttime=904 --freq=\"93,24\" --obsname=\"LVC_MS230908u\" --creator=\"VOEvent_Auto_Trigger\" --mode=MWAX_VCS --project=G0094 --groupid=1378241392 --ra=170.64022307 --dec=11.041971 --verbose --numeric --force --ut ;\n/home/mwa/MandC/obssched/schedule_observation.py --starttime=1378241392 --rfstream=2 --tile=\"all_se\" --stoptime=++900s --shifttime=904 --freq=\"93,24\" --obsname=\"LVC_MS230908u\" --creator=\"VOEvent_Auto_Trigger\" --mode=MWAX_VCS --project=G0094 --groupid=1378241392 --ra=142.21354753 --dec=-30.680349 --verbose --numeric --force --ut ;\n/home/mwa/MandC/obssched/schedule_observation.py --starttime=1378241392 --rfstream=3 --tile=\"all_sw\" --stoptime=++900s --shifttime=904 --freq=\"93,24\" --obsname=\"LVC_MS230908u\" --creator=\"VOEvent_Auto_Trigger\" --mode=MWAX_VCS --project=G0094 --groupid=1378241392 --ra=158.07131100 --dec=-14.467459 --verbose --numeric --force --ut ;\n/home/mwa/MandC/obssched/schedule_observation.py --starttime=1378242300 --stoptime=++120s --freq=\"93,24\" --freqres=10.0 --inttime=0.5 --obsname=\"LVC_MS230908u Cal: PicA at 93,24\" --creator=\"VOEvent_Auto_Trigger\" --project=\"G0094\" --groupid=1378241392 --calibration --calibrators=\"PicA\" --source=\"PicA\" --verbose --numeric --ut",
+    },
+    "obsid_list": [],
+    "trigger_id": 1001,
+}

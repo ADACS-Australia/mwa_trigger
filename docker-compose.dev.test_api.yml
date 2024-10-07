@@ -6,8 +6,8 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
       - .env_web
-    # ports:
-    #   - 5432:5432
+    ports:
+      - 5432:5432
     networks:
       - tracet-network
     healthcheck:
@@ -24,8 +24,8 @@ services:
       - postgres_api:/var/lib/postgresql/data/
     env_file:
       - .env_api
-    # ports:
-    #   - 5431:5432
+    ports:
+      - 5431:5432
     networks:
       - tracet-network
     healthcheck:
@@ -42,8 +42,8 @@ services:
       - postgres_test_api:/var/lib/postgresql/data/
     env_file:
       - .env_test
-    # ports:
-    #   - 5430:5432
+    ports:
+      - 5430:5432
     networks:
       - tracet-network
     healthcheck:

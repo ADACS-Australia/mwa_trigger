@@ -1,0 +1,94 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:12.18
+    container_name: db-container
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    ports:
+      - 5432:5432
+    networks:
+      - tracet-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SYSTEM_ENV: PRODUCTION
+    container_name: web-container
+    volumes:
+      - .:/app
+      - static_volume:/app/webapp_tracet/static_host
+      - media_volume:/app/webapp_tracet/media
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    command: [
+        "sh",
+        "-c",
+        "gunicorn webapp_tracet.wsgi:application --bind 0.0.0.0:8000 --error-logfile /app/logs/gunicorn_error.log --access-logfile /app/logs/gunicorn_access.log --workers 8 & sleep 5s && echo 'Starting'
+        && tmux new -s kafka -d './kafka_daemon.sh'
+        && tmux new -s comet -d 'python3.10 twistd_comet_wrapper.py' && wait",
+      ]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - tracet-network
+
+  nginx:
+    build: ./nginx
+    container_name: nginx-container
+    volumes:
+      - ./nginx/conf.d.ssl/default.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt:/etc/letsencrypt
+      # - ./certbot/conf:/etc/letsencrypt
+      # - ./certbot/www:/var/www/certbot
+      - static_volume:/home/app/staticfiles
+      - media_volume:/home/app/mediafiles
+    ports:
+      - 80:80
+    depends_on:
+      - web
+    networks:
+      - tracet-network
+
+  # certbot:
+  #   image: certbot/certbot
+  #   container_name: certbot
+  #   volumes:
+  #     - ./certbot/conf:/etc/letsencrypt
+  #     - ./certbot/www:/var/www/certbot
+  #   command: certonly --webroot -w /var/www/certbot --force-renewal --email batbold.sanghi@gmail.com -d tracet.duckdns.org --agree-tos
+  #   networks:
+  #     - tracet-network
+
+  autoheal:
+    image: willfarrell/autoheal
+    container_name: autoheal
+    restart: always
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=all
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+
+networks:
+  tracet-network:
+    driver: bridge

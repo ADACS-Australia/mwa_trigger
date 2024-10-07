@@ -15,6 +15,9 @@ webapp_tracet/webapp_tracet.sock
 webapp_tracet/media
 docs/html/*
 .env
+.env*
+.venv
+.venv*
 .vscode
 build
 webapp_tracet/logs
