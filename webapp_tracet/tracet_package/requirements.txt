@@ -1,0 +1,11 @@
+astropy >= 5
+astropy_healpix >= 0.7
+healpy >=1.15.2
+Comet >= 3
+pytest >= 7
+git+https://github.com/ste616/atca-rapid-response-api.git#subdirectory=python
+# ligo.skymap
+mhealpy
+gcn_kafka >= 0.3
+voevent-parse >=1.0.3
+pre-commit
