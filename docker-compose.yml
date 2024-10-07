@@ -101,14 +101,14 @@ services:
       - "8000:8000"
     env_file:
       - .env_web
-    command: ["sh", "-c", "python manage.py runserver 0.0.0.0:8000"]
-    # command: [
-    #     "sh",
-    #     "-c",
-    #     "python manage.py runserver 0.0.0.0:8000 & sleep 5s && echo 'Starting'
-    #     && tmux new -s kafka -d './kafka_daemon.sh'
-    #     && tmux new -s comet -d 'python3.10 twistd_comet_wrapper.py' && wait",
-    # ]
+    # command: ["sh", "-c", "python manage.py runserver 0.0.0.0:8000"]
+    command: [
+        "sh",
+        "-c",
+        "python manage.py runserver 0.0.0.0:8000 & sleep 5s && echo 'Starting'
+        && tmux new -s kafka -d './kafka_daemon.sh'
+        && tmux new -s comet -d 'python3.10 twistd_comet_wrapper.py' && wait",
+    ]
     depends_on:
       db:
         condition: service_healthy
