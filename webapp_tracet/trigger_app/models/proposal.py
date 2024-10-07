@@ -384,10 +384,6 @@ from .telescope import EventTelescope, Telescope, TelescopeProjectID
 #     def __str__(self):
 #         return f"{self.proposal_id}"
 
-#     # def __str__(self):
-#     #     params = ", ".join(f"{k}={v}" for k, v in self.__dict__.items())
-#     #     return f"{self.__class__.__name__}({params})"
-
 
 
 class ProposalSettings(models.Model): 
@@ -441,12 +437,6 @@ class ProposalSettings(models.Model):
         max_length=3,
         choices=SOURCE_CHOICES,
         verbose_name="What type of source will you trigger on?",
-    )
-    
-    repointing_limit = models.FloatField(
-        verbose_name="Repointing Limit (deg)",
-        help_text="An updated position must be at least this far away from a current observation before repointing (in degrees).",
-        default=10.0,
     )
 
     active = models.BooleanField(

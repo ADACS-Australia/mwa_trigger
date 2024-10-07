@@ -1,65 +1,55 @@
 import logging
 import time
-from functools import partial
 
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import Signal, receiver
+from trigger_app.utils import utils_api, utils_signals
 
 from .models.alert import AlertPermission
 from .models.event import Event
 from .models.proposal import ProposalSettings
 from .models.status import Status
-from .utils.utils_signals import (calculate_sky_coordinates, check_if_ignored,
-                                  link_event_to_group, log_initial_debug_info,
-                                  prepare_event_data, process_all_proposals,
-                                  update_or_create_event_group)
+
+# from trigger_app.utils.utils_signals import (calculate_sky_coordinates,
+#                                              check_if_ignored,
+#                                              link_event_to_group,
+#                                              log_initial_debug_info,
+#                                              prepare_event_data,
+#                                              process_all_proposals,
+#                                              process_all_proposals_new,
+#                                              update_or_create_event_group)
+
 
 logger = logging.getLogger(__name__)
-
-json_logger = logging.getLogger('django_json')
-
 
 @receiver(post_save, sender=Event)
 def group_trigger(sender, instance, **kwargs):
     """Check if the latest Event has already been observered or if it is new and update the models accordingly"""
-    json_logger.info(
-        "signal triggered",
-        extra={
-            "function": "group_trigger",
-            "event_id": instance.id,
-        },
-    )
 
     start_time = time.time()
 
-    context = log_initial_debug_info(instance)
+    context = utils_signals.log_initial_debug_info(instance)
 
-    context = prepare_event_data(context)
+    context = utils_signals.prepare_event_data(context)
 
-    context = update_or_create_event_group(context)
+    context = utils_signals.update_or_create_event_group(context)
 
-    context = link_event_to_group(context)
+    context = utils_signals.link_event_to_group(context)
 
-    context = check_if_ignored(context)
+    context = utils_signals.check_if_ignored(context)
     if context is None:
         return
 
-    json_logger.info(
-        "signal not ignored",
-        extra={
-            "function": "group_trigger",
-            "event_id": instance.id,
-        },
-    )
-
-    context = calculate_sky_coordinates(context)
+    context = utils_signals.calculate_sky_coordinates(context)
 
     # print(context)
-    # Getting proposal decisions
-    context = process_all_proposals(context)
+    context = utils_signals.process_all_proposals(context)
+    
+    response = utils_api.make_process_all_proposals_request(context)
 
     end_time = time.time()
+
     print(f"Execution time: {end_time - start_time} seconds")
 
 

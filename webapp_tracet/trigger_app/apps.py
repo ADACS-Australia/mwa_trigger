@@ -2,6 +2,7 @@ import sys
 
 from django.apps import AppConfig
 from django.conf import settings
+from django.core.checks import Tags, Warning, register
 
 
 class TriggerAppConfig(AppConfig):
@@ -10,13 +11,13 @@ class TriggerAppConfig(AppConfig):
 
     def ready(self):
         import trigger_app.signals
-        from trigger_app.utils.utils_api import init_session
+        from trigger_app.utils.utils_api import initialize_api_session
+        from trigger_app.utils.utils_update import \
+            update_proposal_settings_from_api
 
-        # initialize session
-        init_session()
-
+        # Initialize API session
+        initialize_api_session()
         # Initialize proposal settings
-        from .utils.utils_api import update_proposal_settings_from_api
         update_proposal_settings_from_api()    
         
         if "runserver" in sys.argv:

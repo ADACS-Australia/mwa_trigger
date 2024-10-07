@@ -123,7 +123,7 @@ class test_grb_group_fermi(TestCase):
             create_voevent_wrapper(trig, ra_dec)
 
     def test_mwa_proposal_decision(self):
-        proposal_decision = (
+        prop_dec = (
             ProposalDecision.objects.all()
             .filter(proposal__telescope__name="MWA_VCS")
             .first()
@@ -131,7 +131,7 @@ class test_grb_group_fermi(TestCase):
 
         # print(
         #     f"\n\ntest_grb_group_01 MWA proposal decison:\n{decision}\n\n")
-        self.assertEqual(proposal_decision.decision, "T")
+        self.assertEqual(prop_dec.decision, "T")
 
     def test_atca_proposal_decision(self):
         print(

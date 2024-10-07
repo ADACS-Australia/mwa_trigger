@@ -5,14 +5,14 @@ from trigger_app.models import Event, ProposalDecision
 from trigger_app.schemas import EventSchema, ProposalDecisionSchema
 
 # Fetch the instances from the database
-prop_dec_instance = ProposalDecision.objects.get(id=77790)
+prop_dec = ProposalDecision.objects.get(id=77790)
 voevent_instances = Event.objects.filter(
-    event_group_id=prop_dec_instance.event_group_id.id
+    event_group_id=prop_dec.event_group_id.id
 )
 voevent_instance = voevent_instances[0]
 
 # Serialize the instances to JSON-compatible dictionaries
-prop_dec_data_str = ProposalDecisionSchema.from_orm(prop_dec_instance).json()
+prop_dec_data_str = ProposalDecisionSchema.from_orm(prop_dec).json()
 voevent_data_str = EventSchema.from_orm(voevent_instance).json()
 
 prop_dec_data = json.loads(prop_dec_data_str)

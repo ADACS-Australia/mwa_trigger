@@ -1,14 +1,15 @@
-from django.core.management.base import BaseCommand, CommandError
-from gcn_kafka import Consumer
+import logging
 import os
 from datetime import datetime
-import voeventparse
-import logging
 
-from trigger_app.views import parse_and_save_xml
+import voeventparse
+from django.core.management.base import BaseCommand, CommandError
+from gcn_kafka import Consumer
+from trigger_app.views.event import parse_and_save_xml
 
 logger = logging.getLogger(__name__)
-from trigger_app.models import CometLog, Status
+from trigger_app.models.log import CometLog
+from trigger_app.models.status import Status
 
 # Environment variables
 GCN_KAFKA_CLIENT = os.getenv("GCN_KAFKA_CLIENT")

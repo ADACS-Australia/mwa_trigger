@@ -19,14 +19,14 @@ auth_token = os.environ.get("TWILIO_AUTH_TOKEN", None)
 my_number = os.environ.get("TWILIO_PHONE_NUMBER", None)
 
 
-def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_model):
+def send_all_alerts(trigger_bool, debug_bool, pending_bool, prop_dec):
     """ """
     # Work out all the telescopes that observed the event
     logger.info(
-        f"Work out all the telescopes that observed the event {trigger_bool, debug_bool, pending_bool, proposal_decision_model}"
+        f"Work out all the telescopes that observed the event {trigger_bool, debug_bool, pending_bool, prop_dec}"
     )
     voevents = Event.objects.filter(
-        event_group_id=proposal_decision_model.event_group_id
+        event_group_id=prop_dec.event_group_id
     )
 
     # print(f"\nDEBUG - send email - checking events\n")
@@ -38,7 +38,7 @@ def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_mo
     telescopes = ", ".join(list(set(telescopes)))
 
     # Work out when the source will go below the horizon
-    telescope = proposal_decision_model.proposal.telescope
+    telescope = prop_dec.proposal.telescope
     location = EarthLocation(
         lon=telescope.lon * u.deg,
         lat=telescope.lat * u.deg,
@@ -47,10 +47,10 @@ def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_mo
 
     # print(f"\nDEBUG - send email - checking telescope location\n")
 
-    if proposal_decision_model.ra and proposal_decision_model.dec:
+    if prop_dec.ra and prop_dec.dec:
         obs_source = SkyCoord(
-            proposal_decision_model.ra,
-            proposal_decision_model.dec,
+            prop_dec.ra,
+            prop_dec.dec,
             # equinox='J2000',
             unit=(u.deg, u.deg),
         )
@@ -82,13 +82,13 @@ def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_mo
     # print(f"\nDEBUG - send email - Get all admin alert permissions for this project\n")
 
     alert_permissions = AlertPermission.objects.filter(
-        proposal=proposal_decision_model.proposal
+        proposal=prop_dec.proposal
     )
     for ap in alert_permissions:
         # Grab user
         user = ap.user
         user_alerts = UserAlerts.objects.filter(
-            user=user, proposal=proposal_decision_model.proposal
+            user=user, proposal=prop_dec.proposal
         )
 
         # Send off the alerts of types user defined
@@ -96,11 +96,11 @@ def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_mo
             # Check if user can recieve each type of alert
             # Trigger alert
             if ap.alert and ua.alert and trigger_bool:
-                subject = f"TraceT {proposal_decision_model.proposal.proposal_id}: {proposal_decision_model.proposal.telescope_id} TRIGGERING on {telescopes} {proposal_decision_model.event_group_id.source_type}"
-                message_type_text = f"Tracet scheduled the following {proposal_decision_model.proposal.telescope} observations:\n"
+                subject = f"TraceT {prop_dec.proposal.proposal_id}: {prop_dec.proposal.telescope_id} TRIGGERING on {telescopes} {prop_dec.event_group_id.source_type}"
+                message_type_text = f"Tracet scheduled the following {prop_dec.proposal.telescope} observations:\n"
                 # Send links for each observation
                 obs = Observations.objects.filter(
-                    proposal_decision_id=proposal_decision_model
+                    proposal_decision_id=prop_dec
                 )
                 for ob in obs:
                     message_type_text += f"{ob.website_link}\n"
@@ -110,7 +110,7 @@ def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_mo
                         ua.address,
                         subject,
                         message_type_text,
-                        proposal_decision_model,
+                        prop_dec,
                         telescopes,
                         set_time_utc,
                     )
@@ -119,7 +119,7 @@ def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_mo
 
             # Debug Alert
             if ap.debug and ua.debug and debug_bool:
-                subject = f"TraceT {proposal_decision_model.proposal.proposal_id}: {proposal_decision_model.proposal.telescope_id} INFO on {telescopes} {proposal_decision_model.event_group_id.source_type}"
+                subject = f"TraceT {prop_dec.proposal.proposal_id}: {prop_dec.proposal.telescope_id} INFO on {telescopes} {prop_dec.event_group_id.source_type}"
                 message_type_text = f"This is a debug notification from TraceT."
                 try:
                     send_alert_type(
@@ -127,7 +127,7 @@ def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_mo
                         ua.address,
                         subject,
                         message_type_text,
-                        proposal_decision_model,
+                        prop_dec,
                         telescopes,
                         set_time_utc,
                     )
@@ -136,7 +136,7 @@ def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_mo
 
             # Pending Alert
             if ap.approval and ua.approval and pending_bool:
-                subject = f"TraceT {proposal_decision_model.proposal.proposal_id}: {proposal_decision_model.proposal.telescope_id} PENDING on {telescopes} {proposal_decision_model.event_group_id.source_type}"
+                subject = f"TraceT {prop_dec.proposal.proposal_id}: {prop_dec.proposal.telescope_id} PENDING on {telescopes} {prop_dec.event_group_id.source_type}"
                 message_type_text = f"HUMAN INTERVENTION REQUIRED! TraceT is unsure about the following event."
                 try:
                     send_alert_type(
@@ -144,7 +144,7 @@ def send_all_alerts(trigger_bool, debug_bool, pending_bool, proposal_decision_mo
                         ua.address,
                         subject,
                         message_type_text,
-                        proposal_decision_model,
+                        prop_dec,
                         telescopes,
                         set_time_utc,
                     )
@@ -157,7 +157,7 @@ def send_alert_type(
     address,
     subject,
     message_type_text,
-    proposal_decision_model,
+    prop_dec,
     telescopes,
     set_time_utc,
 ):
@@ -168,21 +168,21 @@ def send_alert_type(
     message_text = f"""{message_type_text}
 
 Event Details are:
-TraceT proposal:      {proposal_decision_model.proposal.proposal_id}
+TraceT proposal:      {prop_dec.proposal.proposal_id}
 Detected by: {telescopes}
-Event Type:  {proposal_decision_model.event_group_id.source_type}
-Duration:    {proposal_decision_model.duration}
-RA:          {proposal_decision_model.ra_hms} hours
-Dec:         {proposal_decision_model.dec_dms} deg
-Error Rad:   {proposal_decision_model.pos_error} deg
-Event observed (UTC): {proposal_decision_model.event_group_id.earliest_event_observed}
+Event Type:  {prop_dec.event_group_id.source_type}
+Duration:    {prop_dec.duration}
+RA:          {prop_dec.ra_hms} hours
+Dec:         {prop_dec.dec_dms} deg
+Error Rad:   {prop_dec.pos_error} deg
+Event observed (UTC): {prop_dec.event_group_id.earliest_event_observed}
 Set time (UTC):       {set_time_utc}
 
 Decision log:
-{proposal_decision_model.decision_reason}
+{prop_dec.decision_reason}
 
 Proposal decision can be seen here:
-https://mwa-trigger.duckdns.org/proposal_decision_details/{proposal_decision_model.id}/
+https://mwa-trigger.duckdns.org/proposal_decision_details/{prop_dec.id}/
 """
 
     if alert_type == 0:

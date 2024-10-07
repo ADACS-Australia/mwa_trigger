@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 from ninja import ModelSchema, Schema
 from pydantic import BaseModel, Field
 from trigger_app.models.event import Event, EventGroup
@@ -185,3 +187,39 @@ class PydProposalSettings(BaseModel):
 
     class Config:
         extra = "allow"
+        
+class SkyCoordSchema(BaseModel):
+    ra: float = Field(..., description="Right Ascension in degrees")
+    dec: float = Field(..., description="Declination in degrees")
+
+    @classmethod
+    def from_skycoord(cls, skycoord: SkyCoord):
+        return cls(
+            ra=skycoord.ra.deg,
+            dec=skycoord.dec.deg
+        )
+
+    def to_skycoord(self) -> SkyCoord:
+        return SkyCoord(ra=self.ra * u.degree, dec=self.dec * u.degree)
+
+    class Config:
+        arbitrary_types_allowed = True
+        
+class UpdateProposalDecisionSchema(Schema):
+    decision: str
+    decision_reason: str
+
+class UpdateEventGroupSchema(Schema):
+    ra: Optional[float] = None
+    dec: Optional[float] = None
+    ra_hms: Optional[str] = None
+    dec_dms: Optional[str] = None
+    pos_error: Optional[float] = None
+    latest_event_observed: Optional[datetime] = None
+    ignored: Optional[bool] = None
+    
+class TriggerAlertsSchema(Schema):
+    prop_dec_id: int
+    trigger_bool: bool
+    debug_bool: bool
+    pending_bool: bool

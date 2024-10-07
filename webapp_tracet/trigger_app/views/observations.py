@@ -60,9 +60,9 @@ def cancel_atca_observation(request, id=None):
         )
         decision = "C"
     # Update propocal decision
-    proposal_decision = obs.proposal_decision_id
-    proposal_decision.decision_reason = decision_reason_log
-    proposal_decision.decision = decision
-    proposal_decision.save()
+    prop_dec = obs.proposal_decision_id
+    prop_dec.decision_reason = decision_reason_log
+    prop_dec.decision = decision
+    prop_dec.save()
 
     return HttpResponseRedirect(request.META.get("HTTP_REFERER"))
