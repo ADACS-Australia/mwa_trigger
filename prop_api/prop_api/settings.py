@@ -38,7 +38,7 @@ ALLOWED_HOSTS = [
     "tracet.duckdns.org",
     "146.118.70.58",
     "web",
-    "api",
+    "prop-api",
     "test-api",
 ]
 
@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "ninja_extra",
     "ninja_jwt",
+    "proposalsettings",
 ]
 
 MIDDLEWARE = [
@@ -191,7 +192,8 @@ LOGGING = {
         },
         'json_formatter': {
             '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
-            'fmt': '%(asctime)s %(name)s %(levelname)s %(message)s %(pathname)s %(lineno)d',
+            #'fmt': '%(asctime)s %(name)s %(levelname)s %(message)s %(pathname)s %(lineno)d',
+            'fmt': '%(asctime)s %(name)s %(levelname)s %(message)s',
         },
     },
     "filters": {
@@ -254,3 +256,9 @@ NINJA_JWT = {
     "VERIFYING_KEY": JWT_SECRET_KEY,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+WEB_APP_URL = os.getenv("WEB_APP_URL")
+TRIGGER_API_URL = os.getenv("TRIGGER_API_URL")
+LOGIC_API_URL = os.getenv("LOGIC_API_URL")
+
+

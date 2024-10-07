@@ -16,23 +16,16 @@ RUN apt-get update && \
 RUN update-alternatives --set iptables /usr/sbin/iptables-legacy \
     && update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
 
-# Copy the init script into the container
-COPY init.sh /init.sh
-# Make the script executable
-RUN chmod +x /init.sh
-# Set the entry point to run the init script, which applies iptables rules and then runs the main CMD
-ENTRYPOINT ["/init.sh"]
 
 # Install tracet dependencies
-COPY requirements_web1.txt /app/
+COPY requirements_api.txt /app/
 
 # RUN python -m venv .venv
-RUN pip install -r requirements_web1.txt
-
-WORKDIR /app/proposal_package
-ADD proposal_package /app/proposal_package 
-# RUN . /app/.venv/bin/activate && pip install .
-RUN pip install .
+# RUN pip install -r requirements_web1.txt
+RUN pip install -r requirements_api.txt
+# WORKDIR /app/proposal_package
+# ADD proposal_package /app/proposal_package 
+# RUN pip install .
 
 ARG SYSTEM_ENV
 # Set the environment variable
@@ -42,7 +35,7 @@ WORKDIR /app
 
 COPY prop_api /app/prop_api
 COPY propsettings_app /app/propsettings_app
-
+COPY proposalsettings /app/proposalsettings
 WORKDIR /app
 # Collect static files
 # Add this command to conditionally run collectstatic

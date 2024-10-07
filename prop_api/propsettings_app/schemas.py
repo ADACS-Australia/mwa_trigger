@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
-from ninja import Schema
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 from pydantic import BaseModel
 
 
@@ -134,15 +135,53 @@ class ObservationSchema(BaseModel):
         from_attributes = True
 
 
-class ProposalObservationRequest(Schema):
+class SkyCoordSchema(BaseModel):
+    ra: float
+    dec: float
+    
+    @classmethod
+    def from_skycoord(cls, skycoord: SkyCoord):
+        return cls(
+            ra=skycoord.ra.deg,
+            dec=skycoord.dec.deg
+        )
+
+    def to_skycoord(self) -> SkyCoord:
+        return SkyCoord(ra=self.ra * u.degree, dec=self.dec * u.degree)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+class ProposalObservationRequest(BaseModel):
     prop_dec: ProposalDecisionSchema
     voevent: EventSchema
     observation_reason: str = "First observation"
 
 
-class TriggerObservationRequest(Schema):
+class TriggerObservationRequest(BaseModel):
     prop_dec: ProposalDecisionSchema
     voevents: List[EventSchema]
     decision_reason_log: str
     reason: str = "First Observation"
     event_id: int = None
+
+class AllProposalsProcessRequest(BaseModel):
+    prop_decs: List[ProposalDecisionSchema]
+    voevents: List[EventSchema]
+    event: EventSchema
+    event_group: EventGroupSchema
+    prop_decs_exist: bool
+    event_coord: Optional[SkyCoordSchema] = None
+    
+class NewEventGroupSchema:
+    def __init__(self, ignored: bool):
+        self.ignored = ignored
+
+class ExistingEventGroupSchema:
+    def __init__(self, event):
+        self.ra = event.ra
+        self.dec = event.dec
+        self.ra_hms = event.ra_hms
+        self.dec_dms = event.dec_dms
+        self.pos_error = event.pos_error
+        self.latest_event_observed = event.event_observed.isoformat() if event.event_observed else None

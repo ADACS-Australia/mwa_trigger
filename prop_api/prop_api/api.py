@@ -13,6 +13,9 @@ class UserSchema(Schema):
     is_authenticated: bool
     email: str = None
 
+@api.get("/health")
+def health_check(request):
+    return {"status": "healthy"}
 
 @api.get("/hello")
 def hello(request):

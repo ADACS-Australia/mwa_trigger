@@ -1,3 +1,4 @@
+import datetime as dt
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Union
@@ -17,37 +18,31 @@ from proposalsettings.proposalsettings_factory import ProposalSettingsFactory
 from proposalsettings.telescope_factory import TelescopeFactory
 from proposalsettings.telescopeprojectid_factory import \
     TelescopeProjectIdFactory
+from proposalsettings.utils import utils_process
 
-from .schemas import (EventSchema, ProposalDecisionSchema,
-                      ProposalObservationRequest, TriggerObservationRequest)
+from .schemas import (AllProposalsProcessRequest, EventGroupSchema,
+                      EventSchema, ProposalDecisionSchema, SkyCoordSchema)
 from .utils import utils_api
-
-logger = logging.getLogger(__name__)
-print("standart logger:", __name__)
-
-# Get a structlog logger
-json_logger = logging.getLogger('django_json')
-
 
 # Initialize the Ninja API
 # app = NinjaAPI()
-app = Router()
+app = Router(auth=JWTAuth())
 
 # Define the API endpoint
-@app.get("/telescopes/", response=List[Telescope], auth=JWTAuth())
+@app.get("/telescopes/", response=List[Telescope])
 def get_telescopes(request):
     factory = TelescopeFactory()
     return factory.telescopes
 
 
 # Define the API endpoint
-@app.get("/eventtelescopes/", response=List[EventTelescope], auth=JWTAuth())
+@app.get("/eventtelescopes/", response=List[EventTelescope])
 def get_event_telescopes(request):
     factory = EventTelescopeFactory()
     return factory.eventtelescopes
 
 
-@app.get("/eventtelescope/{name}/", response=EventTelescope, auth=JWTAuth())
+@app.get("/eventtelescope/{name}/", response=EventTelescope)
 def get_event_telescope_by_name(request, name: str):
     factory = EventTelescopeFactory()
     telescope = factory.get_event_telescope_by_name(name)
@@ -56,7 +51,7 @@ def get_event_telescope_by_name(request, name: str):
     return telescope
 
 
-@app.get("/telescope_project_ids/", response=list[TelescopeProjectId], auth=JWTAuth())
+@app.get("/telescope_project_ids/", response=list[TelescopeProjectId])
 def get_telescope_project_ids(request):
     telescope_factory = TelescopeFactory()
     project_id_factory = TelescopeProjectIdFactory(telescope_factory=telescope_factory)
@@ -76,7 +71,6 @@ def get_proposalsettings(request):
         event_telescope_factory=event_telescope_factory,
         project_id_factory=project_id_factory,
     )
-    # json_logger.info("Logging using pythonjsonlogger!", extra={"more_data": True})
 
     return proposal_settings_factory.proposals
 
@@ -103,100 +97,41 @@ def get_proposalsettings_by_id(request, id: int):
 
     return proposal
 
+@app.post("/process_all_proposals/", response={200: Dict[str, Union[bool, str]]})
+def api_process_all_proposals(request, data: AllProposalsProcessRequest):
 
-@app.post("/trigger_observation/", response={200: Dict[str, Union[bool, str]]}, auth=JWTAuth())
-def api_trigger_observation(request, data: TriggerObservationRequest):
-
-    print("DEBUG - trigger observation received")
+    print("DEBUG - all proposals process request received")
     
-    prop_dec_pyd = ProposalDecisionSchema(**data.prop_dec.dict())
-
-    proposal = utils_api.get_proposal_object(prop_dec_pyd.proposal)
-    prop_dec_pyd.proposal = proposal
+    prop_decs_pyd = [ProposalDecisionSchema(**prop_dec.dict()) for prop_dec in data.prop_decs]
+    
+    prop_decs_pyd_tmp = []
+    for prop_dec_pyd in prop_decs_pyd:
+        proposal = utils_api.get_proposal_object(prop_dec_pyd.proposal)
+        prop_dec_pyd.proposal = proposal
+        prop_decs_pyd_tmp.append(prop_dec_pyd)
+        
+    prop_decs_pyd = prop_decs_pyd_tmp
 
     voevents_pyd = [EventSchema(**voevent.dict()) for voevent in data.voevents]
-    decision_reason_log = data.decision_reason_log
-    reason = data.reason
-    event_id = data.event_id
+    
+    event_pyd = EventSchema(**data.event.dict())
 
-    telescopes = []
-    latestVoevent = voevents_pyd[0]
-
-    # print("latestVoevent:", latestVoevent)
-
-    json_logger.info(
-        "successfull api request",
-        extra={
-            "function": "api_trigger_observation",
-            "trig_id": prop_dec_pyd.trig_id,
-            "event_id": event_id,
-        },
-    )
-
-    context = {
-        "proposal_decision_model": prop_dec_pyd,
-        "event_id": event_id,
-        "decision_reason_log": decision_reason_log,
-        "reason": reason,
-        "telescopes": telescopes,
-        "latestVoevent": latestVoevent,
-        "mwa_sub_arrays": None,
-        "stop_processing": False,
-        "decision": None,
+    event_group_pyd = EventGroupSchema(**data.event_group.dict())
+    
+    if data.event_coord:
+        event_coord = SkyCoordSchema(**data.event_coord.dict()).to_skycoord()
+    else:
+        event_coord = None
+    
+    context_all = {
+        "event": event_pyd,
+        "prop_decs": prop_decs_pyd,
         "voevents": voevents_pyd,
+        "prop_decs_exist": data.prop_decs_exist,
+        "event_group": event_group_pyd,
+        "event_coord": event_coord,
     }
-
-    print("source_settings:", proposal.source_settings)
-    print(
-        "telescope_settings:",
-        proposal.telescope_settings.telescope,
-    )
-
-    # decision, decision_reason_log = trigger_observation(context, voevents_pyd)
-
-    decision, decision_reason_log = proposal.trigger_gen_observation(context)
-
-    # TODO ask when decision is None
-    decision = decision if decision else "I"
-
-    return {"decision": decision, "decision_reason_log": decision_reason_log}
-
-
-@app.post("/worth_observing/", response={200: Dict[str, Union[bool, str]]}, auth=JWTAuth())
-def worth_observing_proposal(request, data: ProposalObservationRequest):
-    # Deserialize the nested objects
-
-    prop_dec_pyd = ProposalDecisionSchema(**data.prop_dec.dict())
-    voevent_pyd = EventSchema(**data.voevent.dict())
-    proposal = utils_api.get_proposal_object(prop_dec_pyd.proposal)
-    prop_dec_pyd.proposal = proposal
-
-    print("PROP DEC PYD:", prop_dec_pyd.proposal.telescope_settings)
-
-    json_logger.info(
-        "successfull worth observing api request sent",
-        extra={
-            "function": "worth_observing_proposal",
-            "trig_id": prop_dec_pyd.trig_id,
-            "event_id": voevent_pyd.id,
-            "proposal_id": prop_dec_pyd.proposal.id,
-        },
-    )
-
-    boolean_log_values = utils_api.proposal_worth_observing(
-        prop_dec_pyd, voevent_pyd, observation_reason="First observation."
-    )
-
-    json_logger.info(
-        f"successfull worth observing proposal processed",
-        extra={
-            "function": "worth_observing_proposal",
-            "trig_id": prop_dec_pyd.trig_id,
-            "event_id": voevent_pyd.id,
-            "proposal_id": prop_dec_pyd.proposal.id,
-        },
-    )
-
-
-    print("PROCESSING WORTH OBSERVING done")
-    return boolean_log_values
+    
+    context = utils_process.process_all_proposals(context_all)
+    
+    return {"message": "success"}
