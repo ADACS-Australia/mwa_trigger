@@ -1,0 +1,438 @@
+import datetime as dt
+import logging
+from datetime import datetime, timedelta
+from functools import partial
+from typing import Tuple, Union
+
+from ..models.event import Event
+from .utils_log import log_event, log_event_with_error
+
+# from ..models.sourcesettings import GWSourceSettings
+
+# Initialize the context with the event and defaults
+
+def initialize_context(event: Event, kwargs: dict) -> dict:
+    # print('DEBUG - event:', event)
+    prop_dec = kwargs.get("prop_dec")
+
+    context = {
+        "event_id": event.id,
+        "event": event,
+        "decision_reason_log": kwargs.get("decision_reason_log", ""),
+        "trigger_bool": False,
+        "debug_bool": False,  # This remains for its original purpose
+        "pending_bool": False,
+        "FAR": None,
+        "FARThreshold": None,
+        "stop_processing": False,  # New flag to control short-circuiting
+        "trig_id": prop_dec.trig_id,
+        "prop_dec": prop_dec,
+    }
+
+    return context
+# Process the False Alarm Rate (FAR)
+@log_event_with_error(message="Processing FAR values", level="debug", handle_errors=True)
+def process_false_alarm_rate(context: dict, maximum_false_alarm_rate: float) -> dict:
+    
+    
+    event = context["event"]
+    
+    if event.lvc_false_alarm_rate is None:
+        return context
+    
+    if maximum_false_alarm_rate is None:
+        return context
+    
+    # if event.lvc_false_alarm_rate and maximum_false_alarm_rate:
+    try:
+        # maximum_false_alarm_rate = 1/'a'
+        context["FAR"] = float(event.lvc_false_alarm_rate)
+        context["FARThreshold"] = float(maximum_false_alarm_rate)
+        
+        context['reached_end'] = True
+
+    except Exception as e:
+        context["debug_bool"] = True
+        context["stop_processing"] = True
+        context["decision_reason_log"] += (
+            f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The event FAR ({event.lvc_false_alarm_rate}) "
+            f"or proposal FAR ({maximum_false_alarm_rate}) could not be processed so not triggering. \n"
+        )
+        raise  # Re-raise the exception to be caught by the decorator
+
+    return context
+
+@log_event(message="Early warning detected. Triggering.", level="info")
+def update_event_parameters(context):
+    
+    
+    event = context["event"]
+    
+    if event.telescope != "LVC":
+        return context
+    
+    if event.event_type != "EarlyWarning":
+        return context
+    
+    # if event.telescope == "LVC" and event.event_type == "EarlyWarning":
+    
+    context["trigger_bool"] = True  # Always trigger on Early Warning events
+    event.lvc_binary_neutron_star_probability = 0.97
+    event.lvc_neutron_star_black_hole_probability = 0.01
+    event.lvc_binary_black_hole_probability = 0.01
+    event.lvc_terrestial_probability = 0.01
+
+    context["event"] = event
+    
+    context['reached_end'] = True
+
+    return context
+
+
+# Check event time against a threshold of 2 hours ago
+@log_event( message="Event more than 2 hours ago. Not observing.", level="debug")
+def check_event_time(context) -> dict:
+    
+    
+    
+    event = context["event"]
+    two_hours_ago = datetime.now(dt.timezone.utc) - dt.timedelta(hours=2)
+    
+    if event.event_observed is None:
+        return context
+    
+    if event.event_observed >= two_hours_ago:
+        return context
+    
+    # if event.event_observed < two_hours_ago:
+    
+    context["stop_processing"] = True
+    context["trigger_bool"] = False
+    context["decision_reason_log"] += (
+        f'{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The event time {event.event_observed.strftime("%Y-%m-%dT%H:%M:%S+0000")} '
+        f'is more than 2 hours ago {two_hours_ago.strftime("%Y-%m-%dT%H:%M:%S+0000")} so not triggering. \n'
+    )
+        
+    context['reached_end'] = True
+
+    return context
+
+
+# Check the number of LVC instruments involved
+@log_event( message="Event has only one instrument - not triggering", level="debug")
+def check_lvc_instruments(context) -> dict:
+    
+    
+    # Short-circuit if a previous condition was met
+    if context["stop_processing"]:
+        return context
+
+    event = context["event"]
+    
+    if event.lvc_instruments is None:
+        return context
+
+    if len(event.lvc_instruments.split(",")) >= 2:
+        return context
+    
+    # if event.lvc_instruments and len(event.lvc_instruments.split(",")) < 2:
+    context["stop_processing"] = True
+    context["debug_bool"] = True
+    context[
+        "decision_reason_log"
+    ] += f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The event has only {event.lvc_instruments} so not triggering. \n"
+    
+    context['reached_end'] = True
+        
+    return context
+
+
+# Handle specific event types and telescope
+@log_event( message="Event is a retraction. Not observing.", level="debug")
+def handle_event_types(context) -> dict:
+    
+    
+    # Short-circuit if a previous condition was met
+    if context["stop_processing"]:
+        return context
+
+    event = context["event"]
+    
+    if event.telescope != "LVC":
+        return context
+    
+    if event.event_type != "Retraction":
+        return context
+    
+    
+    # if event.telescope == "LVC" and event.event_type == "Retraction":
+    context["stop_processing"] = True
+    context["debug_bool"] = True
+    context[
+        "decision_reason_log"
+    ] += f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: Retraction, scheduling no capture observation (WIP, ignoring for now). \n"
+    
+    context['reached_end'] = True
+
+    return context
+
+
+# Check all probabilities by chaining individual checks with short-circuiting
+def check_probabilities(telescope_settings, gw_settings, context: dict) -> dict:
+    
+    if context["stop_processing"]:
+        return context
+
+    event = context["event"]
+    
+    if event.telescope != "LVC":
+        return context
+        
+    context = check_far_against_threshold(context)
+    context = check_ns_probability(gw_settings, context)
+    context = check_bns_probability(gw_settings, context)
+    context = check_nsb_h_probability(gw_settings, context)
+    context = check_bbh_probability(gw_settings, context)
+    context = check_terrestrial_probability(gw_settings, context)
+    context = check_significance(telescope_settings, context)
+    
+    # only this block is triggering
+    context = consider_triggering(context)
+
+    return context
+
+@log_event( message="Event is worth observing", level="debug")
+def consider_triggering(context):
+    # If no conditions prevent triggering, consider it worth observing
+    
+    
+    if context["stop_processing"]:
+        return context
+    
+    if event.telescope != "LVC":
+        return context
+    
+    event = context["event"]
+        
+    context["trigger_bool"] = True
+    context[
+        "decision_reason_log"
+    ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event'].id}: The probability looks good so triggering. \n"
+    
+    context['reached_end'] = True
+
+    return context
+
+
+# Check FAR against the threshold
+@log_event( message="FAR is greater than threshold. Not triggering", level="debug")
+def check_far_against_threshold(context) -> dict:
+    
+    
+    if context["stop_processing"]:
+        return context
+    
+    if context["FAR"] is None:
+        return context
+    
+    if context["FARThreshold"] is None:
+        return context
+
+    if context["FAR"] <= context["FARThreshold"]:
+        return context
+        
+    # if context["FAR"] > context["FARThreshold"]:
+        
+    context["stop_processing"] = True
+    context["debug_bool"] = True
+    context["decision_reason_log"] += (
+        f"{datetime.now(dt.timezone.utc)}: Event ID {context['event'].id}: The FAR is {context['FAR']} "
+        f"which is greater than the threshold {context['FARThreshold']} so not triggering. \n"
+    )
+
+    context['reached_end'] = True
+    
+    return context
+
+
+# Check individual probabilities and short-circuit if a condition is met
+@log_event( message="NS probability is out of range. Not triggering", level="debug")
+def check_ns_probability(gw_settings, context) -> dict:
+    
+    
+    
+    if context["stop_processing"]:
+        return context 
+
+    if context["event"].lvc_includes_neutron_star_probability is None:
+        return context
+
+    event = context["event"]    
+    # if event.lvc_includes_neutron_star_probability:
+    
+    if (
+        (event.lvc_includes_neutron_star_probability
+        <= gw_settings.maximum_neutron_star_probability) and 
+        (event.lvc_includes_neutron_star_probability
+        >= gw_settings.minimum_neutron_star_probability)
+    ) :
+        return context
+    
+    context["stop_processing"] = True
+    context["debug_bool"] = True
+    context["decision_reason_log"] += (
+        f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_NS probability ({event.lvc_includes_neutron_star_probability}) "
+        f"is out of range {gw_settings.minimum_neutron_star_probability} and {gw_settings.maximum_neutron_star_probability} so not triggering. \n"
+    )
+        
+    context['reached_end'] = True
+            
+    return context
+
+@log_event( message="BNS probability is out of range. Not triggering", level="debug")
+def check_bns_probability(gw_settings, context) -> dict:
+    
+    
+    if context["stop_processing"]:  # Only check if no previous condition was met
+        return context
+
+    event = context["event"]
+    
+    if event.lvc_binary_neutron_star_probability is None:
+        return context
+    # if event.lvc_binary_neutron_star_probability:
+    
+    if (
+        (event.lvc_binary_neutron_star_probability
+        <= gw_settings.maximum_binary_neutron_star_probability) and 
+        (event.lvc_binary_neutron_star_probability
+        >= gw_settings.minimum_binary_neutron_star_probability)
+    ) :
+        return context
+    
+    context["stop_processing"] = True
+    context["debug_bool"] = True
+    context["decision_reason_log"] += (
+        f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_BNS probability ({event.lvc_binary_neutron_star_probability}) "
+        f"is out of range {gw_settings.minimum_binary_neutron_star_probability} and {gw_settings.maximum_binary_neutron_star_probability} so not triggering. \n"
+    )
+    
+    context['reached_end'] = True
+
+    return context
+
+@log_event( message="NSBH probability is out of range. Not triggering", level="debug")
+def check_nsb_h_probability(gw_settings, context) -> dict:
+    
+    
+    
+    if context["stop_processing"]:  # Only check if no previous condition was met
+        return context
+
+    event = context["event"]
+    
+    if event.lvc_neutron_star_black_hole_probability is None:
+        return context
+    
+    if (
+        (event.lvc_neutron_star_black_hole_probability
+        <= gw_settings.maximum_neutron_star_black_hole_probability) and 
+        (event.lvc_neutron_star_black_hole_probability
+        >= gw_settings.minimum_neutron_star_black_hole_probability)
+    ):
+        return context
+    
+    context["stop_processing"] = True
+    context["debug_bool"] = True
+    context["decision_reason_log"] += (
+        f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_NSBH probability ({event.lvc_neutron_star_black_hole_probability}) "
+        f"is out of range {gw_settings.minimum_neutron_star_black_hole_probability} and {gw_settings.maximum_neutron_star_black_hole_probability} so not triggering. \n"
+    )
+    
+    context['reached_end'] = True
+    return context
+
+@log_event( message="BBH probability is out of range. Not triggering", level="debug")
+def check_bbh_probability(gw_settings, context) -> dict:
+    
+    
+    if context["stop_processing"]:  # Only check if no previous condition was met
+        return context
+
+    event = context["event"]
+    
+    if event.lvc_binary_black_hole_probability is None:
+        return context
+    
+    if (
+        (event.lvc_binary_black_hole_probability
+        <= gw_settings.maximum_binary_black_hole_probability) and 
+        (event.lvc_binary_black_hole_probability
+        >= gw_settings.minimum_binary_black_hole_probability)
+    ):
+        return context
+    
+    context["stop_processing"] = True
+    context["debug_bool"] = True
+    context["decision_reason_log"] += (
+        f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_BBH probability ({event.lvc_binary_black_hole_probability}) "
+        f"is out of range {gw_settings.minimum_binary_black_hole_probability} and {gw_settings.maximum_binary_black_hole_probability} so not triggering. \n"
+    )
+    
+    context['reached_end'] = True
+    
+    return context
+
+@log_event( message="Terrestrial probability is out of range. Not triggering", level="debug")
+def check_terrestrial_probability(gw_settings, context) -> dict:
+    
+    
+    if context["stop_processing"]:  # Only check if no previous condition was met
+        return context
+
+    event = context["event"]
+
+    if event.lvc_terrestial_probability is None:
+        return context
+    
+    
+    if (
+        (event.lvc_terrestial_probability
+        <= gw_settings.maximum_terrestial_probability) and 
+        (event.lvc_terrestial_probability
+        >= gw_settings.minimum_terrestial_probability)
+    ):
+        return context
+    
+    context["stop_processing"] = True
+    context["debug_bool"] = True
+    context["decision_reason_log"] += (
+        f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The PROB_Terre probability ({event.lvc_terrestial_probability}) "
+        f"is out of range {gw_settings.minimum_terrestial_probability} and {gw_settings.maximum_terrestial_probability} so not triggering. \n"
+    )
+    
+    context['reached_end'] = True
+    
+    return context
+
+@log_event( message="GW significance is not observed. Not triggering", level="debug")
+def check_significance(telescope_settings, context) -> dict:
+    if context["stop_processing"]:  # Only check if no previous condition was met
+        return context
+
+    event = context["event"]
+    
+    if (event.lvc_significant == True and not telescope_settings.observe_significant) is False:
+        return context
+            
+    # if event.lvc_significant == True and not telescope_settings.observe_significant:
+    
+    context["stop_processing"] = True
+    context["debug_bool"] = True
+    context["decision_reason_log"] += (
+        f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: The GW significance ({event.lvc_significant}) "
+        f"is not observed because observe_significant is {telescope_settings.observe_significant}. \n"
+    )
+    
+    context['reached_end'] = True
+    return context
