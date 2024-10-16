@@ -250,7 +250,7 @@ AUTH_PASSWORD = os.getenv("AUTH_PASSWORD")
 
 NINJA_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=365),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=365*2),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=365 * 2),
     "ALGORITHM": "HS256",  # Make sure both web and API use the same algorithm
     "SIGNING_KEY": JWT_SECRET_KEY,  # Shared secret key
     "VERIFYING_KEY": JWT_SECRET_KEY,
@@ -260,5 +260,3 @@ NINJA_JWT = {
 WEB_APP_URL = os.getenv("WEB_APP_URL")
 TRIGGER_API_URL = os.getenv("TRIGGER_API_URL")
 LOGIC_API_URL = os.getenv("LOGIC_API_URL")
-
-

@@ -11,16 +11,25 @@ from .utils_log import log_event
 logger = logging.getLogger(__name__)
 print("standart logger:", __name__)
 
-@log_event(log_location="start",message=f"check_worth_observing started", level="info")
+
+@log_event(log_location="start", message=f"check_worth_observing started", level="info")
 def check_worth_observing(context):
-    
+    """
+    Check if a proposal is worth observing based on the given context.
+
+    Args:
+        context (dict): A dictionary containing proposal and event information.
+
+    Returns:
+        dict: Updated context with observation decision information.
+    """
     if context["proposal_worth_observing"] is False:
         return context
-    
+
     prop_dec = context["prop_dec"]
     event = context["event"]
-    observation_reason=context["observation_reason"]
-    
+    observation_reason = context["observation_reason"]
+
     print("DEBUG - check_worth_observing")
 
     # make api request after saving prop_dec
@@ -35,28 +44,26 @@ def check_worth_observing(context):
     context["debug_bool"] = boolean_log_values["debug_bool"]
     context["pending_bool"] = boolean_log_values["pending_bool"]
     context["decision_reason_log"] = boolean_log_values["decision_reason_log"]
-    
+
     print("DEBUG - boolean_log_values:", boolean_log_values)
-     
+
     context["trigger_decision"] = True
 
     context["reached_end"] = True
-    
+
     return context
 
-def proposal_worth_observing(
-    prop_dec, event, observation_reason
-):
+
+def proposal_worth_observing(prop_dec, event, observation_reason):
     """For a proposal sees is this voevent is worth observing. If it is will trigger an observation and send off the relevant alerts.
 
-    Parameters
-    ----------
-    prop_dec : `django.db.models.Model`
-        The Django ProposalDecision model object.
-    voevent : `django.db.models.Model`
-        The Django Event model object.
-    observation_reason : `str`, optional
-        The reason for this observation. The default is "First Observation" but other potential reasons are "Repointing".
+    Args:
+        prop_dec (django.db.models.Model): The Django ProposalDecision model object.
+        event (django.db.models.Model): The Django Event model object.
+        observation_reason (str): The reason for this observation (e.g., "First Observation", "Repointing").
+
+    Returns:
+        dict: A dictionary containing boolean flags and decision reasons.
     """
     print("DEBUG - proposal_worth_observing")
     logger.info(f"Checking that proposal {prop_dec.proposal} is worth observing.")
@@ -69,9 +76,12 @@ def proposal_worth_observing(
     #     prop_dec.proposal.telescope_settings.event_telescope = None
     # prop_dec.proposal.telescope_settings.event_telescope.name = "Fermi"
     # prop_dec.event_group_id.source_type = "GRB"
-    print("DEBUG - prop_dec.proposal.event_telescope:", prop_dec.proposal.event_telescope.name)
+    print(
+        "DEBUG - prop_dec.proposal.event_telescope:",
+        prop_dec.proposal.event_telescope.name,
+    )
     print("DEBUG - event.telescope:", event.telescope)
-    
+
     # Continue to next test
     if (
         prop_dec.proposal.event_telescope is None
@@ -133,14 +143,24 @@ def proposal_worth_observing(
         "decision_reason_log": decision_reason_log,
     }
 
-@log_event(log_location="end",message=f"make_trigger_decision completed", level="info")
+
+@log_event(log_location="end", message=f"make_trigger_decision completed", level="info")
 def make_trigger_decision(context):
+    """
+    Make a trigger decision based on the proposal worth observing results.
+
+    Args:
+        context (dict): A dictionary containing proposal and event information.
+
+    Returns:
+        dict: Updated context with trigger decision information.
+    """
     if context["proposal_worth_observing"] is False:
         return context
-    
+
     if "trigger_decision" not in context.keys() or context["trigger_decision"] is False:
         return context
-    
+
     # context["trigger_decision"] is True
     if context["trigger_bool"]:
         print("DEBUG - trigger started")
@@ -161,7 +181,7 @@ def make_trigger_decision(context):
             logger.error(e)
             context["decision"] = "E"
             context["debug_bool"] = True
-            
+
     elif context["pending_bool"]:
         print("DEBUG - pending")
         context["decision"] = "P"
@@ -175,29 +195,43 @@ def make_trigger_decision(context):
     else:
         print("DEBUG - ignored")
         context["decision"] = "I"
-        
+
     # update prop_dec
     context["prop_dec"].decision = context["decision"]
     context["prop_dec"].decision_reason = context["decision_reason_log"]
 
     logger.info("Sending alerts to users and admins")
-    
+
     context["send_alert"] = True
-    
+
     context["reached_end"] = True
-        
+
     return context
 
 
-@log_event(log_location="end",message=f"trigger_repointing completed", level="info")
+@log_event(log_location="end", message=f"trigger_repointing completed", level="info")
 def trigger_repointing(context):
-    
-    if "trigger_repointing" not in context.keys() or context["trigger_repointing"] is False:
+    """
+    Trigger a repointing observation based on the given context.
+
+    Args:
+        context (dict): A dictionary containing proposal and event information.
+
+    Returns:
+        dict: Updated context with repointing information.
+    """
+    if (
+        "trigger_repointing" not in context.keys()
+        or context["trigger_repointing"] is False
+    ):
         return context
-    
-    prop_dec, event,repoint_message = context["prop_dec"], context["event"],context["observation_reason"]
-    
-    
+
+    prop_dec, event, repoint_message = (
+        context["prop_dec"],
+        context["event"],
+        context["observation_reason"],
+    )
+
     prop_dec.ra = event.ra
     prop_dec.dec = event.dec
     prop_dec.ra_hms = event.ra_hms
@@ -206,7 +240,7 @@ def trigger_repointing(context):
         prop_dec.pos_error = event.pos_error
 
     voevents = context["voevents"]
-    
+
     print("DEBUG - reached trigger_observation")
     decision, decision_reason_log = trigger_observation(
         prop_dec=prop_dec,
@@ -230,7 +264,7 @@ def trigger_repointing(context):
 
     # send off alert messages to users and admins
     context["send_alert"] = True
-    
+
     context["trigger_bool"] = True
     context["debug_bool"] = debug_bool
     context["pending_bool"] = False
@@ -247,7 +281,19 @@ def trigger_observation(
     reason="First Observation",
     event_id=None,
 ):
-    
+    """
+    Trigger an observation based on the proposal decision and event information.
+
+    Args:
+        prop_dec (django.db.models.Model): The Django ProposalDecision model object.
+        voevents (list): A list of VOEvent objects.
+        decision_reason_log (str): The current decision reason log.
+        reason (str, optional): The reason for the observation. Defaults to "First Observation".
+        event_id (int, optional): The ID of the event. Defaults to None.
+
+    Returns:
+        tuple: A tuple containing the decision (str) and updated decision_reason_log (str).
+    """
     # print("DEBUG - Trigger observation")
 
     telescopes = []
@@ -269,11 +315,10 @@ def trigger_observation(
     print("DEBUG - starts trigger_gen_observation")
     context = prop_dec.proposal.trigger_gen_observation(context_trig)
     decision, decision_reason_log = context["decision"], context["decision_reason_log"]
-    
+
     print("DEBUG - ends trigger_gen_observation")
-    
+
     # TODO ask if we need to set decision to "I" when decision is None
     decision = decision if decision else "I"
-    
-    return decision, decision_reason_log
 
+    return decision, decision_reason_log

@@ -12,8 +12,34 @@
 #
 import os
 import sys
+from unittest.mock import Mock
 
 sys.path.insert(0, os.path.abspath("."))
+
+# Add path to prop_api
+sys.path.insert(0, os.path.abspath('..'))
+
+# sys.path.insert(
+#     0, os.path.abspath("/home/batbold/Projects/adacs_project_official/TraceT/prop_api")
+# )
+
+
+print("sys.path:", sys.path)
+
+# Mock Django and other troublesome modules
+MOCK_MODULES = [
+    'django',
+    'django.conf',
+    'django.core',
+    'django.db',
+    'django.utils',
+    'django.apps',
+    'ninja',
+    'ninja.openapi',
+    'ninja_jwt',
+    'log_filters',
+]
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
 # -- Project information -----------------------------------------------------
@@ -32,6 +58,7 @@ release = "1"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx.ext.autosummary",
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.mathjax",
@@ -43,6 +70,9 @@ extensions = [
     "sphinxcontrib.mermaid",
 ]
 numpydoc_show_class_members = False
+autosummary_generate = True
+
+autodoc_mock_imports = MOCK_MODULES  # Mock imports for autodoc to work properly
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

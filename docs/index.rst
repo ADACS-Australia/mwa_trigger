@@ -31,12 +31,12 @@ explanations of the software methodologies and layout (Developer Documentation) 
    using_the_database
 
 
-.. toctree::
-   :maxdepth: 4
-   :caption: Trigger Logic:
+.. .. toctree::
+..    :maxdepth: 4
+..    :caption: Trigger Logic:
 
-   voevent_handling
-   grb
+..    voevent_handling
+..    grb
 
 
 .. toctree::
@@ -56,12 +56,14 @@ explanations of the software methodologies and layout (Developer Documentation) 
    developer_documentation
    git_hooks
 
-
 .. toctree::
-   :maxdepth: 4
-   :caption: TraceT Package:
+   :maxdepth: 1
+   :caption: Proposal API Overview:
 
-   tracet_module
+   prop_api
+   prop_api_models
+   prop_api_factory_classes
+   prop_api_processing
 
 
 .. toctree::

@@ -19,7 +19,21 @@ print("standart logger:", __name__)
 
 @log_event(log_location="end", message=f"update_event_group completed", level="info")
 def update_event_group(context):
+    """
+    Update the event group with the latest event information.
 
+    This function updates the event group's position and error if the new event
+    has more precise information. It also updates the latest observed event.
+
+    Args:
+        context (dict): A dictionary containing the following keys:
+            - prop_decs_exist (bool): Whether proposal decisions exist
+            - event_group (EventGroup): The event group to update
+            - event (Event): The latest event
+
+    Returns:
+        dict: The updated context dictionary
+    """
     if context["prop_decs_exist"]:
         event_group = context["event_group"]
         event = context["event"]
@@ -48,7 +62,17 @@ def update_event_group(context):
     log_location="end", message=f"process_new_proposal_decision completed", level="info"
 )
 def process_new_proposal_decision(context):
+    """
+    Process a new proposal decision when no previous decisions exist.
 
+    This function sets the proposal as worth observing for new events.
+
+    Args:
+        context (dict): A dictionary containing the context for the decision
+
+    Returns:
+        dict: The updated context dictionary with proposal_worth_observing set to True
+    """
     context["proposal_worth_observing"] = True
 
     context['reached_end'] = True
@@ -59,7 +83,22 @@ def process_new_proposal_decision(context):
     log_location="end", message=f"process_proposal_decision completed", level="info"
 )
 def process_proposal_decision(context):
+    """
+    Process a proposal decision based on the decision type.
 
+    This function routes the processing to the appropriate function based on the
+    decision type (Canceled, Ignored/Error, Triggered, or Pending).
+
+    Args:
+        context (dict): A dictionary containing the following keys:
+            - prop_dec (ProposalDecision): The proposal decision object
+
+    Returns:
+        dict: The updated context dictionary after processing the decision
+
+    Raises:
+        ValueError: If the decision type is invalid or not implemented
+    """
     prop_dec = context["prop_dec"]
 
     print("DEBUG - prop_dec.decision:", prop_dec.decision)
@@ -90,7 +129,20 @@ def process_proposal_decision(context):
     log_location="end", message=f"process_canceled_decision completed", level="info"
 )
 def process_canceled_decision(context):
+    """
+    Process a canceled decision.
 
+    This function updates the proposal decision reason with the cancellation
+    reason.
+
+    Args:
+        context (dict): A dictionary containing the following keys:
+            - prop_dec (ProposalDecision): The proposal decision object
+            - event (Event): The event associated with the decision
+
+    Returns:
+        dict: The updated context dictionary
+    """
     prop_dec, event = context["prop_dec"], context["event"]
 
     prop_dec.decision_reason += f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: Previous observation canceled so not observing. \n"
@@ -109,7 +161,20 @@ def process_canceled_decision(context):
     level="info",
 )
 def process_ignored_or_error_decision(context):
+    """
+    Process an ignored or error decision.
 
+    This function updates the proposal decision with the new event information
+    and sets the proposal as worth observing.
+
+    Args:
+        context (dict): A dictionary containing the following keys:
+            - prop_dec (ProposalDecision): The proposal decision object
+            - event (Event): The event associated with the decision
+
+    Returns:
+        dict: The updated context dictionary
+    """
     prop_dec, event = context["prop_dec"], context["event"]
 
     prop_dec.ra = event.ra
@@ -136,7 +201,21 @@ def process_ignored_or_error_decision(context):
     log_location="end", message=f"process_trigger_decision completed", level="info"
 )
 def process_trigger_decision(context):
+    """
+    Process a triggered decision.
 
+    This function checks if the event separation is greater than the repointing
+    limit and updates the proposal decision accordingly.
+
+    Args:
+        context (dict): A dictionary containing the following keys:
+            - prop_dec (ProposalDecision): The proposal decision object
+            - event (Event): The event associated with the decision
+            - event_coord (SkyCoord): The event coordinates
+
+    Returns:
+        dict: The updated context dictionary
+    """
     prop_dec, event, event_coord = (
         context["prop_dec"],
         context["event"],
@@ -183,7 +262,25 @@ def process_trigger_decision(context):
     log_location="end", message=f"process_all_proposals_api completed", level="info"
 )
 def process_all_proposals(context_all):
+    """
+    Process all proposals for a given event.
 
+    This function iterates through all proposal decisions, processes each one,
+    checks if it's worth observing, makes trigger decisions, and updates the
+    event group.
+
+    Args:
+        context_all (dict): A dictionary containing the following keys:
+            - event (Event): The event to process
+            - prop_decs (list): List of proposal decisions
+            - voevents (list): List of VOEvents
+            - prop_decs_exist (bool): Whether proposal decisions exist
+            - event_group (EventGroup): The event group
+            - event_coord (SkyCoord): The event coordinates
+
+    Returns:
+        dict: The final context dictionary after processing all proposals
+    """
     event_pyd = context_all["event"]
     prop_decs_pyd = context_all["prop_decs"]
     voevents_pyd = context_all["voevents"]
