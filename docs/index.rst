@@ -63,7 +63,7 @@ explanations of the software methodologies and layout (Developer Documentation) 
    prop_api_endpoints
    prop_api_processing
    prop_api_models
-   prop_api_factory_classes
+   prop_api_factory
 
 
 .. toctree::

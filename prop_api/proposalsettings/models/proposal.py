@@ -58,7 +58,9 @@ class ProposalSettings(BaseModel):
     class Config:
         extra = "forbid"
 
-    def is_worth_observing(self, event: Event, **kwargs):
+    def is_worth_observing(
+        self, event: Event, **kwargs
+    ) -> Tuple[bool, bool, bool, str]:
         """
         Determines if an event is worth observing based on the source settings.
 
@@ -69,8 +71,13 @@ class ProposalSettings(BaseModel):
             **kwargs: Additional keyword arguments to pass to the worth_observing method.
 
         Returns:
-            bool: True if the event is worth observing, False otherwise.
+            Tuple[bool, bool, bool, str]: A tuple containing:
+                - bool: True if the event is worth observing, False otherwise.
+                - bool: True if the event passes additional criteria.
+                - bool: True if the event requires immediate action.
+                - str: A message explaining the decision.
         """
+
         # Delegate to the source settings' worth_observing method
         return self.source_settings.worth_observing(
             event, self.telescope_settings, **kwargs

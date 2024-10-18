@@ -4,6 +4,9 @@ from .models.telescope import EventTelescope
 
 
 class EventTelescopeFactory:
+    """
+    A factory class for creating and managing EventTelescope objects.
+    """
 
     @property
     def event_telescope_swift(self):
@@ -34,7 +37,13 @@ class EventTelescopeFactory:
         return EventTelescope(name="LVC")
 
     @property
-    def eventtelescopes(self):
+    def eventtelescopes(self) -> List[EventTelescope]:
+        """
+        Returns a list of all EventTelescope objects.
+
+        Returns:
+            List[EventTelescope]: A list containing all EventTelescope objects.
+        """
         # Combine these objects into a list
         return [
             getattr(self, attr)
@@ -44,6 +53,15 @@ class EventTelescopeFactory:
         ]
 
     def get_event_telescope_by_name(self, name: str) -> Optional[EventTelescope]:
+        """
+        Searches for an EventTelescope object by name.
+
+        Args:
+            name (str): The name of the telescope to search for.
+
+        Returns:
+            Optional[EventTelescope]: The EventTelescope object if found, None otherwise.
+        """
         # Search for the EventTelescope by name
         for telescope in self.eventtelescopes:
             if telescope.name.lower() == name.lower():

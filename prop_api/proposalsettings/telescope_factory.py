@@ -2,6 +2,12 @@ from .models.telescope import Telescope
 
 
 class TelescopeFactory:
+    """
+    A factory class for creating and managing Telescope objects.
+
+    This class provides properties for various telescope configurations and a method
+    to retrieve all available telescopes.
+    """
 
     @property
     def telescope_mwa_vcs(self):
@@ -19,6 +25,15 @@ class TelescopeFactory:
 
     @property
     def telescopes(self):
+        """
+        Returns a list of all available Telescope objects.
+
+        This method dynamically generates a list of all Telescope objects
+        by iterating through the class attributes that start with "telescope_".
+
+        Returns:
+            list: A list of Telescope objects.
+        """
         return [
             getattr(self, attr)
             for attr in dir(self)
