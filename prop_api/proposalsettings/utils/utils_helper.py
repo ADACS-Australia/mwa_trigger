@@ -10,8 +10,11 @@ from astropy.time import Time
 from astropy.utils.data import download_file
 
 # ATCAUser, Observations
-from .utils_calculation import (getMWAPointingsFromSkymapFile,
-                                getMWARaDecFromAltAz, isClosePosition)
+from .utils_calculation import (
+    getMWAPointingsFromSkymapFile,
+    getMWARaDecFromAltAz,
+    isClosePosition,
+)
 from .utils_log import log_event
 
 logger = logging.getLogger(__name__)
@@ -35,7 +38,15 @@ TRIGGER_ON = (
 
 
 def round_to_nearest_modulo_8(number):
-    """Rounds a number to the nearest modulo of 8."""
+    """
+    Rounds a number to the nearest modulo of 8.
+
+    Args:
+        number (int): The number to be rounded.
+
+    Returns:
+        int: The rounded number.
+    """
     remainder = number % 8
     if remainder >= 4:
         rounded_number = number + (8 - remainder)
@@ -45,11 +56,25 @@ def round_to_nearest_modulo_8(number):
 
 
 def dump_mwa_buffer():
+    """
+    Dumps the MWA buffer.
+
+    Returns:
+        bool: Always returns True.
+    """
     return True
 
 
 def get_default_sub_arrays(ps):
-    """Get default sub arrays based on proposal settings."""
+    """
+    Get default sub arrays based on proposal settings.
+
+    Args:
+        ps (ProposalSettings): The proposal settings object.
+
+    Returns:
+        dict: A dictionary containing 'dec' and 'ra' lists for the sub-arrays.
+    """
     return {
         "dec": [
             getMWARaDecFromAltAz(
@@ -99,13 +124,30 @@ def get_default_sub_arrays(ps):
 
 
 def get_skymap_pointings_from_cache(skymap_fits):
+    """
+    Retrieve skymap pointings from a cached FITS file.
+
+    Args:
+        skymap_fits (str): Path to the cached skymap FITS file.
+
+    Returns:
+        tuple: A tuple containing the skymap and pointings.
+    """
     skymap = Table.read(skymap_fits)
     (skymap, time, pointings) = getMWAPointingsFromSkymapFile(skymap)
     return skymap, pointings
 
 
 def get_skymap_pointings(skymap_fits):
-    """Download and process skymap FITS file to get pointings."""
+    """
+    Download and process skymap FITS file to get pointings.
+
+    Args:
+        skymap_fits (str): URL or path to the skymap FITS file.
+
+    Returns:
+        tuple: A tuple containing the skymap and pointings.
+    """
     event_filename = download_file(skymap_fits, cache=True)
     skymap = Table.read(event_filename)
     (skymap, time, pointings) = getMWAPointingsFromSkymapFile(skymap)
@@ -113,7 +155,17 @@ def get_skymap_pointings(skymap_fits):
 
 
 def should_repoint(current_arrays_ra, current_arrays_dec, pointings):
-    """Determine whether repointing is necessary based on the new skymap."""
+    """
+    Determine whether repointing is necessary based on the new skymap.
+
+    Args:
+        current_arrays_ra (list): Current right ascension values of the arrays.
+        current_arrays_dec (list): Current declination values of the arrays.
+        pointings (list): New pointings from the skymap.
+
+    Returns:
+        bool: True if repointing is necessary, False otherwise.
+    """
     repoint = False
 
     pointings_dec = []
@@ -142,15 +194,32 @@ def should_repoint(current_arrays_ra, current_arrays_dec, pointings):
 
 
 def generate_sub_arrays_from_skymap(pointings):
-    """Generate sub arrays from skymap pointings."""
+    """
+    Generate sub arrays from skymap pointings.
+
+    Args:
+        pointings (list): List of pointings from the skymap.
+
+    Returns:
+        dict: A dictionary containing 'dec' and 'ra' lists for the sub-arrays.
+    """
     return {
         "dec": [pointings[i][4].value for i in range(4)],
         "ra": [pointings[i][3].value for i in range(4)],
     }
 
-@log_event(log_location="end",message=f"prepare context", level="debug")
-def check_mwa_horizon_and_prepare_context(context):
 
+@log_event(log_location="end", message=f"prepare context", level="debug")
+def check_mwa_horizon_and_prepare_context(context):
+    """
+    Check if the MWA telescope is above the horizon and prepare the observation context.
+
+    Args:
+        context (dict): The current context dictionary.
+
+    Returns:
+        dict: The updated context dictionary.
+    """
     prop_dec = context["prop_dec"]
     event_id = context["event_id"]
     decision_reason_log = context["decision_reason_log"]
@@ -158,21 +227,17 @@ def check_mwa_horizon_and_prepare_context(context):
     # condition to check if the telescope is MWA and if the ra and dec are not None
     # stops
     if (
-        prop_dec.proposal.telescope_settings.telescope.name.startswith(
-            "MWA"
-        )
+        prop_dec.proposal.telescope_settings.telescope.name.startswith("MWA")
         and prop_dec.ra
         and prop_dec.dec
     ) == False:
 
         context["reached_end"] = True
-    
+
         return context
 
     if (
-        prop_dec.proposal.telescope_settings.telescope.name.startswith(
-            "MWA"
-        )
+        prop_dec.proposal.telescope_settings.telescope.name.startswith("MWA")
         and prop_dec.ra
         and prop_dec.dec
     ):
@@ -201,7 +266,10 @@ def check_mwa_horizon_and_prepare_context(context):
         )
         alt_beg = obs_source_altaz_beg.alt.deg
         # Calculate alt at end of obs
-        print("DEBUG - prop_dec.proposal.telescope_settings.mwa_exptime:", prop_dec.proposal.telescope_settings.mwa_exptime)
+        print(
+            "DEBUG - prop_dec.proposal.telescope_settings.mwa_exptime:",
+            prop_dec.proposal.telescope_settings.mwa_exptime,
+        )
         end_time = Time.now() + timedelta(
             seconds=prop_dec.proposal.telescope_settings.mwa_exptime
         )
@@ -211,16 +279,17 @@ def check_mwa_horizon_and_prepare_context(context):
         alt_end = obs_source_altaz_end.alt.deg
 
         print("converted obs for horizon")
-        
+
         print("DEBUG - alt_beg:", alt_beg)
         print("DEBUG - alt_end:", alt_end)
-        print("DEBUG - prop_dec.proposal.telescope_settings.mwa_horizon_limit:", prop_dec.proposal.telescope_settings.mwa_horizon_limit)
+        print(
+            "DEBUG - prop_dec.proposal.telescope_settings.mwa_horizon_limit:",
+            prop_dec.proposal.telescope_settings.mwa_horizon_limit,
+        )
 
         if (
-            alt_beg
-            < prop_dec.proposal.telescope_settings.mwa_horizon_limit
-            and alt_end
-            < prop_dec.proposal.telescope_settings.mwa_horizon_limit
+            alt_beg < prop_dec.proposal.telescope_settings.mwa_horizon_limit
+            and alt_end < prop_dec.proposal.telescope_settings.mwa_horizon_limit
         ):
             horizon_message = f"{datetime.now(dt.timezone.utc)}: Event ID {event_id}: Not triggering due to horizon limit: alt_beg {alt_beg:.4f} < {prop_dec.proposal.telescope_settings.mwa_horizon_limit:.4f} and alt_end {alt_end:.4f} < {prop_dec.proposal.telescope_settings.mwa_horizon_limit:.4f}. "
             logger.debug(horizon_message)
@@ -232,17 +301,11 @@ def check_mwa_horizon_and_prepare_context(context):
             context["reached_end"] = True
             return context
 
-        elif (
-            alt_beg
-            < prop_dec.proposal.telescope_settings.mwa_horizon_limit
-        ):
+        elif alt_beg < prop_dec.proposal.telescope_settings.mwa_horizon_limit:
             # Warn them in the log
             decision_reason_log += f"{datetime.now(dt.timezone.utc)}: Event ID {event_id}: Warning: The source is below the horizion limit at the start of the observation alt_beg {alt_beg:.4f}. \n"
 
-        elif (
-            alt_end
-            < prop_dec.proposal.telescope_settings.mwa_horizon_limit
-        ):
+        elif alt_end < prop_dec.proposal.telescope_settings.mwa_horizon_limit:
             # Warn them in the log
             decision_reason_log += f"{datetime.now(dt.timezone.utc)}: Event ID {event_id}: Warning: The source will set below the horizion limit by the end of the observation alt_end {alt_end:.4f}. \n"
 
@@ -262,9 +325,18 @@ def check_mwa_horizon_and_prepare_context(context):
     return context
 
 
-@log_event(log_location="end",message=f"Prepared observation context.", level="debug")
+@log_event(log_location="end", message=f"Prepared observation context.", level="debug")
 def prepare_observation_context(context, voevents):
+    """
+    Prepare the observation context based on the proposal decision and VOEvents.
 
+    Args:
+        context (dict): The current context dictionary.
+        voevents (list): List of VOEvent objects.
+
+    Returns:
+        dict: The updated context dictionary.
+    """
     prop_dec = context["prop_dec"]
     telescopes = context["telescopes"]
     latestVoevent = context["latestVoevent"]
@@ -272,11 +344,7 @@ def prepare_observation_context(context, voevents):
     trigger_both = TRIGGER_ON[1][0]
     trigger_real = TRIGGER_ON[2][0]
 
-    vcsmode = (
-        prop_dec.proposal.telescope_settings.telescope.name.endswith(
-            "VCS"
-        )
-    )
+    vcsmode = prop_dec.proposal.telescope_settings.telescope.name.endswith("VCS")
     if vcsmode:
         print("VCS Mode")
 
@@ -296,27 +364,15 @@ def prepare_observation_context(context, voevents):
     pretend = True
     repoint = None
 
-    print(
-        f"prop_dec.proposal.testing {prop_dec.proposal.testing}"
-    )
+    print(f"prop_dec.proposal.testing {prop_dec.proposal.testing}")
     # print(f"latestVoevent {latestVoevent.__dict__}")
-    if (
-        latestVoevent.role == "test"
-        and prop_dec.proposal.testing != trigger_both
-    ):
-        
-        raise Exception("Invalid event observation and proposal setting")
-        
+    if latestVoevent.role == "test" and prop_dec.proposal.testing != trigger_both:
 
-    if (
-        prop_dec.proposal.testing == trigger_both
-        and latestVoevent.role != "test"
-    ):
+        raise Exception("Invalid event observation and proposal setting")
+
+    if prop_dec.proposal.testing == trigger_both and latestVoevent.role != "test":
         pretend = False
-    if (
-        prop_dec.proposal.testing == trigger_real
-        and latestVoevent.role != "test"
-    ):
+    if prop_dec.proposal.testing == trigger_real and latestVoevent.role != "test":
         pretend = False
     print(f"pretend: {pretend}")
 

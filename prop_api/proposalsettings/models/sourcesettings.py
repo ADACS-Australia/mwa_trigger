@@ -1,3 +1,27 @@
+"""
+This module defines source settings classes for different types of astronomical events.
+
+The module contains a base class `SourceSettings` which defines common
+attributes and methods for all source settings. It also includes three child
+classes, `GWSourceSettings`, `GrbSourceSettings`, and `NuSourceSettings`, which
+implement source-specific settings and behaviors for Gravitational Wave, Gamma-Ray Burst,
+and Neutrino events respectively.
+
+Classes:
+    SourceSettings: Abstract base class for source settings.
+    GWSourceSettings: Settings specific to Gravitational Wave events.
+    GrbSourceSettings: Settings specific to Gamma-Ray Burst events.
+    NuSourceSettings: Settings specific to Neutrino events.
+
+Each child class implements three key methods:
+    - worth_observing: Determines if an event is worth observing based on source-specific criteria.
+    - trigger_atca_observation: Handles the logic for triggering an ATCA observation for the specific source type.
+    - trigger_mwa_observation: Handles the logic for triggering an MWA observation for the specific source type.
+
+These classes are used to manage source-specific settings and handle the
+process of evaluating events and triggering observations in a standardized way
+across different astronomical event types.
+"""
 
 import datetime as dt
 import logging
@@ -16,18 +40,24 @@ from ..utils import utils_telescope_nongw as utils_nongw
 from ..utils.utils_log import log_event
 from .event import Event
 from .schemas import Observations
-from .telescopesettings import (ATCATelescopeSettings, BaseTelescopeSettings,
-                                MWATelescopeSettings)
+from .telescopesettings import (
+    ATCATelescopeSettings,
+    BaseTelescopeSettings,
+    MWATelescopeSettings,
+)
 
 logger = logging.getLogger(__name__)
 
+
 # Settings for Source Type class
 class SourceSettings(BaseModel, ABC):
+    """
+    Abstract base class for source-specific settings.
 
-    # class Config:
-    #     extra = "forbid"  # This forbids any extra fields t
+    This class defines the interface for source-specific settings and observation logic.
+    Subclasses should implement the abstract methods for different source types.
+    """
 
-    # event: Dict, proc_dec: Dict
     @abstractmethod
     def worth_observing(
         self,
@@ -37,7 +67,18 @@ class SourceSettings(BaseModel, ABC):
         ],
         **kwargs,
     ) -> bool:
-        """This is an abstract method that must be implemented by subclasses."""
+        """
+        Determine if an event is worth observing based on source-specific criteria.
+
+        Args:
+            event (Event): The event to evaluate.
+            telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
+                The settings for the telescope.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            bool: True if the event is worth observing, False otherwise.
+        """
         pass
 
     @abstractmethod
@@ -49,7 +90,18 @@ class SourceSettings(BaseModel, ABC):
         ],
         **kwargs,
     ) -> bool:
-        """This is an abstract method that must be implemented by subclasses."""
+        """
+        Trigger an ATCA observation based on source-specific criteria.
+
+        Args:
+            context: The context containing event and observation information.
+            telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
+                The settings for the ATCA telescope.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            bool: True if the observation is triggered, False otherwise.
+        """
         pass
 
     @abstractmethod
@@ -61,11 +113,29 @@ class SourceSettings(BaseModel, ABC):
         ],
         **kwargs,
     ) -> bool:
-        """This is an abstract method that must be implemented by subclasses."""
+        """
+        Trigger an MWA observation based on source-specific criteria.
+
+        Args:
+            context: The context containing event and observation information.
+            telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
+                The settings for the MWA telescope.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            bool: True if the observation is triggered, False otherwise.
+        """
         pass
 
 
 class GWSourceSettings(SourceSettings):
+    """
+    Settings and logic for Gravitational Wave (GW) source observations.
+
+    This class contains specific parameters and methods for handling GW events,
+    including probability thresholds and observation triggering logic.
+    """
+
     # GW settings
     # GW event property prob
     minimum_neutron_star_probability: float = Field(
@@ -131,7 +201,11 @@ class GWSourceSettings(SourceSettings):
         extra = "forbid"  # This forbids any extra fields
 
     # self, event: Dict, proc_dec: Dict
-    @log_event(log_location="end",message=f"Worth observing for GW source completed", level="info")
+    @log_event(
+        log_location="end",
+        message=f"Worth observing for GW source completed",
+        level="info",
+    )
     def worth_observing(
         self,
         event: Event,
@@ -140,8 +214,24 @@ class GWSourceSettings(SourceSettings):
         ],
         **kwargs,
     ) -> Tuple[bool, bool, bool, str]:
+        """
+        Determine if a GW event is worth observing based on various criteria.
+
+        Args:
+            event (Event): The GW event to evaluate.
+            telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
+                The settings for the telescope.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Tuple[bool, bool, bool, str]: A tuple containing:
+                - trigger_bool: Whether to trigger an observation.
+                - debug_bool: Whether to trigger a debug alert.
+                - pending_bool: Whether to create a pending observation.
+                - decision_reason_log: A log of the decision-making process.
+        """
         print("DEBUG - worth_observing_gw")
-        
+
         prop_dec = kwargs.get("prop_dec")
 
         # Initialize the context with the event and default values
@@ -150,10 +240,12 @@ class GWSourceSettings(SourceSettings):
         print(f" DEBUG - worth_observing gw context keys: {context.keys()}")
 
         # Chain the checks together, maintaining the original order
-        context = utils_gw.process_false_alarm_rate(context=context, maximum_false_alarm_rate=self.maximum_false_alarm_rate)
+        context = utils_gw.process_false_alarm_rate(
+            context=context, maximum_false_alarm_rate=self.maximum_false_alarm_rate
+        )
 
         context = utils_gw.update_event_parameters(context=context)
-        
+
         # two hour check
         context = utils_gw.check_event_time(context)
 
@@ -170,8 +262,12 @@ class GWSourceSettings(SourceSettings):
             context["pending_bool"],
             context["decision_reason_log"],
         )
-        
-    @log_event(log_location="end",message=f"Trigger ATCA observation for GW source completed", level="info")
+
+    @log_event(
+        log_location="end",
+        message=f"Trigger ATCA observation for GW source completed",
+        level="info",
+    )
     def trigger_atca_observation(
         self,
         context: Dict,
@@ -180,6 +276,18 @@ class GWSourceSettings(SourceSettings):
         ],
         **kwargs,
     ) -> Tuple[str, str]:
+        """
+        Trigger an ATCA observation for a GW event.
+
+        Args:
+            context (Dict): The context containing event and observation information.
+            telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
+                The settings for the ATCA telescope.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Tuple[str, str]: A tuple containing updated context information.
+        """
 
         telescope_name = telescope_settings.telescope.name
 
@@ -197,7 +305,11 @@ class GWSourceSettings(SourceSettings):
 
         return context
 
-    @log_event(log_location="end",message=f"Trigger MWA observation for GW source completed", level="info")
+    @log_event(
+        log_location="end",
+        message=f"Trigger MWA observation for GW source completed",
+        level="info",
+    )
     def trigger_mwa_observation(
         self,
         context: Dict,
@@ -206,6 +318,18 @@ class GWSourceSettings(SourceSettings):
         ],
         **kwargs,
     ) -> Tuple[str, str]:
+        """
+        Trigger an MWA observation for a GW event.
+
+        Args:
+            context (Dict): The context containing event and observation information.
+            telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
+                The settings for the MWA telescope.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Tuple[str, str]: A tuple containing updated context information.
+        """
 
         voevents = context["voevents"]
         telescope_name = telescope_settings.telescope.name
@@ -217,7 +341,6 @@ class GWSourceSettings(SourceSettings):
             return context
 
         print("DEBUG - Trigger MWA observation for GW source")
-        
 
         context = utils_helper.prepare_observation_context(context, voevents)
 
@@ -250,26 +373,36 @@ class GWSourceSettings(SourceSettings):
             )
 
             latest_obs = utils_api.get_latest_observation(
-                    cls=Observations,
-                    prop_dec=context["prop_dec"]
-                )
+                cls=Observations, prop_dec=context["prop_dec"]
+            )
 
             context = utils_telgw.handle_gw_voevents(
                 telescope_settings=telescope_settings,
                 context=context,
                 latest_obs=latest_obs,
             )
-            
+
         context["reached_end"] = True
 
         return context
 
 
 class GrbSourceSettings(SourceSettings):
+    """
+    Settings and logic for Gamma-Ray Burst (GRB) source observations.
+
+    This class contains specific methods for handling GRB events,
+    including observation triggering logic for different telescopes.
+    """
+
     # GRB settings
     # event: Dict, proc_dec: Dict
     # Final aggregation function
-    @log_event(log_location="end",message=f"Worth observing for GRB source completed", level="info")
+    @log_event(
+        log_location="end",
+        message=f"Worth observing for GRB source completed",
+        level="info",
+    )
     def worth_observing(
         self,
         event: Event,
@@ -278,6 +411,22 @@ class GrbSourceSettings(SourceSettings):
         ],
         **kwargs,
     ) -> Tuple[bool, bool, bool, str]:
+        """
+        Determine if a GRB event is worth observing based on various criteria.
+
+        Args:
+            event (Event): The GRB event to evaluate.
+            telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
+                The settings for the telescope.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Tuple[bool, bool, bool, str]: A tuple containing:
+                - trigger_bool: Whether to trigger an observation.
+                - debug_bool: Whether to trigger a debug alert.
+                - pending_bool: Whether to create a pending observation.
+                - decision_reason_log: A log of the decision-making process.
+        """
         print("DEBUG - worth_observing_grb")
 
         prop_dec = kwargs.get("prop_dec")
@@ -299,13 +448,13 @@ class GrbSourceSettings(SourceSettings):
         context["likely_bool"] = False
 
         context = utils_grb.check_fermi_likelihood(telescope_settings, context)
-        
+
         context = utils_grb.check_swift_significance(telescope_settings, context)
-        
+
         context = utils_grb.check_hess_significance(telescope_settings, context)
-        
+
         context = utils_grb.default_no_likelihood(context)
-        
+
         # Check the duration of the event
         # since new if starts, initialize the stop_processing flag
         context["stop_processing"] = False
@@ -315,7 +464,7 @@ class GrbSourceSettings(SourceSettings):
         context = utils_grb.check_not_any_event_duration(telescope_settings, context)
 
         context = utils_grb.check_duration_with_limits(telescope_settings, context)
-        
+
         context["reached_end"] = True
         return (
             context["trigger_bool"],
@@ -324,7 +473,11 @@ class GrbSourceSettings(SourceSettings):
             context["decision_reason_log"],
         )
 
-    @log_event(log_location="end",message=f"Trigger ATCA observation for GRB source completed", level="info")
+    @log_event(
+        log_location="end",
+        message=f"Trigger ATCA observation for GRB source completed",
+        level="info",
+    )
     def trigger_atca_observation(
         self,
         context: Dict,
@@ -333,6 +486,18 @@ class GrbSourceSettings(SourceSettings):
         ],
         **kwargs,
     ) -> Tuple[str, str]:
+        """
+        Trigger an ATCA observation for a GRB event.
+
+        Args:
+            context (Dict): The context containing event and observation information.
+            telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
+                The settings for the ATCA telescope.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Tuple[str, str]: A tuple containing updated context information.
+        """
 
         telescope_name = telescope_settings.telescope.name
 
@@ -349,12 +514,16 @@ class GrbSourceSettings(SourceSettings):
         context = utils_atca.handle_atca_observation(
             telescope_settings=telescope_settings, context=context
         )
-        
+
         context["reached_end"] = True
 
         return context
 
-    @log_event(log_location="end",message=f"Trigger MWA observation for GRB source completed", level="info")
+    @log_event(
+        log_location="end",
+        message=f"Trigger MWA observation for GRB source completed",
+        level="info",
+    )
     def trigger_mwa_observation(
         self,
         context: Dict,
@@ -363,7 +532,19 @@ class GrbSourceSettings(SourceSettings):
         ],
         **kwargs,
     ) -> Tuple[str, str]:
-        
+        """
+        Trigger an MWA observation for a GRB event.
+
+        Args:
+            context (Dict): The context containing event and observation information.
+            telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
+                The settings for the MWA telescope.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Tuple[str, str]: A tuple containing updated context information.
+        """
+
         voevents = context["voevents"]
         telescope_name = telescope_settings.telescope.name
 
@@ -372,7 +553,6 @@ class GrbSourceSettings(SourceSettings):
 
         if telescope_name.startswith("MWA") is False:
             return context
-        
 
         context = utils_helper.prepare_observation_context(
             context=context, voevents=voevents
@@ -381,16 +561,26 @@ class GrbSourceSettings(SourceSettings):
         context = utils_nongw.handle_non_gw_observation(
             telescope_settings=telescope_settings, context=context
         )
-        
+
         context["reached_end"] = True
 
         return context
 
 
 class NuSourceSettings(SourceSettings):
+    """
+    Settings and logic for Neutrino (Nu) source observations.
+
+    This class contains specific methods for handling Neutrino events,
+    including observation triggering logic for different telescopes.
+    """
 
     # event: Dict, proc_dec: Dict
-    @log_event(log_location="end",message=f"Worth observing for NU source completed", level="info")
+    @log_event(
+        log_location="end",
+        message=f"Worth observing for NU source completed",
+        level="info",
+    )
     def worth_observing(
         self,
         event: Event,
@@ -399,31 +589,21 @@ class NuSourceSettings(SourceSettings):
         ],
         **kwargs,
     ):
-        """Decide if a Neutrino Event is worth observing.
+        """
+        Determine if a Neutrino event is worth observing based on various criteria.
 
-        Parameters
-        ----------
-        antares_ranking : `int`, optional
-            The rank of antaras event. Default: None.
-        telescope : `int`, optional
-            The rank of telescope of the event. Default: None.
-        antares_min_ranking : `int`, optional
-            The minimum (inclusive) rank of antaras events. Default: 2.
-        decision_reason_log : `str`
-            A log of all the decisions made so far so a user can understand why the source was(n't) observed. Default: "".
-        event_id : `int`, optional
-            An Event ID that will be recorded in the decision_reason_log. Default: None.
+        Args:
+            event (Event): The Neutrino event to evaluate.
+            telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
+                The settings for the telescope.
+            **kwargs: Additional keyword arguments.
 
-        Returns
-        -------
-        trigger_bool : `boolean`
-            If True an observations should be triggered.
-        debug_bool : `boolean`
-            If True a debug alert should be sent out.
-        pending_bool : `boolean`
-            If True will create a pending observation and wait for human intervention.
-        decision_reason_log : `str`
-            A log of all the decisions made so far so a user can understand why the source was(n't) observed.
+        Returns:
+            Tuple[bool, bool, bool, str]: A tuple containing:
+                - trigger_bool: Whether to trigger an observation.
+                - debug_bool: Whether to trigger a debug alert.
+                - pending_bool: Whether to create a pending observation.
+                - decision_reason_log: A log of the decision-making process.
         """
 
         print("DEBUG - WORTH OBSERVING NU")
@@ -431,7 +611,7 @@ class NuSourceSettings(SourceSettings):
         context = {}
         decision_reason_log = kwargs.get("decision_reason_log")
         prop_dec = kwargs.get("prop_dec")
-        
+
         context["prop_dec"] = prop_dec
         context["event"] = event
         context["event_id"] = event.id
@@ -453,11 +633,15 @@ class NuSourceSettings(SourceSettings):
         else:
             trigger_bool = True
             decision_reason_log += f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: No thresholds for non Antares telescopes so triggering. \n"
-        
+
         context["reached_end"] = True
         return trigger_bool, debug_bool, pending_bool, decision_reason_log
 
-    @log_event(log_location="end",message=f"Trigger ATCA observation for NU source completed", level="info")
+    @log_event(
+        log_location="end",
+        message=f"Trigger ATCA observation for NU source completed",
+        level="info",
+    )
     def trigger_atca_observation(
         self,
         context: Dict,
@@ -466,6 +650,18 @@ class NuSourceSettings(SourceSettings):
         ],
         **kwargs,
     ) -> Tuple[str, str]:
+        """
+        Trigger an ATCA observation for a NU event.
+
+        Args:
+            context (Dict): The context containing event and observation information.
+            telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
+                The settings for the ATCA telescope.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Tuple[str, str]: A tuple containing updated context information.
+        """
 
         telescope_name = telescope_settings.telescope.name
 
@@ -478,12 +674,16 @@ class NuSourceSettings(SourceSettings):
         context = utils_atca.handle_atca_observation(
             telescope_settings=telescope_settings, context=context
         )
-        
+
         context["reached_end"] = True
 
         return context
 
-    @log_event(log_location="end",message=f"Trigger MWA observation for NU source completed", level="info")
+    @log_event(
+        log_location="end",
+        message=f"Trigger MWA observation for NU source completed",
+        level="info",
+    )
     def trigger_mwa_observation(
         self,
         context: Dict,
@@ -492,6 +692,18 @@ class NuSourceSettings(SourceSettings):
         ],
         **kwargs,
     ) -> Tuple[str, str]:
+        """
+        Trigger an MWA observation for a NU event.
+
+        Args:
+            context (Dict): The context containing event and observation information.
+            telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
+                The settings for the MWA telescope.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Tuple[str, str]: A tuple containing updated context information.
+        """
 
         voevents = context["voevents"]
         telescope_name = telescope_settings.telescope.name
@@ -509,8 +721,7 @@ class NuSourceSettings(SourceSettings):
         context = utils_nongw.handle_non_gw_observation(
             telescope_settings=telescope_settings, context=context
         )
-        
+
         context["reached_end"] = True
 
         return context
-

@@ -1,3 +1,27 @@
+"""
+This module defines telescope settings classes for different telescopes.
+
+The module contains a base class `BaseTelescopeSettings` which defines common
+attributes and methods for all telescope settings. It also includes two child
+classes, `MWATelescopeSettings` and `ATCATelescopeSettings`, which implement
+telescope-specific settings and behaviors.
+
+Classes:
+    BaseTelescopeSettings: Abstract base class for telescope settings.
+    MWATelescopeSettings: Settings specific to the Murchison Widefield Array (MWA) telescope.
+    ATCATelescopeSettings: Settings specific to the Australia Telescope Compact Array (ATCA).
+
+Each child class implements two key methods:
+    - trigger_telescope: Sends a request to the real system or a test API to trigger
+      an observation, depending on the environment (production or development).
+    - save_observation: Saves the observation details through an API call, with
+      specifics varying based on the telescope.
+
+These classes are used to manage telescope-specific settings and handle the
+process of triggering observations and saving their results in a standardized way
+across different telescope systems.
+"""
+
 import datetime as dt
 import logging
 import os
@@ -12,8 +36,13 @@ import requests
 from astropy.time import Time
 from pydantic import BaseModel, Field
 
-from ..config import (ATCA_API_ENDPOINT, ATCA_AUTH, ATCA_PROTOCOL,
-                      ATCA_SERVER_NAME, PROJECT_PASSWORDS)
+from ..config import (
+    ATCA_API_ENDPOINT,
+    ATCA_AUTH,
+    ATCA_PROTOCOL,
+    ATCA_SERVER_NAME,
+    PROJECT_PASSWORDS,
+)
 from ..consts import *
 from ..utils import utils_api
 from ..utils import utils_helper as utils_helper
@@ -26,10 +55,36 @@ logger = logging.getLogger(__name__)
 # Get a json logger
 json_logger = logging.getLogger('django_json')
 
+
 class BaseTelescopeSettings(BaseModel, ABC):
+    """
+    Abstract base class for telescope settings.
+
+    This class defines common attributes and methods for all telescope settings.
+    It includes fields for various observation parameters and abstract methods
+    for triggering telescopes and saving observations.
+
+    Attributes:
+        telescope (Telescope): The telescope associated with these settings.
+        maximum_observation_time_seconds (int): Maximum observation time in seconds.
+        event_any_duration (bool): Whether to trigger on events with any duration.
+        event_min_duration (float): Minimum event duration.
+        event_max_duration (float): Maximum event duration.
+        pending_min_duration_1 (float): Pending minimum duration 1.
+        pending_max_duration_1 (float): Pending maximum duration 1.
+        pending_min_duration_2 (float): Pending minimum duration 2.
+        pending_max_duration_2 (float): Pending maximum duration 2.
+        maximum_position_uncertainty (float): Maximum allowed position uncertainty.
+        fermi_prob (float): Minimum probability to observe for Fermi sources.
+        swift_rate_signif (float): Minimum "RATE_SIGNIF" to observe for SWIFT sources.
+        antares_min_ranking (int): Minimum rating to observe for Antares sources.
+        repointing_limit (float): Minimum distance for repointing.
+        observe_significant (bool): Whether to observe only high-significance events.
+    """
+
     # id: int
     telescope: Telescope
- 
+
     maximum_observation_time_seconds: int = Field(
         DEFAULT_MAX_OBSERVATION_TIME_SECONDS,
         description="Set maximum observation time based off event time. Setting to 0 disables this check.",
@@ -91,16 +146,70 @@ class BaseTelescopeSettings(BaseModel, ABC):
         context,
         **kwargs,
     ) -> Tuple[str, str, List[Union[int, str]], Optional[str]]:
-        """This is an abstract method that must be implemented by subclasses."""
+        """
+        Abstract method to trigger a telescope observation.
+
+        This method should be implemented by subclasses to handle the specific
+        logic for triggering an observation on the respective telescope.
+
+        Args:
+            context (dict): A dictionary containing context information for the observation.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Tuple[str, str, List[Union[int, str]], Optional[str]]: A tuple containing:
+                - A string indicating the result of the trigger attempt ('T', 'I', or 'E').
+                - An updated decision reason log.
+                - A list of observation IDs.
+                - Optional additional result information.
+        """
         pass
 
     @abstractmethod
     def save_observation(self, context, trigger_id, obsid=None, reason=None) -> Dict:
-        """This is an abstract method that must be implemented by subclasses."""
+        """
+        Abstract method to save an observation.
+
+        This method should be implemented by subclasses to handle the specific
+        logic for saving an observation for the respective telescope.
+
+        Args:
+            context (dict): A dictionary containing context information for the observation.
+            trigger_id (str): The ID of the trigger.
+            obsid (Optional[str]): The observation ID, if available.
+            reason (Optional[str]): The reason for the observation, if available.
+
+        Returns:
+            Dict: A dictionary containing the result of the save operation.
+        """
         pass
 
 
 class MWATelescopeSettings(BaseTelescopeSettings):
+    """
+    Settings specific to the Murchison Widefield Array (MWA) telescope.
+
+    This class extends BaseTelescopeSettings with MWA-specific attributes and methods.
+
+    Attributes:
+        start_observation_at_high_sensitivity (bool): Whether to start observations at high sensitivity.
+        mwa_sub_alt_NE (float): Altitude in degrees for the North-East sub array.
+        mwa_sub_az_NE (float): Azimuth in degrees for the North-East sub array.
+        mwa_sub_alt_NW (float): Altitude in degrees for the North-West sub array.
+        mwa_sub_az_NW (float): Azimuth in degrees for the North-West sub array.
+        mwa_sub_alt_SW (float): Altitude in degrees for the South-West sub array.
+        mwa_sub_az_SW (float): Azimuth in degrees for the South-West sub array.
+        mwa_sub_alt_SE (float): Altitude in degrees for the South-East sub array.
+        mwa_sub_az_SE (float): Azimuth in degrees for the South-East sub array.
+        mwa_freqspecs (str): The frequency channels IDs for the MWA to observe at.
+        mwa_exptime (int): Observation time in seconds.
+        mwa_calexptime (float): Calibrator Observation time in seconds.
+        mwa_freqres (float): Correlator frequency resolution for observations.
+        mwa_inttime (float): Correlator integration time for observations in seconds.
+        mwa_horizon_limit (float): The minimum elevation of the source to observe (in degrees).
+        mwa_nobs (float): Number of observations to make.
+    """
+
     start_observation_at_high_sensitivity: bool = Field(
         DEFAULT_START_OBSERVATION_AT_HIGH_SENSITIVITY,
         description="Without positional data, start observations with MWA sub array at high sensitivity area.",
@@ -168,39 +277,31 @@ class MWATelescopeSettings(BaseTelescopeSettings):
     class Config:
         extra = "forbid"  # This forbids any extra fields t
 
-    @log_event(log_location="end",message=f"MWA trigger telescope completed", level="info")
+    @log_event(
+        log_location="end", message=f"MWA trigger telescope completed", level="info"
+    )
     def trigger_telescope(
         self,
         context,
         **kwargs,
     ) -> Tuple[str, str, List[Union[int, str]], str]:
-        """Check if the MWA can observe then send it off the observation.
-
-        Parameters
-        ----------
-        prop_dec : `django.db.models.Model`
-            The Django ProposalDecision model object.
-        decision_reason_log : `str`
-            A log of all the decisions made so far so a user can understand why the source was(n't) observed.
-        obsname : `str`
-            The name of the observation.
-        vcsmode : `boolean`, optional
-            True to observe in VCS mode and False to observe in correlator/imaging mode. Default: False
-        event_id : `int`, optional
-            An Event ID that will be recorded in the decision_reason_log. Default: None.
-
-        Returns
-        -------
-        result : `str`
-            The results of the attempt to observer where 'T' means it was triggered, 'I' means it was ignored and 'E' means there was an error.
-        decision_reason_log : `str`
-            The updated trigger message to include an observation specific logs.
-        observations : `list`
-            A list of observations that were scheduled by MWA.
-        result : `object`
-            Result from mwa
         """
+        Trigger an MWA telescope observation.
 
+        This method handles the logic for triggering an MWA observation, including
+        different scenarios such as early warning events and sub-array observations.
+
+        Args:
+            context (dict): A dictionary containing context information for the observation.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Tuple[str, str, List[Union[int, str]], str]: A tuple containing:
+                - A string indicating the result of the trigger attempt ('T', 'I', or 'E').
+                - An updated decision reason log.
+                - A list of observation IDs.
+                - The raw result from the MWA trigger operation.
+        """
         # return "T", decision_reason_log, [], {}
         prop_dec = context["prop_dec"]
         prop_settings = context["prop_dec"].proposal
@@ -217,7 +318,6 @@ class MWATelescopeSettings(BaseTelescopeSettings):
         # Not below horizon limit so observer
         logger.info(f"Triggering MWA at UTC time {Time.now()} ...")
 
-
         # if True:
         #     return "T", decision_reason_log, [], None
 
@@ -229,7 +329,6 @@ class MWATelescopeSettings(BaseTelescopeSettings):
                 and vcsmode == True
             ):
 
-            
                 result = trigger_mwa(
                     project_id=prop_settings.project_id.id,
                     secure_key=prop_settings.project_id.password,
@@ -273,7 +372,7 @@ class MWATelescopeSettings(BaseTelescopeSettings):
                 )
             else:
                 print("DEBUG - Scheduling an ra/dec observation")
-                
+
                 result = trigger_mwa(
                     project_id=prop_settings.project_id.id,
                     secure_key=prop_settings.project_id.password,
@@ -298,7 +397,7 @@ class MWATelescopeSettings(BaseTelescopeSettings):
         except Exception as e:
             print(f"DEBUG - Error exception scheduling observation {e}")
             decision_reason_log += f"{datetime.now(dt.timezone.utc)}: Event ID {event_id}: Exception trying to schedule event {e}\n "
-            
+
             json_logger.error(
                 "Triggering MWA observation",
                 extra={
@@ -310,7 +409,6 @@ class MWATelescopeSettings(BaseTelescopeSettings):
 
             return "E", decision_reason_log, [], []
 
-    
         logger.debug(f"result: {result}")
         # Check if succesful
         if result is None:
@@ -351,9 +449,25 @@ class MWATelescopeSettings(BaseTelescopeSettings):
 
         return "T", decision_reason_log, obsids, result
 
-    @log_event(log_location="end",message=f"MWA save observation completed", level="info")
+    @log_event(
+        log_location="end", message=f"MWA save observation completed", level="info"
+    )
     def save_observation(self, context, trigger_id, obsid=None, reason=None) -> Dict:
-        """Save the observation result through the API."""
+        """
+        Save an MWA observation.
+
+        This method handles the logic for saving an MWA observation, including
+        preparing the payload and making an API call to create the observation record.
+
+        Args:
+            context (dict): A dictionary containing context information for the observation.
+            trigger_id (str): The ID of the trigger.
+            obsid (Optional[str]): The observation ID, if available.
+            reason (Optional[str]): The reason for the observation, if available.
+
+        Returns:
+            Dict: A dictionary containing the result of the save operation.
+        """
         print("DEBUG - saving MWA observation")
 
         # Prepare the payload
@@ -381,12 +495,12 @@ class MWATelescopeSettings(BaseTelescopeSettings):
                 else None
             ),
         }
-        
+
         try:
             response = utils_api.create_observation(payload)
             response.raise_for_status()
             result = response.json()
-            
+
             print(f"Observation created: {result}")
 
         except requests.RequestException as e:
@@ -398,6 +512,39 @@ class MWATelescopeSettings(BaseTelescopeSettings):
 
 
 class ATCATelescopeSettings(BaseTelescopeSettings):
+    """
+    Settings specific to the Australia Telescope Compact Array (ATCA).
+
+    This class extends BaseTelescopeSettings with ATCA-specific attributes and methods.
+
+    Attributes:
+        atca_band_3mm (bool): Whether to use the 3mm Band (83-105 GHz).
+        atca_band_3mm_exptime (int): 3mm Band Exposure Time (mins).
+        atca_band_3mm_freq1 (Optional[int]): 3mm Band Centre frequency 1 (MHz).
+        atca_band_3mm_freq2 (Optional[int]): 3mm Band Centre frequency 2 (MHz).
+        atca_band_7mm (bool): Whether to use the 7mm Band (30-50 GHz).
+        atca_band_7mm_exptime (int): 7mm Band Exposure Time (mins).
+        atca_band_7mm_freq1 (Optional[int]): 7mm Band Centre frequency 1 (MHz).
+        atca_band_7mm_freq2 (Optional[int]): 7mm Band Centre frequency 2 (MHz).
+        atca_band_15mm (bool): Whether to use the 15mm Band (16-25 GHz).
+        atca_band_15mm_exptime (int): 15mm Band Exposure Time (mins).
+        atca_band_15mm_freq1 (Optional[int]): 15mm Band Centre frequency 1 (MHz).
+        atca_band_15mm_freq2 (Optional[int]): 15mm Band Centre frequency 2 (MHz).
+        atca_band_4cm (bool): Whether to use the 4cm Band (3.9-11.0 GHz).
+        atca_band_4cm_exptime (int): 4cm Band Exposure Time (mins).
+        atca_band_4cm_freq1 (Optional[int]): 4cm Band Centre frequency 1 (MHz).
+        atca_band_4cm_freq2 (Optional[int]): 4cm Band Centre frequency 2 (MHz).
+        atca_band_16cm (bool): Whether to use the 16cm Band (1.1-3.1 GHz).
+        atca_band_16cm_exptime (int): 16cm Band Exposure Time (mins).
+        atca_max_exptime (int): Maximum Exposure Time (mins).
+        atca_min_exptime (int): Minimum Exposure Time (mins).
+        atca_prioritise_source (bool): Whether to prioritise time on source rather than time on calibrator.
+        atca_dec_min_1 (int): Declination min limit 1 (deg).
+        atca_dec_max_1 (int): Declination max limit 1 (deg).
+        atca_dec_min_2 (int): Declination min limit 2 (deg).
+        atca_dec_max_2 (int): Declination max limit 2 (deg).
+    """
+
     # ATCA setting
     atca_band_3mm: bool = Field(
         DEFAULT_ATCA_BAND_3MM, description="Use 3mm Band (83-105 GHz)?"
@@ -483,33 +630,29 @@ class ATCATelescopeSettings(BaseTelescopeSettings):
     class Config:
         extra = "forbid"  # This forbids any extra fields t
 
-    @log_event(log_location="end",message=f"ATCA save observation completed", level="info")
+    @log_event(
+        log_location="end", message=f"ATCA save observation completed", level="info"
+    )
     def trigger_telescope(
         self,
         context,
         **kwargs,
     ) -> Tuple[str, str, List[Union[int, str]]]:
-        """Check if the ATCA telescope can observe, send it off the observation and return any errors.
+        """
+        Trigger an ATCA telescope observation.
 
-        Parameters
-        ----------
-        prop_dec : `django.db.models.Model`
-            The Django ProposalDecision model object.
-        decision_reason_log : `str`
-            A log of all the decisions made so far so a user can understand why the source was(n't) observed.
-        obsname : `str`
-            The name of the observation.
-        event_id : `int`, optional
-            An Event ID that will be recorded in the decision_reason_log. Default: None.
+        This method handles the logic for triggering an ATCA observation, including
+        preparing the request payload and sending it to the ATCA rapid response service.
 
-        Returns
-        -------
-        result : `str`
-            The results of the attempt to observer where 'T' means it was triggered, 'I' means it was ignored and 'E' means there was an error.
-        decision_reason_log : `str`
-            The updated trigger message to include an observation specific logs.
-        observations : `list`
-            A list of observations that were scheduled by ATCA (currently there is no functionality to record this so will be empty).
+        Args:
+            context (dict): A dictionary containing context information for the observation.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Tuple[str, str, List[Union[int, str]]]: A tuple containing:
+                - A string indicating the result of the trigger attempt ('T', 'I', or 'E').
+                - An updated decision reason log.
+                - A list containing the response ID from the ATCA service.
         """
 
         prop_dec = context["prop_dec"]
@@ -591,7 +734,7 @@ class ATCATelescopeSettings(BaseTelescopeSettings):
 
         rapidObj["httpAuthUsername"] = ATCA_AUTH.get('username')
         rapidObj["httpAuthPassword"] = ATCA_AUTH.get('password')
-        
+
         rapidObj["serverProtocol"] = ATCA_PROTOCOL
         rapidObj["serverName"] = ATCA_SERVER_NAME
         rapidObj["apiEndpoint"] = ATCA_API_ENDPOINT
@@ -607,9 +750,7 @@ class ATCATelescopeSettings(BaseTelescopeSettings):
             response = request.send()
         except Exception as r:
             logger.error(f"ATCA error message: {r}")
-            decision_reason_log += (
-                f"{datetime.now(dt.timezone.utc)}: Event ID {event_id}: ATCA error message: {r}\n "
-            )
+            decision_reason_log += f"{datetime.now(dt.timezone.utc)}: Event ID {event_id}: ATCA error message: {r}\n "
 
             json_logger.error(
                 "ATCA error message. decision: E ",
@@ -625,9 +766,25 @@ class ATCATelescopeSettings(BaseTelescopeSettings):
         context["reached_end"] = True
         return "T", decision_reason_log, [response["id"]]
 
-    @log_event(log_location="end",message=f"ATCA save observation completed", level="info")
+    @log_event(
+        log_location="end", message=f"ATCA save observation completed", level="info"
+    )
     def save_observation(self, context, trigger_id, obsid=None, reason=None) -> Dict:
-        """Save the observation result through the API."""
+        """
+        Save an ATCA observation.
+
+        This method handles the logic for saving an ATCA observation, including
+        preparing the payload and making an API call to create the observation record.
+
+        Args:
+            context (dict): A dictionary containing context information for the observation.
+            trigger_id (str): The ID of the trigger.
+            obsid (Optional[str]): The observation ID, if available.
+            reason (Optional[str]): The reason for the observation, if available.
+
+        Returns:
+            Dict: A dictionary containing the result of the save operation.
+        """
         print("DEBUG - saving ATCA observation")
 
         # Prepare the payload
@@ -661,4 +818,3 @@ class ATCATelescopeSettings(BaseTelescopeSettings):
 
         context["reached_end"] = True
         return result
-

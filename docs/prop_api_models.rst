@@ -1,44 +1,29 @@
-Propoal Package Models
+Proposal Package Models
 =======================
 
 The `models` module in `proposalsettings` defines the data models used for proposals and telescopes.
 
-The following are the available models:
+.. toctree::
+   :maxdepth: 1
+   :caption: Model Documentation:
 
-1. **ProposalSettings** - This model is responsible for storing settings related to proposals.
-2. **TelescopeSettings** - Manages the configuration of telescopes.
-3. **ObservationSchedule** - Stores information regarding the scheduling of observations.
-4. **EventGroup** - Handles grouping of astronomical events.
-5. **SourceSettings** - Defines settings for sources being observed.
+   proposal_model
+   telescope_settings_model
+   source_settings_model
+   other_models
 
-.. automodule:: prop_api.proposalsettings.models.proposal
-    :members:
-    :undoc-members:
-    :show-inheritance:
+1. :doc:`ProposalSettings <proposal_model>`
+   
+   Stores settings related to proposals, including methods for determining observation worthiness and triggering observations.
 
-.. automodule:: prop_api.proposalsettings.models.event
-    :members:
-    :undoc-members:
-    :show-inheritance:
+2. :doc:`TelescopeSettings <telescope_settings_model>`
+   
+   Manages the configuration of telescopes, storing telescope-related parameters and data.
 
-.. automodule:: prop_api.proposalsettings.models.telescope
-    :members:
-    :undoc-members:
-    :show-inheritance:
+3. :doc:`SourceSettings <source_settings_model>`
+   
+   Defines settings for sources being observed, including logic for determining observation worthiness and triggering observations based on telescope type.
 
-
-.. automodule:: prop_api.proposalsettings.models.telescopesettings
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-.. automodule:: prop_api.proposalsettings.models.sourcesettings
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. automodule:: prop_api.proposalsettings.models.schemas
-    :members:
-    :undoc-members:
-    :show-inheritance:
+4. :doc:`Other Models <other_models>`
+   
+   Contains documentation for additional models in the proposal package.

@@ -19,6 +19,15 @@ logger = logging.getLogger(__name__)
 
 
 class ProposalSettings(BaseModel):
+    """
+    Represents the settings for a proposal in the telescope observation system.
+
+    This class holds data and functions related to proposal settings, including
+    project information, event telescope details, proposal identifiers, and
+    various configuration options for triggering observations.
+
+    """
+
     id: int
     project_id: TelescopeProjectId
     event_telescope: Optional[EventTelescope]
@@ -50,15 +59,40 @@ class ProposalSettings(BaseModel):
         extra = "forbid"
 
     def is_worth_observing(self, event: Event, **kwargs):
+        """
+        Determines if an event is worth observing based on the source settings.
+
+        This method delegates the decision to the source_settings' worth_observing method.
+
+        Args:
+            event (Event): The event to evaluate.
+            **kwargs: Additional keyword arguments to pass to the worth_observing method.
+
+        Returns:
+            bool: True if the event is worth observing, False otherwise.
+        """
         # Delegate to the source settings' worth_observing method
         return self.source_settings.worth_observing(
             event, self.telescope_settings, **kwargs
         )
 
-    # @log_event(log_location="start",message=f"Trigger observation started", level="info")
-    @log_event(log_location="end",message=f"Trigger observation completed", level="info")
+    @log_event(
+        log_location="end", message=f"Trigger observation completed", level="info"
+    )
     def trigger_gen_observation(self, context: Dict, **kwargs) -> Tuple[str, str]:
+        """
+        Triggers the generation of an observation based on the event context.
 
+        This method is called after receiving a response that an event is worth observing.
+        It performs various checks and triggers observations for different telescopes (MWA, ATCA).
+
+        Args:
+            context (Dict): A dictionary containing the context of the event and observation.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Tuple[str, str]: A tuple containing the decision and the decision reason log.
+        """
         print(f"DEBUG - START context keys: {context.keys()}")
 
         context = utils_helper.check_mwa_horizon_and_prepare_context(context)
@@ -85,8 +119,7 @@ class ProposalSettings(BaseModel):
             context["decision_reason_log"] = (
                 f"{context['decision_reason_log']}{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Not making an MWA observation. \n"
             )
-        
+
         context['reached_end'] = True
         print(f"DEBUG - END context keys: {context.keys()}")
         return context
-

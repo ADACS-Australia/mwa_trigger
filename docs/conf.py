@@ -14,6 +14,8 @@ import os
 import sys
 from unittest.mock import Mock
 
+import django
+
 sys.path.insert(0, os.path.abspath("."))
 
 # Add path to prop_api
@@ -22,7 +24,6 @@ sys.path.insert(0, os.path.abspath('..'))
 # sys.path.insert(
 #     0, os.path.abspath("/home/batbold/Projects/adacs_project_official/TraceT/prop_api")
 # )
-
 
 print("sys.path:", sys.path)
 
@@ -71,6 +72,7 @@ extensions = [
 ]
 numpydoc_show_class_members = False
 autosummary_generate = True
+autodoc_member_order = 'bysource'  #
 
 autodoc_mock_imports = MOCK_MODULES  # Mock imports for autodoc to work properly
 

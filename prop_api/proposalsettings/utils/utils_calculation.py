@@ -2,7 +2,7 @@ import io
 import os
 import pathlib
 import time as pytime
-from typing import List, Tuple, TypeVar
+from typing import Any, Dict, List, Tuple, TypeVar
 
 import astropy_healpix as ah
 import ligo.skymap.plot
@@ -25,6 +25,20 @@ PointingVar = TypeVar("PointingVar")
 
 
 def getMWARaDecFromAltAz(alt, az, time):
+    """
+    Convert altitude and azimuth coordinates to right ascension and declination for MWA.
+
+    Args:
+        alt (float): Altitude in degrees.
+        az (float): Azimuth in degrees.
+        time (Time): Observation time.
+
+    Returns:
+        tuple: (ra, dec, ra_dec) where:
+            ra (Quantity): Right ascension in degrees.
+            dec (Quantity): Declination in degrees.
+            ra_dec (SkyCoord): SkyCoord object representing the ICRS coordinates.
+    """
     mwa_coord = SkyCoord(
         az, alt, unit=(u.deg, u.deg), frame="altaz", obstime=time, location=MWA
     )
@@ -35,7 +49,22 @@ def getMWARaDecFromAltAz(alt, az, time):
     return ra, dec, ra_dec
 
 
-def isClosePosition(ra1, dec1, ra2, dec2, deg=10):
+def isClosePosition(
+    ra1: float, dec1: float, ra2: float, dec2: float, deg: float = 10
+) -> bool:
+    """
+    Check if two celestial positions are within a specified angular separation.
+
+    Args:
+        ra1 (float): Right ascension of the first position in degrees.
+        dec1 (float): Declination of the first position in degrees.
+        ra2 (float): Right ascension of the second position in degrees.
+        dec2 (float): Declination of the second position in degrees.
+        deg (float, optional): Maximum angular separation in degrees. Defaults to 10.
+
+    Returns:
+        bool: True if positions are within the specified angular separation, False otherwise.
+    """
     # Create SkyCoord objects for the two positions
 
     coord1 = SkyCoord(ra=ra1, dec=dec1, frame="icrs")
@@ -54,6 +83,18 @@ def isClosePosition(ra1, dec1, ra2, dec2, deg=10):
 
 
 def getMWAPointingsFromSkymapFile(skymap):
+    """
+    Calculate MWA pointings based on a given skymap file.
+
+    Args:
+        skymap (dict): Dictionary containing skymap data.
+
+    Returns:
+        tuple: (skymap, time, pointings) where:
+            skymap (dict): The input skymap.
+            time (Time): Observation time (set to a fixed value).
+            pointings (list): List of tuples containing pointing information.
+    """
     with open(MWA_SPOTS, "r") as file:
         lines = file.readlines()
         data = []
@@ -100,6 +141,18 @@ def getMWAPointingsFromSkymapFile(skymap):
 
 
 def drawMWAPointings(skymap, time, name, pointings: List[PointingVar]):
+    """
+    Draw MWA pointings on a skymap and save the plot as an image.
+
+    Args:
+        skymap (dict): Dictionary containing skymap data.
+        time (Time): Observation time.
+        name (str): Name to be used in the output file name.
+        pointings (List[PointingVar]): List of pointing information.
+
+    Returns:
+        str: File name of the saved image.
+    """
     plt.close("all")
     with open(MWA_SPOTS, "r") as file:
         lines = file.readlines()
@@ -175,6 +228,18 @@ def drawMWAPointings(skymap, time, name, pointings: List[PointingVar]):
 
 
 def singleMWAPointing(skymap, time, name, pointing: PointingVar):
+    """
+    Draw a single MWA pointing on a skymap.
+
+    Args:
+        skymap (dict): Dictionary containing skymap data.
+        time (Time): Observation time.
+        name (str): Name to be used in the output file name.
+        pointing (PointingVar): Single pointing information.
+
+    Returns:
+        str: File name of the saved image.
+    """
     return drawMWAPointings(skymap, time, name, [pointing])
 
 
@@ -184,4 +249,16 @@ def subArrayMWAPointings(
     name,
     pointings: Tuple[PointingVar, PointingVar, PointingVar, PointingVar],
 ):
+    """
+    Draw multiple MWA pointings (sub-array) on a skymap.
+
+    Args:
+        skymap (dict): Dictionary containing skymap data.
+        time (Time): Observation time.
+        name (str): Name to be used in the output file name.
+        pointings (Tuple[PointingVar, PointingVar, PointingVar, PointingVar]): Tuple of four pointing information.
+
+    Returns:
+        str: File name of the saved image.
+    """
     return drawMWAPointings(skymap, time, name, list(pointings))

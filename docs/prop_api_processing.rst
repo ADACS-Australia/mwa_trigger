@@ -9,7 +9,31 @@ Main functions for Processing
 ---------------------------------
 
 The first function to be called is `process_all_proposals`. This function is main function that orchestrates the processing of all proposals or new proposals
-calling other functions to do the job. 
+calling other functions to do the job. It will loop through all the proposals and see if it's worth observing. If it is will trigger an observation and send off the relevant alerts and update the proposal decision and event group.
+
+.. code-block:: python
+
+        if context["prop_decs_exist"]:
+            logger.info(
+                "Loop over all proposals settings and see if it's worth reobserving"
+            )
+            context = process_proposal_decision(context)
+        else:
+            logger.info("First unignored event")
+            context = process_new_proposal_decision(context)
+
+        context = trigger_repointing(context)
+
+        context = check_worth_observing(context)
+
+        context = make_trigger_decision(context)
+
+        result = utils_api.update_proposal_decision(
+            prop_dec_pyd.id, context["decision"], context["decision_reason_log"]
+        )
+
+        result = utils_api.trigger_alerts(context)
+
 
 .. automodule:: prop_api.proposalsettings.utils.utils_process
     :undoc-members:
@@ -63,7 +87,7 @@ is_worth_observing function is explained in models part.
 Functions for interacting with the web app
 -----------------------------------------
 
-The following functions are used to interact with the web app.
+The following functions are used to interact with the web app. 
 
 .. automodule:: prop_api.proposalsettings.utils.utils_api
     :undoc-members:

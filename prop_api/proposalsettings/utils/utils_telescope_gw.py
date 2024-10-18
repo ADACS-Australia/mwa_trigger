@@ -10,9 +10,26 @@ from .utils_log import log_event
 json_logger = logging.getLogger("django_json")
 
 
-@log_event(log_location="end",message=f"Handled the first observation of an event.", level="debug")
+@log_event(
+    log_location="end",
+    message=f"Handled the first observation of an event.",
+    level="debug",
+)
 def handle_first_observation(telescope_settings, context):
-    "Handle the first observation of an event."
+    """
+    Handle the first observation of a gravitational wave event.
+
+    This function processes the initial detection of a gravitational wave event.
+    It triggers a buffer dump request to the MWA telescope and saves the buffer
+    observation result.
+
+    Args:
+        telescope_settings: Settings for the telescope.
+        context (dict): Context information for the event.
+
+    Returns:
+        dict: Updated context with observation results and decision logs.
+    """
 
     if context["stop_processing"]:
         return context
@@ -41,7 +58,6 @@ def handle_first_observation(telescope_settings, context):
         "decision_reason_log"
     ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Saving buffer observation result.\n"
 
-
     if context["decision_buffer"].find("T") > -1:
         saved_obs_1 = telescope_settings.save_observation(
             context,
@@ -50,18 +66,32 @@ def handle_first_observation(telescope_settings, context):
             obsid=context["obsids_buffer"][0],
             reason="This is a buffer observation ID",
         )
-        
+
         # TODO: ask if we should stop triggering the subsequent events
         # context["stop_processing"] = True
-        
+
     context["reached_end"] = True
 
     return context
 
 
-@log_event(log_location="end",message=f"Handled early warning events.", level="debug")
+@log_event(log_location="end", message=f"Handled early warning events.", level="debug")
 def handle_early_warning(telescope_settings, context):
-    """Handle early warning events."""
+    """
+    Handle early warning events for gravitational wave detection.
+
+    This function processes early warning events, ignoring skymap data.
+    It calculates the observation time based on the event detection time
+    and the early observation time setting, then triggers an observation
+    if the timing is appropriate.
+
+    Args:
+        telescope_settings: Settings for the telescope.
+        context (dict): Context information for the event.
+
+    Returns:
+        dict: Updated context with observation results and decision logs.
+    """
 
     if context["stop_processing"]:
         return context
@@ -80,7 +110,7 @@ def handle_early_warning(telescope_settings, context):
         f"DEBUG - ps.source_settings.early_observation_time_seconds: {ps.source_settings.early_observation_time_seconds}"
     )
     print(f"DEBUG - timeDiff.total_seconds(): {timeDiff.total_seconds()}")
-    
+
     if timeDiff.total_seconds() >= ps.source_settings.early_observation_time_seconds:
         return context
 
@@ -103,11 +133,9 @@ def handle_early_warning(telescope_settings, context):
         context["result"],
     ) = telescope_settings.trigger_telescope(context)
 
-    
     context[
         "decision_reason_log"
     ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Saving observation result.\n"
-
 
     if context["decision"].find("T") > -1:
         saved_obs_2 = telescope_settings.save_observation(
@@ -118,14 +146,30 @@ def handle_early_warning(telescope_settings, context):
         )
         # TODO: ask if we should stop triggering the subsequent events
         # context["stop_processing"] = True
-        
+
     context["reached_end"] = True
 
     return context
 
-@log_event(log_location="end",message=f"Handled events with skymap data.", level="debug")
+
+@log_event(
+    log_location="end", message=f"Handled events with skymap data.", level="debug"
+)
 def handle_skymap_event(telescope_settings, context):
-    """Handle events with skymap data."""
+    """
+    Handle gravitational wave events with skymap data.
+
+    This function processes events that include skymap information. It generates
+    MWA sub-arrays based on the skymap, calculates the observation time, and
+    triggers an observation if the event is within the maximum observation time window.
+
+    Args:
+        telescope_settings: Settings for the telescope.
+        context (dict): Context information for the event.
+
+    Returns:
+        dict: Updated context with observation results and decision logs.
+    """
 
     if context["stop_processing"]:
         return context
@@ -163,16 +207,12 @@ def handle_skymap_event(telescope_settings, context):
                 ].proposal.telescope_settings.maximum_observation_time_seconds
                 - time_diff.total_seconds()
             )
-        
+
             # if time_diff.total_seconds() < proposal.telescope_settings.maximum_observation_time_seconds
             # it should work and crushed
-            context["prop_dec"].proposal.telescope_settings.mwa_nobs = (
-                floor(
-                    est_obs_time
-                    / context[
-                        "prop_dec"
-                    ].proposal.telescope_settings.mwa_exptime
-                )
+            context["prop_dec"].proposal.telescope_settings.mwa_nobs = floor(
+                est_obs_time
+                / context["prop_dec"].proposal.telescope_settings.mwa_exptime
             )
 
             context[
@@ -226,12 +266,25 @@ def handle_skymap_event(telescope_settings, context):
         )
 
     context["reached_end"] = True
-    
+
     return context
 
 
-@log_event(log_location="end",message=f"Trigger and save gw voevents.", level="debug")
+@log_event(log_location="end", message=f"Trigger and save gw voevents.", level="debug")
 def trigger_and_save_gw_voevents(telescope_settings, context):
+    """
+    Trigger an observation for a gravitational wave event and save the result.
+
+    This function sends a sub-array observation request to the MWA telescope,
+    processes the result, and saves the observation details.
+
+    Args:
+        telescope_settings: Settings for the telescope.
+        context (dict): Context information for the event.
+
+    Returns:
+        dict: Updated context with observation results and decision logs.
+    """
 
     if context["stop_processing"]:
         return context
@@ -258,7 +311,6 @@ def trigger_and_save_gw_voevents(telescope_settings, context):
     ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Saving observation result. \n"
     context["request_sent_at"] = datetime.now(dt.timezone.utc)
 
-
     if context["decision"].find("T") > -1:
         saved_obs_2 = telescope_settings.save_observation(
             context,
@@ -272,8 +324,27 @@ def trigger_and_save_gw_voevents(telescope_settings, context):
     context["reached_end"] = True
     return context
 
-@log_event(log_location="end",message=f"Update observation position based on the new skymap.", level="debug")
+
+@log_event(
+    log_location="end",
+    message=f"Update observation position based on the new skymap.",
+    level="debug",
+)
 def update_position_based_on_skymap(context, latest_obs):
+    """
+    Update the observation position based on new skymap data.
+
+    This function compares the current observation position with the new skymap
+    data to determine if repointing is necessary. If the new position differs by
+    more than 4 degrees, it updates the MWA sub-arrays for a new observation.
+
+    Args:
+        context (dict): Context information for the event.
+        latest_obs: The latest observation data.
+
+    Returns:
+        dict: Updated context with repointing decision and new sub-array information.
+    """
     """Update observation position based on the new skymap."""
     print("DEBUG - update_position_based_on_skymap : start")
     if context["stop_processing"]:
@@ -316,13 +387,29 @@ def update_position_based_on_skymap(context, latest_obs):
     context["repoint"] = True
 
     print("DEBUG - update_position_based_on_skymap : end")
-    
+
     context["reached_end"] = True
-    
+
     return context
 
-@log_event(log_location="end",message=f"Handle gw voevents.", level="debug")
+
+@log_event(log_location="end", message=f"Handle gw voevents.", level="debug")
 def handle_gw_voevents(telescope_settings, context, latest_obs):
+    """
+    Handle gravitational wave VOEvents.
+
+    This function processes gravitational wave VOEvents, checking for skymap updates
+    and determining if a new observation or repointing is necessary based on the
+    latest event data.
+
+    Args:
+        telescope_settings: Settings for the telescope.
+        context (dict): Context information for the event.
+        latest_obs: The latest observation data.
+
+    Returns:
+        dict: Updated context with observation results and decision logs.
+    """
 
     if context["stop_processing"]:
         return context
