@@ -1,11 +1,13 @@
-
-
 from typing import Optional
 
 from pydantic import BaseModel, Field
 
 
 class Telescope(BaseModel):
+    """
+    Represents a telescope with its basic properties.
+    """
+
     name: str = Field(max_length=64, description="E.g. MWA_VCS, MWA_correlate or ATCA.")
     lon: float = Field(description="Telescope longitude in degrees")
     lat: float = Field(description="Telescope latitude in degrees")
@@ -16,6 +18,10 @@ class Telescope(BaseModel):
 
 
 class EventTelescope(BaseModel):
+    """
+    Represents a telescope that receives events.
+    """
+
     name: str = Field(
         max_length=64,
         description="Telescope that we receive Events from (e.g. SWIFT or Fermi)",
@@ -26,6 +32,10 @@ class EventTelescope(BaseModel):
 
 
 class TelescopeProjectId(BaseModel):
+    """
+    Represents a telescope project with its identification and authentication details.
+    """
+
     id: str = Field(
         max_length=125,
         description="The project ID for the telescope used to automatically schedule observations.",
@@ -43,7 +53,6 @@ class TelescopeProjectId(BaseModel):
         description="The email address of someone that was on the ATCA observing proposal. This is an authentication step only required for ATCA.",
     )
     telescope: Telescope
-    
+
     class Config:
         extra = "forbid"  # This forbids any extra fields t
-

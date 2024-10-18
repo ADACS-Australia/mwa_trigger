@@ -5,6 +5,13 @@ from pydantic import BaseModel, Field
 
 
 class EventGroup(BaseModel):
+    """
+    Represents a group of related events.
+
+    This class contains information about a group of events, including
+    identification, timing, location, and other relevant details.
+    """
+
     id: int
     trig_id: str
     earliest_event_observed: Optional[datetime]
@@ -25,6 +32,14 @@ class EventGroup(BaseModel):
 
 
 class Event(BaseModel):
+    """
+    Represents an individual event.
+
+    This class contains detailed information about a specific event,
+    including its relationship to an event group, observational data,
+    and various probabilities and measurements from different sources.
+    """
+
     id: int
     event_group_id: EventGroup
     trig_id: Optional[str]

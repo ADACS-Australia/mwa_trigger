@@ -1,4 +1,3 @@
-
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
@@ -8,6 +7,12 @@ from .event import Event, EventGroup
 
 
 class ProposalDecision(BaseModel):
+    """
+    Represents a decision made on a proposal.
+
+    This class is used for API requests related to proposal decisions.
+    """
+
     id: int
     decision: str
     decision_reason: Optional[str]
@@ -29,6 +34,12 @@ class ProposalDecision(BaseModel):
 
 
 class MWAResponseSimple(BaseModel):
+    """
+    Represents a simplified response from the MWA telescope.
+
+    This class is used for API requests to handle MWA telescope responses.
+    """
+
     clear: Dict[str, Any] = None
     errors: Dict[str, Any] = None
     params: Dict[str, Any] = None
@@ -39,11 +50,23 @@ class MWAResponseSimple(BaseModel):
 
 
 class MWASubArrays(BaseModel):
+    """
+    Represents sub-arrays for the MWA telescope.
+
+    This class is used for API requests related to MWA sub-array configurations.
+    """
+
     ra: List[float]
     dec: List[float]
 
 
 class TelescopeSchema(BaseModel):
+    """
+    Represents a telescope's basic information.
+
+    This class is used for API requests involving telescope data.
+    """
+
     id: int
     name: str
     lon: float
@@ -52,6 +75,11 @@ class TelescopeSchema(BaseModel):
 
 
 class Observations(BaseModel):
+    """
+    Represents an observation object made by a telescope.
+
+    This class is used for API requests related to observations.
+    """
 
     telescope: TelescopeSchema
     proposal_decision_id: ProposalDecision
@@ -67,4 +95,3 @@ class Observations(BaseModel):
 
     class Config:
         from_attributes = True
-

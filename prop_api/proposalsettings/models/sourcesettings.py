@@ -66,7 +66,7 @@ class SourceSettings(BaseModel, ABC):
             BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
         ],
         **kwargs,
-    ) -> bool:
+    ) -> Tuple[bool, bool, bool, str]:
         """
         Determine if an event is worth observing based on source-specific criteria.
 
@@ -77,7 +77,11 @@ class SourceSettings(BaseModel, ABC):
             **kwargs: Additional keyword arguments.
 
         Returns:
-            bool: True if the event is worth observing, False otherwise.
+            Tuple[bool, bool, bool, str]: A tuple containing:
+            - trigger_bool: Whether to trigger an observation.
+            - debug_bool: Whether to trigger a debug alert.
+            - pending_bool: Whether to create a pending observation.
+            - decision_reason_log: A log of the decision-making process.
         """
         pass
 
@@ -230,6 +234,7 @@ class GWSourceSettings(SourceSettings):
                 - pending_bool: Whether to create a pending observation.
                 - decision_reason_log: A log of the decision-making process.
         """
+
         print("DEBUG - worth_observing_gw")
 
         prop_dec = kwargs.get("prop_dec")
@@ -427,6 +432,7 @@ class GrbSourceSettings(SourceSettings):
                 - pending_bool: Whether to create a pending observation.
                 - decision_reason_log: A log of the decision-making process.
         """
+
         print("DEBUG - worth_observing_grb")
 
         prop_dec = kwargs.get("prop_dec")
