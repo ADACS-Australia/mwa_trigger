@@ -60,10 +60,10 @@ explanations of the software methodologies and layout (Developer Documentation) 
    :maxdepth: 1
    :caption: Proposal API Overview:
 
-   prop_api
+   prop_api_endpoints
+   prop_api_processing
    prop_api_models
    prop_api_factory_classes
-   prop_api_processing
 
 
 .. toctree::

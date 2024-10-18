@@ -1,9 +1,9 @@
-Utility Functions for Main Processing
+Utility Functions for Processing
 =====================================
 
 The utility functions for main processing are stored in the `utils` module.
 
-After receiving a new or existing proposal with other associated data, the following functions are used to process the data.
+After receiving a new or existing proposal with other associated data from the web app, the following functions are used to process the data.
 
 Main functions for Processing
 ---------------------------------
