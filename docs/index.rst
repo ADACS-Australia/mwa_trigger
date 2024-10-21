@@ -65,6 +65,13 @@ explanations of the software methodologies and layout (Developer Documentation) 
    prop_api_models
    prop_api_factory
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Docker Scripts:
+
+   docker_development/development_deployment
+   docker_development/accessing_databases
+   docker_development/nginx_production
 
 .. toctree::
    :maxdepth: 4
@@ -73,3 +80,4 @@ explanations of the software methodologies and layout (Developer Documentation) 
    glossary
    mwa_frequency_specifications
    event_telescopes
+
