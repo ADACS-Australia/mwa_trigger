@@ -11,7 +11,7 @@ https://support.pawsey.org.au/documentation/display/US/Allow+HTTPS+Access+To+You
 
 Then make a costum tcp rule for ports 80 and 443, should look like this
 
-.. image:: figures/nimbus_example.png
+.. image:: ../figures/nimbus_example.png
   :width: 800
 
 

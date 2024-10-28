@@ -18,17 +18,17 @@ explanations of the software methodologies and layout (Developer Documentation) 
    :maxdepth: 4
    :caption: Introduction:
 
-   what_is_tracet
-   overview_of_tracet
+   intro/what_is_tracet
+   intro/overview_of_tracet
 
 
 .. toctree::
    :maxdepth: 4
    :caption: Using TraceT:
 
-   new_proposal
-   new_user
-   using_the_database
+   using_tracet/new_proposal
+   using_tracet/new_user
+   using_tracet/using_the_database
 
 
 .. .. toctree::
@@ -43,27 +43,27 @@ explanations of the software methodologies and layout (Developer Documentation) 
    :maxdepth: 4
    :caption: Web Application:
 
-   database_installation
-   webapp_installation
-   running_server
-   restarting_nimbus
+   web_app/database_installation
+   web_app/webapp_installation
+   web_app/running_server
+   web_app/restarting_nimbus
 
 
 .. toctree::
    :maxdepth: 4
    :caption: Developer Documentation:
 
-   developer_documentation
-   git_hooks
+   dev_docs/developer_documentation
+   dev_docs/git_hooks
 
 .. toctree::
    :maxdepth: 1
    :caption: Proposal API Overview:
 
-   prop_api_endpoints
-   prop_api_processing
-   prop_api_models
-   prop_api_factory
+   prop_api/prop_api_endpoints
+   prop_api/prop_api_processing
+   prop_api/prop_api_models
+   prop_api/prop_api_factory
 
 .. toctree::
    :maxdepth: 1
@@ -77,7 +77,7 @@ explanations of the software methodologies and layout (Developer Documentation) 
    :maxdepth: 4
    :caption: Further Reading:
 
-   glossary
-   mwa_frequency_specifications
-   event_telescopes
+   further_reading/glossary
+   further_reading/mwa_frequency_specifications
+   further_reading/event_telescopes
 

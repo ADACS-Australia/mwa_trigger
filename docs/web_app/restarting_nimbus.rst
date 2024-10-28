@@ -7,7 +7,7 @@ Go to `<https://nimbus.pawsey.org.au/>`_, login, and then select the project tha
 
 Navigate to the "Compute/Instances" on the left panel, and you'll see that the Power State is either "Shut Down" or some such thing.
 
-.. image:: figures/Instances_Down.png
+.. image:: ../figures/Instances_Down.png
   :width: 800
 
 From the drop down on the right of the instance choose "Start Instance" and this will trigger the boot sequence.
