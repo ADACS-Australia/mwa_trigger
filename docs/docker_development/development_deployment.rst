@@ -272,20 +272,15 @@ After building the images and running the containers first time, you can use the
   docker-compose up -d  - to run the containers in detached mode
   docker-compose down   - to stop the containers
 
-After building and running the containers first time, you have to update the database. When you have existing data, you have to upload the data to the web application database(container db).
-
-.. code-block:: instructions
-
-  mkdir prop_api/logs
-
-  docker cp demo_trigger_db.sql db-container:/
-  docker exec -it db-container bash -c "PGPASSWORD=mwatriggerbowtie22 psql -U trigger_admin -d trigger_db -f /demo_trigger_db.sql"
-
-Then, you can can restart docker-compose again. Also, you can create superuser for the web application:
+Afterward, you can create superusers for the web application (web-container), prop-api (api-container), and test-api (test-api-container) by running the following commands:
 
 .. code-block:: instructions
 
   docker exec -it web-container bash -c "python manage.py createsuperuser"
+  docker exec -it api-container bash -c "python manage.py createsuperuser"
+  docker exec -it test-api-container bash -c "python manage.py createsuperuser"
+
+These superusers provide authentication access for the web application, prop-api, and test-api.
 
 
 Advantages of Dockerization
