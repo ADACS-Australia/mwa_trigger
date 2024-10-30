@@ -1,15 +1,13 @@
-version: "3.8"
-
 services:
   db:
-    image: postgres:12.18
+    image: postgres:15.8
     container_name: db-container
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
-      - .env
-    ports:
-      - 5432:5432
+      - .env_web
+    # ports:
+    #   - 5432:5432
     networks:
       - tracet-network
     healthcheck:
@@ -19,35 +17,140 @@ services:
       start_period: 30s
       timeout: 5s
 
+  db-api:
+    image: postgres:15.8
+    container_name: db-api-container
+    volumes:
+      - postgres_api:/var/lib/postgresql/data/
+    env_file:
+      - .env_api
+    # ports:
+    #   - 5431:5432
+    networks:
+      - tracet-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+
+  db-test-api:
+    image: postgres:15.8
+    container_name: db-test-api-container
+    volumes:
+      - postgres_test_api:/var/lib/postgresql/data/
+    env_file:
+      - .env_test
+    # ports:
+    #   - 5430:5432
+    networks:
+      - tracet-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+
+  prop-api:
+    build:
+      context: ./prop_api/
+      dockerfile: Dockerfile
+      args:
+        SYSTEM_ENV: DEVELOPMENT
+    container_name: api-container
+    privileged: true
+    # restart: always
+    volumes:
+      - ./prop_api:/app:rw
+    ports:
+      - "8001:8000"
+    env_file:
+      - .env_api
+    command:
+      [
+        "sh",
+        "-c",
+        "python manage.py migrate &&
+        python manage.py runserver 0.0.0.0:8000",
+      ]
+    depends_on:
+      db-api:
+        condition: service_healthy
+    networks:
+      - tracet-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   web:
     build:
-      context: .
+      context: ./webapp_tracet/
       dockerfile: Dockerfile
       args:
         SYSTEM_ENV: DEVELOPMENT
     container_name: web-container
+    privileged: true
     # restart: always
     volumes:
-      - .:/app
+      - ./webapp_tracet:/app
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - .env_web
+    # command: ["sh", "-c", "python manage.py runserver 0.0.0.0:8000"]
     command: [
         "sh",
         "-c",
         "python manage.py runserver 0.0.0.0:8000 & sleep 5s && echo 'Starting'
         && tmux new -s kafka -d './kafka_daemon.sh'
         && tmux new -s comet -d 'python3.10 twistd_comet_wrapper.py' && wait",
+    ]
+    depends_on:
+      db:
+        condition: service_healthy
+      prop-api:
+        condition: service_healthy
+    networks:
+      - tracet-network
+
+  test-api:
+    build:
+      context: ./test_api/
+      dockerfile: Dockerfile
+      args:
+        SYSTEM_ENV: DEVELOPMENT
+    container_name: test-api-container
+    privileged: true
+    # restart: always
+    volumes:
+      - ./test_api:/app:rw
+    ports:
+      - "8002:8000"
+    env_file:
+      - .env_test
+    command:
+      [
+        "sh",
+        "-c",
+        "python manage.py migrate &&
+        python manage.py runserver 0.0.0.0:8000",
       ]
     depends_on:
-      - db
+      db-test-api:
+        condition: service_healthy
     networks:
       - tracet-network
 
 volumes:
   postgres_data:
+  postgres_api:
+  postgres_test_api:
 
 networks:
   tracet-network:
     driver: bridge
+    # internal: true
