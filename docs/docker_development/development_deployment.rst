@@ -257,22 +257,32 @@ Dockerfile
 Instructions
 ------------
 
-docker-compose build  - to build the images
-docker-compose up -d  - to run the containers in detached mode
-docker-compose down   - to stop the containers
+.. code-block:: instructions
+
+  docker-compose build  - to build the images
+  docker-compose up -d  - to run the containers in detached mode
+  docker-compose down   - to stop the containers
 
 After building and running the containers first time, you have to update the database. When you have existing data, you have to upload the data to the web application database(container db).
 
-docker cp demo_trigger_db.sql db-container:/
-docker exec -it db-container bash -c "PGPASSWORD=mwatriggerbowtie22 psql -U trigger_admin -d trigger_db -f /demo_trigger_db.sql"
+.. code-block:: instructions
+
+  mkdir prop_api/logs
+
+  docker cp demo_trigger_db.sql db-container:/
+  docker exec -it db-container bash -c "PGPASSWORD=mwatriggerbowtie22 psql -U trigger_admin -d trigger_db -f /demo_trigger_db.sql"
 
 Then, you can can restart docker-compose again. Also, you can create superuser for the web application:
 
-docker exec -it web-container bash -c "python manage.py createsuperuser"
+.. code-block:: instructions
+
+  docker exec -it web-container bash -c "python manage.py createsuperuser"
 
 Also, you can run create superuser for the test-api:
 
-docker exec -it test-api-container bash -c "python manage.py createsuperuser"
+.. code-block:: instructions
+  
+  docker exec -it test-api-container bash -c "python manage.py createsuperuser"
 
 
 Advantages of Dockerization
