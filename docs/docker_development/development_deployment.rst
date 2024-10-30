@@ -278,12 +278,6 @@ Then, you can can restart docker-compose again. Also, you can create superuser f
 
   docker exec -it web-container bash -c "python manage.py createsuperuser"
 
-Also, you can run create superuser for the test-api:
-
-.. code-block:: instructions
-  
-  docker exec -it test-api-container bash -c "python manage.py createsuperuser"
-
 
 Advantages of Dockerization
 ---------------------------
