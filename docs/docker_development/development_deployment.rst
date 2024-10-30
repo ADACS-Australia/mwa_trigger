@@ -257,6 +257,15 @@ Dockerfile
 Instructions
 ------------
 
+To begin, build the images and run the containers by executing the ./docker-build.sh script. please copy env files(.env_web, .env_api, and .env_test) and demo_trigger_db.sql to the root directory of the project.
+Ensure that the POSTGRES_PASSWORD parameter, used within docker-build.sh, is sourced from the .env_web file:
+
+.. code-block:: instructions
+
+  ./docker-build.sh
+
+After building the images and running the containers first time, you can use the following commands to manage the containers:
+
 .. code-block:: instructions
 
   docker-compose build  - to build the images
