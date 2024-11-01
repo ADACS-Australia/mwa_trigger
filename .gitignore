@@ -19,6 +19,7 @@ docs/html/*
 .venv
 .venv*
 .vscode
+demo_trigger_db.sql
 build
 webapp_tracet/logs
 webapp_tracet/static

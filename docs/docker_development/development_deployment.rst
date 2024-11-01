@@ -272,7 +272,9 @@ After building the images and running the containers first time, you can use the
   docker-compose up -d  - to run the containers in detached mode
   docker-compose down   - to stop the containers
 
-Afterward, you can create superusers for the web application (web-container), prop-api (api-container), and test-api (test-api-container) by running the following commands:
+Afterward, you can create superusers for the web application (web-container), prop-api (api-container), and test-api (test-api-container) by running the following commands. 
+Please use the username(AUTH_USERNAME) and password(AUTH_PASSWORD) as defined in the .env_web and .env_api files. The username and passwords are used in the api authentication.
+Right now, the username and password are the same for all the superusers.
 
 .. code-block:: instructions
 
@@ -280,34 +282,3 @@ Afterward, you can create superusers for the web application (web-container), pr
   docker exec -it api-container bash -c "python manage.py createsuperuser"
   docker exec -it test-api-container bash -c "python manage.py createsuperuser"
 
-These superusers provide authentication access for the web application, prop-api, and test-api.
-
-
-Advantages of Dockerization
----------------------------
-
-Consistency Across Environments
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-- Uniform Development and Production: Docker ensures that the application behaves the same way in development, testing, and production environments.
-- Separate Containers: Each component (web app, database) runs in its own container, which isolates dependencies and avoids conflicts.
-- Simplified Configuration: Docker Compose simplifies the process of configuring and starting multiple services with a single command.
-- Cross-Platform Compatibility: Docker containers run consistently across different operating systems (Windows, Linux, macOS).
-- Easy Scaling: Docker allows you to scale services up or down easily by modifying the Docker Compose configuration.
-- Version Control: Docker images are versioned, making it easy to reproduce environments or roll back to previous versions.
-- Resource Management: Docker containers share the host OS kernel, which makes them lightweight compared to virtual machines.
-
-Running Docker on Different Platforms
--------------------------------------
-
-- Windows: Use Docker Desktop for Windows. It provides an easy-to-use interface and integrates with WSL 2 for a more native Linux experience.
-- Linux: Install Docker Engine and Docker Compose directly from your package manager. Follow the official Docker documentation for installation instructions.
-- macOS: Use Docker Desktop for Mac. It includes a graphical interface and manages Docker containers with minimal setup.
-
-Additional Features and Best Practices
---------------------------------------
-
-- Health Checks: Implement health checks for your services to ensure they are running correctly.
-- Backup Strategies: Plan and implement regular backups for your database data.
-- Environment Variables: Use environment variables to manage configuration settings and secrets securely.
-- Logging: Configure logging for both the web application and database to capture and analyze logs efficiently.
