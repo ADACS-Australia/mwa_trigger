@@ -109,6 +109,10 @@ TelescopeProjectID Model
 
 ProposalSettings Model
 '''''''''''''''''''''''
+
+ProposalSettings table is shortened and only contains the basic project related information and the activation status of the proposal settings. Whenever docker starts, the table will be populated from proposalsettings_factory.py in proposalsettings module. The proposal_id is the unique identifier for the proposal settings and is updated whenever a new proposal settings is created. If deleted from the factory list, the proposalsettings is not active anymore and will not be used for triggering new proposals. However, the proposal_id will remain in the database and will be used for the old data.
+
+
 * ``id`` - Primary key
 * ``proposal_id`` - Unique proposal identifier (max 16 chars)
 * ``telescope`` - Foreign key to Telescope model
@@ -169,8 +173,6 @@ Database Relationships
 * Observations → Telescope (many-to-one)
 * Observations → ProposalDecision (many-to-one)
 * Observations → Event (many-to-one)
-
-
 
 
 

@@ -31,7 +31,16 @@ explanations of the software methodologies and layout (Developer Documentation) 
    using_tracet/using_the_database
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
+   :caption: Docker Scripts and Server Setup:
+
+   docker_development/development_deployment
+   docker_development/accessing_databases
+   docker_development/nginx_production
+   docker_development/restarting_nimbus
+
+.. toctree::
+   :maxdepth: 2
    :caption: Web App and Event Processing on Web App:
 
    web_application/web_database
@@ -40,7 +49,7 @@ explanations of the software methodologies and layout (Developer Documentation) 
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Proposal API Overview:
 
    prop_api/prop_api_endpoints
@@ -49,13 +58,10 @@ explanations of the software methodologies and layout (Developer Documentation) 
    prop_api/prop_api_factory
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Docker Scripts and Server Setup:
+   :maxdepth: 2
+   :caption: Test API Overview:
 
-   docker_development/development_deployment
-   docker_development/accessing_databases
-   docker_development/nginx_production
-   docker_development/restarting_nimbus
+   test_api/test_trigger_api
 
 .. toctree::
    :maxdepth: 4
