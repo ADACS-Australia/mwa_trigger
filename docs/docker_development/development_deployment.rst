@@ -282,3 +282,22 @@ Right now, the username and password are the same for all the superusers.
   docker exec -it api-container bash -c "python manage.py createsuperuser"
   docker exec -it test-api-container bash -c "python manage.py createsuperuser"
 
+To capture events via the VOEvent network and kafka you need two background services to run. We will run these in tmux.
+
+.. code-block:: instructions
+
+    command: [
+        "sh",
+        "-c",
+        "python manage.py runserver 0.0.0.0:8000 & sleep 5s && echo 'Starting'
+        && tmux new -s kafka -d './kafka_daemon.sh'
+        && tmux new -s comet -d 'python3.10 twistd_comet_wrapper.py' && wait",
+    ]
+
+If you dont need to run the comet and kafka services, you can comment out the lines in the docker-compose.yml file and use the following command line.
+
+.. code-block:: instructions
+
+  command: ["sh", "-c", "python manage.py runserver 0.0.0.0:8000"]
+
+

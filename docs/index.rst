@@ -30,31 +30,14 @@ explanations of the software methodologies and layout (Developer Documentation) 
    using_tracet/new_user
    using_tracet/using_the_database
 
-
-.. .. toctree::
-..    :maxdepth: 4
-..    :caption: Trigger Logic:
-
-..    voevent_handling
-..    grb
-
-
 .. toctree::
-   :maxdepth: 4
-   :caption: Web Application:
+   :maxdepth: 1
+   :caption: Web App and Event Processing on Web App:
 
-   web_app/database_installation
-   web_app/webapp_installation
-   web_app/running_server
-   web_app/restarting_nimbus
+   web_application/web_database
+   web_application/event_processing
+   web_application/web_config
 
-
-.. toctree::
-   :maxdepth: 4
-   :caption: Developer Documentation:
-
-   dev_docs/developer_documentation
-   dev_docs/git_hooks
 
 .. toctree::
    :maxdepth: 1
@@ -67,11 +50,12 @@ explanations of the software methodologies and layout (Developer Documentation) 
 
 .. toctree::
    :maxdepth: 1
-   :caption: Docker Scripts:
+   :caption: Docker Scripts and Server Setup:
 
    docker_development/development_deployment
    docker_development/accessing_databases
    docker_development/nginx_production
+   docker_development/restarting_nimbus
 
 .. toctree::
    :maxdepth: 4

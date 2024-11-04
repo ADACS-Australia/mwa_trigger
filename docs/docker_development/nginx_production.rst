@@ -97,4 +97,22 @@ The static and media files are stored in the ``./static_volume`` and ``./media_v
         networks:
         - tracet-network
 
+Log files and background services
+---------------------------------
+
+Gunicorn log files are defined in the docker-compose file. The background services are defined in the docker-compose file for the production environment.
+
+.. code-block:: docker-compose
+
+      command: [
+        "sh",
+        "-c",
+        "gunicorn webapp_tracet.wsgi:application --bind 0.0.0.0:8000 --error-logfile /app/logs/gunicorn_error.log --access-logfile /app/logs/gunicorn_access.log --workers 8 & sleep 5s && echo 'Starting'
+        && tmux new -s kafka -d './kafka_daemon.sh'
+        && tmux new -s comet -d 'python3.10 twistd_comet_wrapper.py' && wait",
+      ]
+
+
 Please check back later for updates on this section.
+
+
