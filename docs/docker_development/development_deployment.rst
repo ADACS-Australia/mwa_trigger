@@ -7,7 +7,7 @@ docker-compose.yml includes multiple containers for web application, test-api an
 Project Structure
 -----------------
 
-.. image:: ../figures/Architecture_dev.webp
+.. image:: ../figures/Architecture_dev_with_api.png
    :alt: Architecture
 
 Docker Containers
