@@ -7,21 +7,15 @@ Accessing the Database Inside the Docker Container
 Checking current docker container, image, database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Delete all docker volumes:
+You can delete the database volume and create a new one. Especially, you may need to do this when you want to reset the web application database. Please check the docker volume ls and delete the volume for the database:
+
 
 .. code-block:: sh
 
    docker volume ls
-   docker volume rm $(docker volume ls -q)
-   docker volume prune
+   docker volume rm {volume_name}
 
-Delete all docker images:
-
-.. code-block:: sh
-
-   docker rmi $(docker images -q)
-   docker container prune
-   docker system prune -a
+You can also delete all docker images, containers, and system if you want to reset the whole docker environment:
 
 Build docker
 ^^^^^^^^^^^^
@@ -31,21 +25,27 @@ First you need to run docker container:
 .. code-block:: sh
 
    docker-compose down
-   docker-compose --build
-   docker-compose up
+   docker-compose build
+   docker-compose up -d
 
-Check Migrations:
+Check Migrations for the web application:
 
 .. code-block:: sh
 
    docker-compose exec web python3 webapp_tracet/manage.py makemigrations
    docker-compose exec web python3 webapp_tracet/manage.py migrate
 
-Start Django Development Server:
+For the api, you can restart the api container:
 
 .. code-block:: sh
 
-   docker-compose exec web python3 manage.py runserver 0.0.0.0:8000
+   docker-compose restart prop-api
+
+You can also restart the django development container for the web application:
+
+.. code-block:: sh
+
+   docker-compose restart prop-api
 
 Database
 ^^^^^^^^
@@ -87,33 +87,6 @@ Add a `ports` section to the `db` service:
          POSTGRES_PASSWORD: your_db_password
          POSTGRES_DB: your_db_name
 
-Update settings.py
-^^^^^^^^^^^^^^^^^^
-
-Ensure you have the following environment variables set correctly when running Docker:
-
-.. code-block:: plaintext
-
-   DB_USER
-   DB_PASSWORD
-   DB_NAME
-   DB_HOST (set to localhost for external access)
-   DB_PORT (set to 5432)
-
-Configure PostgreSQL to Accept Remote Connections
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Update `postgresql.conf`:
-
-.. code-block:: plaintext
-
-   listen_addresses = '*'
-
-Update `pg_hba.conf`:
-
-.. code-block:: plaintext
-
-   host    all             all             0.0.0.0/0               md5
 
 Restart PostgreSQL Container:
 
