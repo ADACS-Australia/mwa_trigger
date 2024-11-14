@@ -8,6 +8,9 @@ tests/_trial_temp/
 settings.json
 webapp_tracet/plantuml.jar
 docs/_*
+out/*
+*puml
+notebooks/*pynb
 webapp_tracet/twistd.pid
 webapp_tracet/static_host/
 webapp_tracet/uwsgi-emperor.log
