@@ -1,3 +1,5 @@
+.. _prop_api_endpoints:
+
 Proposal API Endpoints
 ======================
 

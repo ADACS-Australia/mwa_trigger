@@ -1,3 +1,5 @@
+.. _prop_api_models:
+
 Proposal Package Models
 =======================
 

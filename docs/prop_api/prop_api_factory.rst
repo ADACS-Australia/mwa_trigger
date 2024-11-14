@@ -1,4 +1,6 @@
 
+.. _prop_api_factory:
+
 Proposal Package Factory Classes
 ================================
 

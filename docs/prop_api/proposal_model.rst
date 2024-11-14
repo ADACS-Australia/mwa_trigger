@@ -1,3 +1,5 @@
+.. _proposal_model:
+
 ProposalSettings Model
 ======================
 

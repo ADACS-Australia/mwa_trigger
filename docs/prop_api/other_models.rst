@@ -1,3 +1,5 @@
+.. _other_models:
+
 Other Models
 ============
 

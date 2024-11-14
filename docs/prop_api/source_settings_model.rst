@@ -1,3 +1,5 @@
+.. _source_settings_model:
+
 SourceSettings Model
 ====================
 

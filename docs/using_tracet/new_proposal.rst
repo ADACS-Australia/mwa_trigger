@@ -1,9 +1,9 @@
 .. _proposals:
 
-Creating a New Proposal
+Working with a Proposal
 =======================
 
-This web application is designed to handle several science
+The proposal api is designed to handle several science
 cases using several telescopes at once through "proposals". Your project
 may have several proposals. For example, if you want to observe GRBs from
 SWIFT with the MWA and ATCA, you will need to make two proposals. One
@@ -13,22 +13,9 @@ observes GRBs from SWIFT with the MWA, and another observes GRBs with ATCA.
 Step 1: Creating the Proposal
 -----------------------------
 
-Admin users can create and edit proposals in the
-`Edit Proposal Settings <https://tracet.duckdns.org/proposal_create/>`_
-page. Each item has a description which should be sufficient to set up your proposal.
+please refer to the :ref:`Creating New Proposal <creating_new_proposal>` for the details.
 
-
-Step 2: Check the Flowchart
----------------------------
-
-Once you've created a proposal, you should check the flowchart to confirm
-that the trigger logic is what you require for your science case and telescope
-allocation. To view your proposal's flowchart, click the "View Flow Diagram"
-button for your proposal in the "Current Proposal Settings (Summarised)" table
-on the home page. You can always edit your settings and thresholds if this is
-not what you require.
-
-Step 3: Update Alert Permissions
+Step 2: Update Alert Permissions
 --------------------------------
 By default, all users will have permission to receive trigger alerts and
 will not have permission to receive pending and debug alerts for all
@@ -37,7 +24,7 @@ and pending alerts and decide if a VOEvent should be triggered on or not. Use th
 `Alert Pemission <https://tracet.duckdns.org/admin/trigger_app/alertpermission/>`_
 page to edit these permissions.
 
-Step 4: Notify Users to Update their Alerts
+Step 3: Notify Users to Update their Alerts
 -------------------------------------------
 All users have proposal specific alert settings, so to receive an alert for
 your proposal, all users must update their alerts on the

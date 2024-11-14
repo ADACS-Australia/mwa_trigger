@@ -1,3 +1,5 @@
+.. _telescope_settings_model:
+
 TelescopeSettings Model
 =======================
 

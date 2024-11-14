@@ -41,6 +41,15 @@ explanations of the software methodologies and layout (Developer Documentation) 
 
 .. toctree::
    :maxdepth: 2
+   :caption: Quick Start:
+
+   quick_start/overview
+   quick_start/creating_new_proposal
+   quick_start/deleting_proposal
+
+
+.. toctree::
+   :maxdepth: 2
    :caption: Web App and Event Processing on Web App:
 
    web_application/web_database

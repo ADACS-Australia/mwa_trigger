@@ -1,3 +1,5 @@
+.. _prop_api_processing:
+
 Utility Functions for Processing
 =====================================
 
