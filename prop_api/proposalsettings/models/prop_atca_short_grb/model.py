@@ -68,7 +68,7 @@ class ProposalAtcaShortGrb(ProposalSettings):
         "SWIFT_UVOT_POS",
     ]
 
-    version: str = '1.0.5'
+    version: str = '1.0.0'
     id: int = 6
     proposal_id: str = "ATCA_short_GRB"
     proposal_description: str = "ATCA triggers on Swift short GRBs"

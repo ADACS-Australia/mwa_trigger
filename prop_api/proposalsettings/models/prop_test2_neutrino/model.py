@@ -50,7 +50,7 @@ class ProposalTest2Neutrino(ProposalSettings):
         "AMON_ICECUBE_GOLD_EVENT",
     ]
 
-    version: str = "1.0.0"
+    version: str = "1.0.1"
     id: int = 10
     proposal_id: str = "test2_neutrino"
     proposal_description: str = "Test proposal for neutrino events"

@@ -65,7 +65,7 @@ class ProposalAtcaLongGrb(ProposalSettings):
         "SWIFT_UVOT_POS",
     ]
 
-    version: str = "1.0.1"
+    version: str = "1.0.0"
     id: int = 12
     proposal_id: str = "ATCA_long_GRB"
     proposal_description: str = (

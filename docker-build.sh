@@ -20,4 +20,10 @@ sleep 5s
 
 docker compose up -d
 
+docker exec -it api-container bash -c "DJANGO_SUPERUSER_USERNAME=${AUTH_USERNAME} DJANGO_SUPERUSER_EMAIL=${AUTH_USERNAME}@gmail.com DJANGO_SUPERUSER_PASSWORD=${AUTH_PASSWORD} python manage.py createsuperuser --noinput"
+
+docker exec -it test-api-container bash -c "DJANGO_SUPERUSER_USERNAME=${AUTH_USERNAME} DJANGO_SUPERUSER_EMAIL=${AUTH_USERNAME}@gmail.com DJANGO_SUPERUSER_PASSWORD=${AUTH_PASSWORD} python manage.py createsuperuser --noinput"
+
+# docker exec -it web-container bash -c "DJANGO_SUPERUSER_USERNAME=${AUTH_USERNAME} DJANGO_SUPERUSER_EMAIL=${AUTH_USERNAME}@gmail.com DJANGO_SUPERUSER_PASSWORD=${AUTH_PASSWORD} python manage.py createsuperuser --noinput"
+
 echo "Deployment completed successfully."
