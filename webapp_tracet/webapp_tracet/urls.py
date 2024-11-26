@@ -19,8 +19,17 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import TemplateView
-from trigger_app.views import (cometlog, event, eventgroup, homepage,
-                               observations, proposal, proposalsettings, user)
+from trigger_app.views import (
+    cometlog,
+    event,
+    eventgroup,
+    homepage,
+    observations,
+    proposal,
+    proposalsettings,
+    user,
+)
+from trigger_app.views.proposalsettings import update_all_proposals
 
 from webapp_tracet.api import api
 
@@ -44,7 +53,11 @@ urlpatterns = [
     path("event_log/", event.EventList),
     path("test_event_log/", event.TestEventList),
     path("comet_log/", cometlog.comet_log),
-    path("proposal_settings/", proposalsettings.ProposalSettingsList.as_view()),
+    path(
+        "proposal_settings/",
+        proposalsettings.ProposalSettingsList.as_view(),
+        name='proposal_settings',
+    ),
     path("proposal_create/", proposalsettings.proposal_form),
     path("proposal_edit/<int:id>/", proposalsettings.proposal_form),
     path("proposal_decision_path/<int:id>/", proposalsettings.proposal_decision_path),
@@ -60,4 +73,11 @@ urlpatterns = [
     path("event_create/", event.event_create),
     path("test_upload_xml/", event.test_upload_xml),
     path("api/", api.urls),
+    path('update_all_proposals/', update_all_proposals, name='update_all_proposals'),
+    path("code-browser/", proposalsettings.code_browser, name='code_browser'),
+    path(
+        "code-browser/<path:file_path>",
+        proposalsettings.view_code_file,
+        name='view_code_file',
+    ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -3,11 +3,24 @@
 {% block content %}
 <title>Current Proposal Settings</title>
 <div class="container-fluid">
+
+  {% if user.is_authenticated %}
+  <form action="{% url 'update_all_proposals' %}" method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">Update Proposals</button>
+  </form>
+  {% endif %}
+
+
   <h2>MWA VCS proposals</h2>
   <table class="fl-table">
     <thead>
     <tr>
       <th>ID</th>
+      <th>Active</th>
+      <th>Version</th>
+      <th>Created At</th>
+      <th>Updated At</th>
       <th>Proposal ID</th>
       <th>Priority</th>
       <th>Source Type</th>
@@ -15,18 +28,7 @@
       <th>Project ID</th>
       <th>Testing?</th>
       <th>Proposal Description</th>
-      <th>Proposal Flow Diagram</th>
-      <th>Trigger Duration range (s)</th>
-      <th>Pending Duration range 1 (s)</th>
-      <th>Pending Duration range 2 (s)</th>
-      <th>Minimum Fermi Probability</th>
-      <th>Minimum SWIFT Rate Significance</th>
-      <th>Repointing Limit</th>
-      <th>Horizon Limit</th>
-      <th>Frequency specifications</th>
-      <th>Observing time (s)</th>
-      <th>Calibraton Observing time (s)</th>
-      <th>Number of Observations</th>
+      <th>Source Code</th>
     </tr>
     </thead>
     <!-- Iterate over object_list -->
@@ -35,6 +37,10 @@
     <!-- Display Objects -->
     <tr>
       <td><a href='/proposal_edit/{{ object.id }}/' style="text-decoration:None">{{ object.id }}</a></td>
+      <td>{{ object.active }}</td>
+      <td>{{ object.version }}</td>
+      <td>{{ object.created_at|timesince }} ago</td>
+      <td>{{ object.updated_at|timesince }} ago</td>
       <td>{{ object.proposal_id }}</td>
       <td>{{ object.priority }}</td>
       <td>{{ object.source_type }}</td>
@@ -42,17 +48,9 @@
       <td>{{ object.project_id }}</td>
       <td>{{ object.testing }}</td>
       <td>{{ object.proposal_description }}</td>
-      <td><a href='/proposal_decision_path/{{ object.id }}/' style="text-decoration:None">View Flow Diagram</a></td>
-      <td>{{ object.event_min_duration }} - {{ object.event_max_duration }}</td>
-      <td>{{ object.pending_min_duration_1 }} - {{ object.pending_max_duration_1 }}</td>
-      <td>{{ object.pending_min_duration_2 }} - {{ object.pending_max_duration_2 }}</td>
-      <td>{{ object.fermi_prob }}</td>
-      <td>{{ object.swift_rate_signf }}</td>
-      <td>{{ object.repointing_limit }}</td>
-      <td>{{ object.mwa_horizon_limit }}</td>
-      <td>{{ object.mwa_freqspecs }}</td>
-      <td>{{ object.mwa_exptime }}</td>
-      <td>{{ object.mwa_calexptime }}</td>
+      <td>
+        <a href="{% url 'code_browser' %}?path={{ object.code_link }}" class="btn btn-info btn-sm">View Code</a>
+      </td>
     </tr>
     {% endif %}
     <!-- If object_list is empty  -->
@@ -66,6 +64,10 @@
     <thead>
     <tr>
       <th>ID</th>
+      <th>Active</th>
+      <th>Version</th>
+      <th>Created At</th>
+      <th>Updated At</th>
       <th>Proposal ID</th>
       <th>Priority</th>
       <th>Source Type</th>
@@ -73,19 +75,7 @@
       <th>Project ID</th>
       <th>Testing?</th>
       <th>Proposal Description</th>
-      <th>Proposal Flow Diagram</th>
-      <th>Trigger Duration range (s)</th>
-      <th>Pending Duration range 1 (s)</th>
-      <th>Pending Duration range 2 (s)</th>
-      <th>Minimum Fermi Probability</th>
-      <th>Minimum SWIFT Rate Significance</th>
-      <th>Repointing Limit</th>
-      <th>Horizon Limit</th>
-      <th>Frequency specifications</th>
-      <th>Observing time (s)</th>
-      <th>Calibraton Observing time (s)</th>
-      <th>Frequency Resolution (kHz)</th>
-      <th>Number of Observations</th>
+      <th>Source Code</th>
     </tr>
     </thead>
     <!-- Iterate over object_list -->
@@ -94,6 +84,10 @@
     <!-- Display Objects -->
     <tr>
       <td><a href='/proposal_edit/{{ object.id }}/' style="text-decoration:None">{{ object.id }}</a></td>
+      <td>{{ object.active }}</td>
+      <td>{{ object.version }}</td>
+      <td>{{ object.created_at|timesince }} ago</td>
+      <td>{{ object.updated_at|timesince }} ago</td>
       <td>{{ object.proposal_id }}</td>
       <td>{{ object.priority }}</td>
       <td>{{ object.source_type }}</td>
@@ -101,20 +95,9 @@
       <td>{{ object.project_id }}</td>
       <td>{{ object.testing }}</td>
       <td>{{ object.proposal_description }}</td>
-      <td><a href='/proposal_decision_path/{{ object.id }}/' style="text-decoration:None">View Flow Diagram</a></td>
-      <td>{{ object.event_min_duration }} - {{ object.event_max_duration }}</td>
-      <td>{{ object.pending_min_duration_1 }} - {{ object.pending_max_duration_1 }}</td>
-      <td>{{ object.pending_min_duration_2 }} - {{ object.pending_max_duration_2 }}</td>
-      <td>{{ object.fermi_prob }}</td>
-      <td>{{ object.swift_rate_signf }}</td>
-      <td>{{ object.repointing_limit }}</td>
-      <td>{{ object.mwa_horizon_limit }}</td>
-      <td>{{ object.mwa_freqspecs }}</td>
-      <td>{{ object.mwa_exptime }}</td>
-      <td>{{ object.mwa_calexptime }}</td>
-      <td>{{ object.mwa_freqres }}</td>
-      <td>{{ object.mwa_inttime }}</td>
-      <td>{{ object.mwa_nobs }}</td>
+      <td>
+        <a href="{% url 'code_browser' %}?path={{ object.code_link }}" class="btn btn-info btn-sm">View Code</a>
+      </td>
     </tr>
     {% endif %}
     <!-- If object_list is empty  -->
@@ -128,6 +111,10 @@
     <thead>
     <tr>
       <th>ID</th>
+      <th>Active</th>
+      <th>Version</th>
+      <th>Created At</th>
+      <th>Updated At</th>
       <th>Proposal ID</th>
       <th>Priority</th>
       <th>Source Type</th>
@@ -135,14 +122,7 @@
       <th>Project ID</th>
       <th>Testing?</th>
       <th>Proposal Description</th>
-      <th>Proposal Flow Diagram</th>
-      <th>Trigger Duration range (s)</th>
-      <th>Pending Duration range 1 (s)</th>
-      <th>Pending Duration range 2 (s)</th>
-      <th>Minimum Fermi Probability</th>
-      <th>Minimum SWIFT Rate Significance</th>
-      <th>Repointing Limit</th>
-      <th>Horizon Limit</th>
+      <th>Source Code</th>
     </tr>
     </thead>
     <!-- Iterate over object_list -->
@@ -151,6 +131,10 @@
     <!-- Display Objects -->
     <tr>
       <td><a href='/proposal_edit/{{ object.id }}/' style="text-decoration:None">{{ object.id }}</a></td>
+      <td>{{ object.active }}</td>
+      <td>{{ object.version }}</td>
+      <td>{{ object.created_at|timesince }} ago</td>
+      <td>{{ object.updated_at|timesince }} ago</td>
       <td>{{ object.proposal_id }}</td>
       <td>{{ object.priority }}</td>
       <td>{{ object.source_type }}</td>
@@ -158,13 +142,9 @@
       <td>{{ object.project_id }}</td>
       <td>{{ object.testing }}</td>
       <td>{{ object.proposal_description }}</td>
-      <td><a href='/proposal_decision_path/{{ object.id }}/' style="text-decoration:None">View Flow Diagram</a></td>
-      <td>{{ object.event_min_duration }} - {{ object.event_max_duration }}</td>
-      <td>{{ object.pending_min_duration_1 }} - {{ object.pending_max_duration_1 }}</td>
-      <td>{{ object.pending_min_duration_2 }} - {{ object.pending_max_duration_2 }}</td>
-      <td>{{ object.fermi_prob }}</td>
-      <td>{{ object.swift_rate_signf }}</td>
-      <td>{{ object.repointing_limit }}</td>
+      <td>
+        <a href="{% url 'code_browser' %}?path={{ object.code_link }}" class="btn btn-info btn-sm">View Code</a>
+      </td>
     </tr>
     {% endif %}
     <!-- If object_list is empty  -->

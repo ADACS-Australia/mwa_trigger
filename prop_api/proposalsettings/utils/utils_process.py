@@ -329,7 +329,7 @@ def process_all_proposals(context_all):
         )
 
         # TODO remove this after testing
-        # context["send_alerts"]=True
+        # context["send_alerts"] = True
         result = utils_api.trigger_alerts(context)
 
     context = update_event_group(context)

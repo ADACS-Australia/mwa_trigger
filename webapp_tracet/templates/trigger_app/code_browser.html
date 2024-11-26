@@ -1,0 +1,16 @@
+{% extends 'trigger_app/header.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2>Code Browser: {{ current_path }}</h2>
+    <div class="list-group">
+        {% for file in files %}
+            <a href="{% url 'view_code_file' file_path=file %}?target_dir={{ target_dir }}" class="list-group-item list-group-item-action">
+                {{ file }}
+            </a>
+        {% empty %}
+            <p>No Python files found in this directory.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -4,9 +4,9 @@ from datetime import datetime
 from functools import partial
 from typing import Tuple, Union
 
-from ..models.event import Event
-from ..models.telescopesettings import BaseTelescopeSettings
-from .utils_log import log_event, log_event_with_error
+from ...utils.utils_log import log_event, log_event_with_error
+from ..event import Event
+from ..telescopesettings import BaseTelescopeSettings
 
 logger = logging.getLogger(__name__)
 

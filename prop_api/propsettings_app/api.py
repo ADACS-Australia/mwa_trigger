@@ -39,7 +39,7 @@ app = Router(auth=JWTAuth())
 
 
 # Define the API endpoint
-@app.get("/telescopes/", response=List[Telescope])
+@app.get("/telescopes/", response=List[Telescope], auth=None)
 def get_telescopes(request):
     """
     Retrieve a list of all telescopes.
@@ -52,7 +52,7 @@ def get_telescopes(request):
 
 
 # Define the API endpoint
-@app.get("/eventtelescopes/", response=List[EventTelescope])
+@app.get("/eventtelescopes/", response=List[EventTelescope], auth=None)
 def get_event_telescopes(request):
     """
     Retrieve a list of all event telescopes.
@@ -64,7 +64,7 @@ def get_event_telescopes(request):
     return factory.eventtelescopes
 
 
-@app.get("/eventtelescope/{name}/", response=EventTelescope)
+@app.get("/eventtelescope/{name}/", response=EventTelescope, auth=None)
 def get_event_telescope_by_name(request, name: str):
     """
     Retrieve an event telescope by its name.
@@ -85,7 +85,7 @@ def get_event_telescope_by_name(request, name: str):
     return telescope
 
 
-@app.get("/telescope_project_ids/", response=list[TelescopeProjectId])
+@app.get("/telescope_project_ids/", response=list[TelescopeProjectId], auth=None)
 def get_telescope_project_ids(request):
     """
     Retrieve a list of all telescope project IDs.
@@ -119,6 +119,87 @@ def get_proposalsettings(request):
     )
 
     return proposal_settings_factory.proposals
+
+
+@app.get(
+    "/proposalsettings_update/",
+    response={200: Dict[str, Union[List[ProposalSettings], List[str], str, None]]},
+    auth=None,
+)
+def get_proposalsettings_update(request):
+    """
+    Retrieve a list of all proposal settings and update their code directories.
+
+    Returns:
+        list[ProposalSettings]: A list of all proposal settings objects.
+    """
+    import logging
+    import os
+    import shutil
+
+    logger = logging.getLogger(__name__)
+    errors = []
+
+    telescope_factory = TelescopeFactory()
+    project_id_factory = TelescopeProjectIdFactory(telescope_factory=telescope_factory)
+    event_telescope_factory = EventTelescopeFactory()
+
+    proposal_settings_factory = ProposalSettingsFactory(
+        telescope_factory=telescope_factory,
+        event_telescope_factory=event_telescope_factory,
+        project_id_factory=project_id_factory,
+    )
+
+    # Process each proposal
+    for prop in proposal_settings_factory.proposals:
+        try:
+            # Create target directory path
+            target_dir = (
+                f"/shared/models/prop_{prop.proposal_id.lower()}_{prop.version}"
+            )
+            source_dir = f"/app/proposalsettings/models/prop_{prop.proposal_id.lower()}"
+
+            print(f"DEBUG - target_dir: {target_dir}")
+            print(f"DEBUG - source_dir: {source_dir}")
+
+            # Remove target directory if it exists
+            if os.path.exists(target_dir):
+                shutil.rmtree(target_dir)
+
+            # Create fresh target directory
+            os.makedirs(target_dir)
+
+            if os.path.exists(source_dir):
+                # Copy all files from source to target
+                for item in os.listdir(source_dir):
+                    source_item = os.path.join(source_dir, item)
+                    target_item = os.path.join(target_dir, item)
+                    if os.path.isfile(source_item):
+                        shutil.copy2(source_item, target_item)
+            else:
+                raise FileNotFoundError(f"Source directory not found: {source_dir}")
+
+        except Exception as e:
+            error_msg = f"Error processing proposal {prop.proposal_id}: {str(e)}"
+            logger.error(error_msg)
+            errors.append(error_msg)
+
+    if errors:
+        return {
+            "status": "error",
+            "proposals": proposal_settings_factory.proposals,
+            "errors": errors,
+        }
+
+    print("DEBUG - proposalsettings_update success")
+
+    # return proposal_settings_factory.proposals
+
+    return {
+        "status": "success",
+        "proposals": proposal_settings_factory.proposals,
+        "errors": None,
+    }
 
 
 @app.get("/proposalsettings_by_id/{id}/", response=ProposalSettings, auth=None)

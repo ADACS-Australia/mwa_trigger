@@ -12,6 +12,7 @@ from .utils_log import log_event
 
 logger = logging.getLogger(__name__)
 
+
 # group trigger functions
 def log_initial_debug_info(event):
     logger.info("Trying to group with similar events")
@@ -38,9 +39,10 @@ def prepare_event_data(context):
 
     print(f"DEBUG - eventData {eventData}")
     context["eventData"] = eventData
-    
+
     context["reached_end"] = True
     return context
+
 
 def update_or_create_event_group(context):
     event = context["event"]
@@ -51,7 +53,7 @@ def update_or_create_event_group(context):
         defaults=eventData,
     )[0]
     context["event_group"] = event_group
-    
+
     # Link the Event (have to update this way to prevent save() triggering this function again)
     logger.info(f"Linking event ({event.id}) to group {event_group}")
     # print(f"Linking event ({event.id}) to group {event_group}")
@@ -59,13 +61,14 @@ def update_or_create_event_group(context):
     context["reached_end"] = True
     return context
 
+
 def link_event_to_group(context):
 
     event = context["event"]
     event_group = context["event_group"]
 
     Event.objects.filter(id=event.id).update(event_group_id=event_group)
-    
+
     event = Event.objects.get(pk=event.id)
     context["event"] = event
 
@@ -77,7 +80,7 @@ def check_if_ignored(context):
     if event.ignored:
         logger.info("Event ignored so do nothing")
         print(f"DEBUG - Event ignored so do nothing")
-        
+
         return None  # Exit early if the event is ignored
     return context
 
@@ -106,7 +109,7 @@ def fetch_proposal_decisions(event_group):
 
 def update_event_group(event_group, event):
     if (
-        event.pos_error is not None 
+        event.pos_error is not None
         and event.pos_error < event_group.pos_error
         and event.pos_error != 0.0
     ):
@@ -123,6 +126,7 @@ def update_event_group(event_group, event):
 
 
 # proposal worth observing trigger functions
+
 
 def trigger_observation(
     prop_dec,
@@ -173,6 +177,7 @@ def trigger_observation(
     )
     return context["decision"], context["decision_reason_log"]
 
+
 def process_all_proposals(context):
     event_group = context["event_group"]
     event = context["event"]
@@ -188,26 +193,38 @@ def process_all_proposals(context):
         print(
             "DEBUG- Loop over all proposals settings and see if it's worth reobserving"
         )
-        
+
         context["event_group"] = update_event_group(event_group, event)
         context["prop_decs"] = prop_decs
         context["prop_decs_exist"] = True
-    else :
+    else:
 
         # TODO selected only source types are same
         # proposal_settings = ProposalSettings.objects.all().order_by("priority")
 
         print("DEBUG - event_group.source_type: ", event_group.source_type)
         print("DEBUG - event.telescope: ", event.telescope)
+        print("DEBUG - event.event_type: ", event.event_type)
+
+        stream = event.telescope.upper() + "_" + event.event_type.upper()
+        if stream[-2:] == "_-":
+            stream = stream[:-2]
+
+        print("DEBUG - stream: ", stream)
+        print(
+            "DEBUG - ProposalSettings.objects.filter(streams__contains=[stream]): ",
+            ProposalSettings.objects.filter(streams__contains=[stream]),
+        )
 
         proposal_settings = ProposalSettings.objects.filter(
             source_type=event_group.source_type,
             event_telescope__name=event.telescope,
-            active=True, # TODO use this filter when active column is added in ProposalSettings model
+            streams__contains=[stream],  #
+            active=True,  # TODO use this filter when active column is added in ProposalSettings model
         ).order_by("priority")
 
         print("DEBUG - num of proposals : ", len(proposal_settings))
-        
+
         if len(proposal_settings) == 0:
             print("DEBUG - no proposal settings found")
             return context
@@ -224,18 +241,18 @@ def process_all_proposals(context):
                 ra_hms=event.ra_hms,
                 dec_dms=event.dec_dms,
                 pos_error=event.pos_error,
+                version=prop_set.version,
             )
-            
+
         prop_decs = fetch_proposal_decisions(event_group)
-        
-        
+
         context["event_group"] = update_event_group(event_group, event)
         context["prop_decs"] = prop_decs
         context["prop_decs_exist"] = False
-        
-    voevents = Event.objects.filter(trig_id=event_group.trig_id).order_by("-recieved_data")
+
+    voevents = Event.objects.filter(trig_id=event_group.trig_id).order_by(
+        "-recieved_data"
+    )
     context["voevents"] = voevents
-    
+
     return context
-
-

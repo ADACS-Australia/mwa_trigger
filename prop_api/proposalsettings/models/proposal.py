@@ -1,8 +1,9 @@
 import datetime as dt
 import logging
+from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
@@ -11,14 +12,13 @@ from ..utils import utils_helper as utils_helper
 from ..utils.utils_log import log_event
 from .constants import SourceChoices, TriggerOnChoices
 from .event import Event
-from .sourcesettings import SourceSettings
 from .telescope import EventTelescope, TelescopeProjectId
 from .telescopesettings import BaseTelescopeSettings
 
 logger = logging.getLogger(__name__)
 
 
-class ProposalSettings(BaseModel):
+class ProposalSettings(BaseModel, ABC):
     """
     Represents the settings for a proposal in the telescope observation system.
 
@@ -29,6 +29,9 @@ class ProposalSettings(BaseModel):
     """
 
     id: int
+    streams: List[str] = []
+    version: str = "1.0.0"
+
     project_id: TelescopeProjectId
     event_telescope: Optional[EventTelescope]
     proposal_id: str = Field(
@@ -53,18 +56,16 @@ class ProposalSettings(BaseModel):
     )
 
     telescope_settings: BaseTelescopeSettings
-    source_settings: SourceSettings
 
     class Config:
         extra = "forbid"
 
+    @abstractmethod
     def is_worth_observing(
         self, event: Event, **kwargs
     ) -> Tuple[bool, bool, bool, str]:
         """
         Determines if an event is worth observing based on the source settings.
-
-        This method delegates the decision to the source_settings' worth_observing method.
 
         Args:
             event (Event): The event to evaluate.
@@ -79,13 +80,9 @@ class ProposalSettings(BaseModel):
         """
 
         # Delegate to the source settings' worth_observing method
-        return self.source_settings.worth_observing(
-            event, self.telescope_settings, **kwargs
-        )
+        pass
 
-    @log_event(
-        log_location="end", message=f"Trigger observation completed", level="info"
-    )
+    @abstractmethod
     def trigger_gen_observation(self, context: Dict, **kwargs) -> Tuple[str, str]:
         """
         Triggers the generation of an observation based on the event context.
@@ -100,33 +97,4 @@ class ProposalSettings(BaseModel):
         Returns:
             Tuple[str, str]: A tuple containing the decision and the decision reason log.
         """
-        print(f"DEBUG - START context keys: {context.keys()}")
-
-        context = utils_helper.check_mwa_horizon_and_prepare_context(context)
-
-        # TODO: Remove this after testing
-        # context["stop_processing"] = False
-        print("DEBUG - context['stop_processing']: ", context["stop_processing"])
-
-        if context["stop_processing"]:
-            return context["decision"], context["decision_reason_log"]
-
-        context = self.source_settings.trigger_mwa_observation(
-            telescope_settings=self.telescope_settings, context=context
-        )
-
-        context = self.source_settings.trigger_atca_observation(
-            telescope_settings=self.telescope_settings, context=context
-        )
-
-        if (
-            self.telescope_settings.telescope.name.startswith("ATCA") is False
-            and self.telescope_settings.telescope.name.startswith("MWA") is False
-        ):
-            context["decision_reason_log"] = (
-                f"{context['decision_reason_log']}{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Not making an MWA observation. \n"
-            )
-
-        context['reached_end'] = True
-        print(f"DEBUG - END context keys: {context.keys()}")
-        return context
+        pass

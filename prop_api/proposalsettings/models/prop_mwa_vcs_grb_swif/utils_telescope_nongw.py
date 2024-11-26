@@ -3,7 +3,7 @@ import logging
 import random
 from datetime import datetime
 
-from .utils_log import log_event
+from ...utils.utils_log import log_event
 
 
 @log_event(

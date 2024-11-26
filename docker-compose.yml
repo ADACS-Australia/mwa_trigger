@@ -64,6 +64,7 @@ services:
     # restart: always
     volumes:
       - ./prop_api:/app:rw
+      - shared_data:/shared:rw
     ports:
       - "8001:8000"
     env_file:
@@ -97,6 +98,7 @@ services:
     # restart: always
     volumes:
       - ./webapp_tracet:/app
+      - shared_data:/shared:rw
     ports:
       - "8000:8000"
     env_file:
@@ -128,6 +130,7 @@ services:
     # restart: always
     volumes:
       - ./test_api:/app:rw
+      - shared_data:/shared:rw
     ports:
       - "8002:8000"
     env_file:
@@ -149,7 +152,7 @@ volumes:
   postgres_data:
   postgres_api:
   postgres_test_api:
-
+  shared_data:
 networks:
   tracet-network:
     driver: bridge

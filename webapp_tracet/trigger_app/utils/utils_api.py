@@ -124,13 +124,22 @@ def make_trig_obs_request(context: Dict[str, Any], voevents: List[Any]) -> tuple
 
 def get_prop_settings_from_api(order_by: str = "id") -> Optional[dict]:
     try:
-        response = api_session.request("GET", "proposalsettings/")
+        response = api_session.request("GET", "proposalsettings_update/")
 
         if response.status_code != 200:
             logger.error(f"Request unsuccessful. Status code: {response.status_code}")
             return None
 
-        return response
+        api_response = response.json()
+
+        # Check if there were any errors in the response
+        if api_response.get("status") == "error":
+            logger.error("Errors occurred during proposal update:")
+            for error in api_response.get("errors", []):
+                logger.error(error)
+        print("success")
+        # Return just the proposals regardless of status
+        return api_response.get("proposals")
 
     except Exception as e:
         logger.error(f"Error in get_prop_settings_from_api: {str(e)}")

@@ -1,0 +1,8 @@
+{% extends 'trigger_app/header.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2>{{ file_path }}</h2>
+    <pre><code class="python">{{ content }}</code></pre>
+</div>
+{% endblock %}

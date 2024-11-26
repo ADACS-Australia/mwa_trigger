@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from .constants import SOURCE_CHOICES, TRIGGER_ON
@@ -8,6 +9,20 @@ from .telescope import EventTelescope, Telescope, TelescopeProjectID
 class ProposalSettings(models.Model):
 
     id = models.AutoField(primary_key=True)
+
+    streams = ArrayField(
+        models.CharField(max_length=20),
+        default=list,  # This sets default as empty list: []
+        blank=True,
+        help_text="List of streams for this proposal",
+    )
+    version = models.CharField(
+        max_length=10,
+        default="1.0.0",
+        null=True,
+        help_text="Version of the proposal settings",
+    )
+
     proposal_id = models.CharField(
         max_length=16,
         unique=True,
@@ -32,6 +47,7 @@ class ProposalSettings(models.Model):
         max_length=513,
         help_text="A brief description of the proposal. Only needs to be enough to distinguish it from the other proposals.",
     )
+
     priority = models.IntegerField(
         help_text="Set proposal processing priority (lower is better)", default=1
     )
@@ -63,8 +79,30 @@ class ProposalSettings(models.Model):
         help_text="Indicates whether this proposal setting is currently active.",
     )
 
+    created_at = models.DateTimeField(
+        auto_now_add=True, help_text="Time when this proposal was created"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, help_text="Last time this proposal was updated"
+    )
+
+    code_link = models.CharField(
+        max_length=2028,
+        blank=True,
+        null=True,
+        help_text="Link to the code repository or documentation",
+        default="",  # Empty default, will be set in save() method
+    )
+
     def __str__(self):
         return f"{self.proposal_id}"
+
+    def save(self, *args, **kwargs):
+        if not self.code_link:
+            self.code_link = (
+                f"/shared/models/prop_{self.proposal_id.lower()}_{self.version}"
+            )
+        super().save(*args, **kwargs)
 
 
 class ProposalDecision(models.Model):
@@ -85,7 +123,7 @@ class ProposalDecision(models.Model):
     decision_reason = models.CharField(max_length=2056, blank=True, null=True)
 
     proposal = models.ForeignKey(
-        ProposalSettings, on_delete=models.SET_NULL, blank=True, null=True
+        ProposalSettings, on_delete=models.CASCADE, blank=True, null=True
     )
     # proposal_id = models.IntegerField(blank=True, null=True)
 
@@ -103,8 +141,117 @@ class ProposalDecision(models.Model):
     pos_error = models.FloatField(blank=True, null=True)
     recieved_data = models.DateTimeField(auto_now_add=True, blank=True)
 
+    version = models.CharField(
+        max_length=10,
+        default="1.0.0",
+        null=True,
+        help_text="Version inherited from ProposalSettings",
+    )
+
     def __str__(self):
         return str(self.id)
 
+    def save(self, *args, **kwargs):
+        if self.proposal and not self.version:
+            self.version = self.proposal.version
+        super().save(*args, **kwargs)
+
     class Meta:
         ordering = ["-id"]
+
+
+class ProposalSettingsArchive(models.Model):
+
+    id_version = models.CharField(
+        primary_key=True,
+        max_length=30,
+        help_text="Combination of proposal id and version (id-version)",
+    )
+
+    id = models.IntegerField(
+        help_text="Original ProposalSettings id",
+    )
+
+    streams = ArrayField(
+        models.CharField(max_length=20),
+        default=list,
+        blank=True,
+        help_text="List of streams for this proposal",
+    )
+    version = models.CharField(
+        max_length=10,
+        default="1.0.0",
+        null=True,
+        help_text="Version of the proposal settings",
+    )
+    proposal_id = models.CharField(
+        max_length=16,
+        verbose_name="Proposal ID",
+        help_text="A short identifier of the proposal of maximum lenth 16 charcters.",
+    )
+    telescope = models.ForeignKey(
+        Telescope,
+        to_field="name",
+        verbose_name="Telescope name",
+        help_text="Telescope this proposal will observer with.",
+        on_delete=models.CASCADE,
+    )
+    project_id = models.ForeignKey(
+        TelescopeProjectID,
+        to_field="id",
+        verbose_name="Project ID",
+        help_text="This is the target telescopes's project ID that is used with a password to schedule observations.",
+        on_delete=models.CASCADE,
+    )
+    proposal_description = models.CharField(
+        max_length=513,
+        help_text="A brief description of the proposal. Only needs to be enough to distinguish it from the other proposals.",
+    )
+    code_link = models.CharField(
+        max_length=2028,
+        blank=True,
+        null=True,
+        help_text="Link to the code repository or documentation",
+        default="",  # Empty default, will be set in save() method
+    )
+    priority = models.IntegerField(
+        help_text="Set proposal processing priority (lower is better)", default=1
+    )
+    event_telescope = models.ForeignKey(
+        EventTelescope,
+        to_field="name",
+        help_text="The telescope that this proposal will accept at least one Event from before observing.",
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+    testing = models.CharField(
+        default=TRIGGER_ON[2][0],
+        choices=TRIGGER_ON,
+        verbose_name="What events will this proposal trigger on?",
+        null=False,
+        max_length=128,
+    )
+    source_type = models.CharField(
+        max_length=3,
+        choices=SOURCE_CHOICES,
+        verbose_name="What type of source will you trigger on?",
+    )
+    active = models.BooleanField(
+        default=True,
+        help_text="Indicates whether this proposal setting is currently active.",
+    )
+    created_at = models.DateTimeField(help_text="Time when this proposal was created")
+    updated_at = models.DateTimeField(help_text="Last time this proposal was updated")
+
+    def save(self, *args, **kwargs):
+        # Create the composite primary key
+        if not self.id_version:
+            self.id_version = f"{self.id}-{self.version}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.proposal_id} (v{self.version})"
+
+    class Meta:
+        ordering = ["-created_at"]

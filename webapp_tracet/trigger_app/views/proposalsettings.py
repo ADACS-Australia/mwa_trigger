@@ -1,7 +1,11 @@
+import os
+
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 from django.shortcuts import redirect, render
 from django.views.generic import ListView
 from tracet import parse_xml
+from trigger_app.utils.utils_update import update_proposal_settings_from_api
 
 from .. import forms, models
 
@@ -9,6 +13,7 @@ from .. import forms, models
 class ProposalSettingsList(ListView):
     model = models.proposal.ProposalSettings
     ordering = ["priority"]
+
 
 @login_required
 def proposal_form(request, id=None):
@@ -35,7 +40,6 @@ def proposal_form(request, id=None):
         "trigger_app/proposal_form.html",
         {"form": form, "src_tele": src_tele, "title": title},
     )
-
 
 
 def proposal_decision_path(request, id):
@@ -126,4 +130,77 @@ end"""
         request,
         "trigger_app/proposal_decision_path.html",
         {"proposal": prop_set, "mermaid_script": mermaid_script},
+    )
+
+
+@login_required
+def update_all_proposals(request):
+
+    update_proposal_settings_from_api()
+    print("Updating proposals")
+    # return redirect(reverse('proposal_settings'))
+    return redirect('proposal_settings')
+
+
+@login_required
+def code_browser(request):
+    # Get the path from query parameters
+    relative_path = request.GET.get('path', '')
+
+    # Define the root directory
+    code_dir = os.path.join('/')
+
+    # Combine with the relative path
+    target_dir = os.path.join(code_dir, relative_path.lstrip('/'))
+
+    print(target_dir)
+
+    # Get list of files and directories
+    files = []
+    if os.path.exists(target_dir):
+        for root, dirs, filenames in os.walk(target_dir):
+            rel_path = os.path.relpath(root, target_dir)
+            if rel_path == '.':
+                rel_path = ''
+
+            for filename in filenames:
+                if filename.endswith('.py'):  # Only show Python files
+                    file_path = os.path.join(rel_path, filename)
+                    files.append(file_path)
+
+    return render(
+        request,
+        'trigger_app/code_browser.html',
+        {
+            'files': sorted(files),
+            'current_path': relative_path,
+            'target_dir': target_dir,
+        },
+    )
+
+
+@login_required
+def view_code_file(request, file_path):
+    target_dir = request.GET.get('target_dir', '/')
+
+    # Ensure the file path is within our allowed directory
+    full_path = os.path.join(target_dir, file_path)
+    file_path = file_path.lstrip('/')
+
+    print(full_path)
+
+    # Basic security check to prevent directory traversal
+    if not os.path.commonpath([full_path, '/']) == '/':
+        raise Http404("File not found")
+
+    try:
+        with open(full_path, 'r') as file:
+            content = file.read()
+    except FileNotFoundError:
+        raise Http404("File not found")
+
+    return render(
+        request,
+        'trigger_app/view_code.html',
+        {'file_path': file_path, 'content': content, 'target_dir': target_dir},
     )

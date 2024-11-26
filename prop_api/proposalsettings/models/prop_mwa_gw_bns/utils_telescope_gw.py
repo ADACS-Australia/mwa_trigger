@@ -4,8 +4,8 @@ import random
 from datetime import datetime, timezone
 from math import floor
 
-from .utils_helper import *
-from .utils_log import log_event
+from ...utils.utils_helper import *
+from ...utils.utils_log import log_event
 
 json_logger = logging.getLogger("django_json")
 
@@ -107,20 +107,20 @@ def handle_early_warning(telescope_settings, context):
     ].event_observed.replace(tzinfo=timezone.utc)
 
     print(
-        f"DEBUG - ps.source_settings.early_observation_time_seconds: {ps.source_settings.early_observation_time_seconds}"
+        f"DEBUG - ps.early_observation_time_seconds: {ps.early_observation_time_seconds}"
     )
     print(f"DEBUG - timeDiff.total_seconds(): {timeDiff.total_seconds()}")
 
-    if timeDiff.total_seconds() >= ps.source_settings.early_observation_time_seconds:
+    if timeDiff.total_seconds() >= ps.early_observation_time_seconds:
         return context
 
-    # if timeDiff.total_seconds() < ps.source_settings.early_observation_time_seconds:
+    # if timeDiff.total_seconds() < ps.early_observation_time_seconds:
     estObsTime = round_to_nearest_modulo_8(
-        ps.source_settings.early_observation_time_seconds - timeDiff.total_seconds()
+        ps.early_observation_time_seconds - timeDiff.total_seconds()
     )
     context[
         "decision_reason_log"
-    ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Event time was {timeDiff.total_seconds()} seconds ago, early observation proposal setting is {ps.source_settings.early_observation_time_seconds} seconds so making an observation of {estObsTime} seconds.\n"
+    ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Event time was {timeDiff.total_seconds()} seconds ago, early observation proposal setting is {ps.early_observation_time_seconds} seconds so making an observation of {estObsTime} seconds.\n"
     context[
         "decision_reason_log"
     ] += f"{datetime.now(dt.timezone.utc)}: Event ID {context['event_id']}: Sending observation request to MWA.\n"

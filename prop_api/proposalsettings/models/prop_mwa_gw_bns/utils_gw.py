@@ -4,10 +4,8 @@ from datetime import datetime, timedelta
 from functools import partial
 from typing import Tuple, Union
 
-from ..models.event import Event
-from .utils_log import log_event, log_event_with_error
-
-# from ..models.sourcesettings import GWSourceSettings
+from ...utils.utils_log import log_event, log_event_with_error
+from ..event import Event
 
 # Initialize the context with the event and defaults
 

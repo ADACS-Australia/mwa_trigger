@@ -14,7 +14,7 @@ class Observations(models.Model):
         on_delete=models.CASCADE,
     )
     proposal_decision_id = models.ForeignKey(
-        ProposalDecision, on_delete=models.SET_NULL, blank=True, null=True
+        ProposalDecision, on_delete=models.CASCADE, blank=True, null=True
     )
     website_link = models.URLField(max_length=2028)
     reason = models.CharField(max_length=2029, blank=True, null=True)
