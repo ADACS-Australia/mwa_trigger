@@ -139,8 +139,6 @@ def update_proposal_settings_from_api():
     if changed_data:
         ProposalSettingsArchive.objects.bulk_create(changed_data, ignore_conflicts=True)
 
-    print("DEBUG - UPLOAD_USER", os.environ["UPLOAD_USER"])
-    print("DEBUG - UPLOAD_PASSWORD", os.environ["UPLOAD_PASSWORD"])
     # Update or create proposals from API data
     ProposalSettings.objects.bulk_create(api_data, ignore_conflicts=True)
     ProposalSettings.objects.bulk_update(
