@@ -3,8 +3,10 @@ from .models.constants import SourceChoices, TriggerOnChoices
 from .models.prop_atca_hess_grbs.model import ProposalAtcaHessGrbs
 from .models.prop_atca_long_grb.model import ProposalAtcaLongGrb
 from .models.prop_atca_short_grb.model import ProposalAtcaShortGrb
+from .models.prop_atca_test_grb.models import ProposalAtcaTestGrb
 from .models.prop_mwa_gw_bns.model import ProposalMwaGwBns
 from .models.prop_mwa_gw_nsbh.model import ProposalMwaGwNsbh
+from .models.prop_mwa_test_grb.model import ProposalMwaTestGrb
 from .models.prop_mwa_vcs_grb_swif.model import ProposalMwaVcsGrbSwif
 from .models.prop_test2_neutrino.model import ProposalTest2Neutrino
 from .models.proposal import ProposalSettings
@@ -78,6 +80,18 @@ class ProposalSettingsFactory:
     def proposal_mwa_gw_nshh(self):
         # print("proposal_mwa_gw_nshh")
         prop = ProposalMwaGwNsbh()
+        return prop
+
+    @property
+    def proposal_atca_test_grb(self):
+        print("proposal_atca_test_grb")
+        prop = ProposalAtcaTestGrb()
+        return prop
+
+    @property
+    def proposal_mwa_test_grb(self):
+        print("proposal_mwa_test_grb")
+        prop = ProposalMwaTestGrb()
         return prop
 
     #

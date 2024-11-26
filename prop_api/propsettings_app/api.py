@@ -237,7 +237,9 @@ def get_proposalsettings_by_id(request, id: int):
     return proposal
 
 
-@app.post("/process_all_proposals/", response={200: Dict[str, Union[bool, str]]})
+@app.post(
+    "/process_all_proposals/", response={200: Dict[str, Union[bool, str]]}, auth=None
+)
 def api_process_all_proposals(request, data: AllProposalsProcessRequest):
     """
     Process all proposals based on the provided data.
