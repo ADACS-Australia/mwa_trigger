@@ -93,9 +93,7 @@ class ProposalTest2Neutrino(ProposalSettings):
     class Config:
         extra = "forbid"
 
-    def is_worth_observing(
-        self, event: Event, **kwargs
-    ) -> Tuple[bool, bool, bool, str]:
+    def is_worth_observing(self, context: Dict, **kwargs) -> Dict:
         """
         Determines if an event is worth observing based on the source settings.
 
@@ -110,9 +108,16 @@ class ProposalTest2Neutrino(ProposalSettings):
                 - bool: True if the event requires immediate action.
                 - str: A message explaining the decision.
         """
+        event = context["event"]
 
-        # Delegate to the source settings' worth_observing method
-        return self.worth_observing(event, self.telescope_settings, **kwargs)
+        context_wo = self.worth_observing(event, self.telescope_settings, **kwargs)
+
+        return {
+            "trigger_bool": context_wo["trigger_bool"],
+            "debug_bool": context_wo["debug_bool"],
+            "pending_bool": context_wo["pending_bool"],
+            "decision_reason_log": context_wo["decision_reason_log"],
+        }
 
     @log_event(
         log_location="end", message=f"Trigger observation completed", level="info"
@@ -176,7 +181,7 @@ class ProposalTest2Neutrino(ProposalSettings):
             BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
         ],
         **kwargs,
-    ):
+    ) -> Dict:
         """
         Determine if a Neutrino event is worth observing based on various criteria.
 
@@ -223,7 +228,13 @@ class ProposalTest2Neutrino(ProposalSettings):
             decision_reason_log += f"{datetime.now(dt.timezone.utc)}: Event ID {event.id}: No thresholds for non Antares telescopes so triggering. \n"
 
         context["reached_end"] = True
-        return trigger_bool, debug_bool, pending_bool, decision_reason_log
+
+        context["trigger_bool"] = trigger_bool
+        context["debug_bool"] = debug_bool
+        context["pending_bool"] = pending_bool
+        context["decision_reason_log"] = decision_reason_log
+
+        return context
 
     @log_event(
         log_location="end",

@@ -26,15 +26,11 @@ def check_worth_observing(context):
     if context["proposal_worth_observing"] is False:
         return context
 
-    prop_dec = context["prop_dec"]
-    event = context["event"]
-    observation_reason = context["observation_reason"]
-
     print("DEBUG - check_worth_observing")
 
     # make api request after saving prop_dec
     boolean_log_values = proposal_worth_observing(
-        prop_dec=prop_dec, event=event, observation_reason=observation_reason
+        context=context,
     )
 
     if boolean_log_values is None:
@@ -54,7 +50,7 @@ def check_worth_observing(context):
     return context
 
 
-def proposal_worth_observing(prop_dec, event, observation_reason):
+def proposal_worth_observing(context):
     """For a proposal sees is this voevent is worth observing. If it is will trigger an observation and send off the relevant alerts.
 
     Args:
@@ -66,6 +62,11 @@ def proposal_worth_observing(prop_dec, event, observation_reason):
         dict: A dictionary containing boolean flags and decision reasons.
     """
     print("DEBUG - proposal_worth_observing")
+
+    prop_dec = context["prop_dec"]
+    event = context["event"]
+    observation_reason = context["observation_reason"]
+
     logger.info(f"Checking that proposal {prop_dec.proposal} is worth observing.")
     # Defaults if not worth observing
     trigger_bool = debug_bool = pending_bool = False
@@ -88,7 +89,7 @@ def proposal_worth_observing(prop_dec, event, observation_reason):
         or str(prop_dec.proposal.event_telescope.name).strip()
         == event.telescope.strip()
     ):
-        print("Next test")
+
         print(prop_dec.proposal.source_type)
         print(prop_dec.event_group_id.source_type)
 
@@ -106,18 +107,19 @@ def proposal_worth_observing(prop_dec, event, observation_reason):
             prop_dec.proposal.source_type == prop_dec.event_group_id.source_type
             and prop_dec.event_group_id.source_type in ["GRB", "GW", "NU"]
         ):
-            print(prop_dec.proposal.id)
-            (
-                trigger_bool,
-                debug_bool,
-                pending_bool,
-                decision_reason_log,
-            ) = prop_dec.proposal.is_worth_observing(
-                event,
+
+            context_wo = prop_dec.proposal.is_worth_observing(
+                context=context,
                 dec=prop_dec.dec,
                 decision_reason_log=decision_reason_log,
                 prop_dec=prop_dec,
             )
+
+            trigger_bool = context_wo["trigger_bool"]
+            debug_bool = context_wo["debug_bool"]
+            pending_bool = context_wo["pending_bool"]
+            decision_reason_log = context_wo["decision_reason_log"]
+
             proj_source_bool = True
 
         else:

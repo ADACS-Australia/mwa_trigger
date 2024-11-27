@@ -62,7 +62,7 @@ class ProposalSettings(BaseModel, ABC):
 
     @abstractmethod
     def is_worth_observing(
-        self, event: Event, **kwargs
+        self, context: Dict, **kwargs
     ) -> Tuple[bool, bool, bool, str]:
         """
         Determines if an event is worth observing based on the source settings.

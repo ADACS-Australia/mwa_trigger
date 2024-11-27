@@ -148,7 +148,7 @@ class ProposalMwaGwBns(ProposalSettings):
         extra = "forbid"
 
     def is_worth_observing(
-        self, event: Event, **kwargs
+        self, context: Dict, **kwargs
     ) -> Tuple[bool, bool, bool, str]:
         """
         Determines if an event is worth observing based on the source settings.
@@ -164,9 +164,16 @@ class ProposalMwaGwBns(ProposalSettings):
                 - bool: True if the event requires immediate action.
                 - str: A message explaining the decision.
         """
+        event = context["event"]
 
-        # Delegate to the source settings' worth_observing method
-        return self.worth_observing(event, self.telescope_settings, **kwargs)
+        context_wo = self.worth_observing(event, self.telescope_settings, **kwargs)
+
+        return {
+            "trigger_bool": context_wo["trigger_bool"],
+            "debug_bool": context_wo["debug_bool"],
+            "pending_bool": context_wo["pending_bool"],
+            "decision_reason_log": context_wo["decision_reason_log"],
+        }
 
     @log_event(
         log_location="end", message=f"Trigger observation completed", level="info"
@@ -229,7 +236,7 @@ class ProposalMwaGwBns(ProposalSettings):
             BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
         ],
         **kwargs,
-    ) -> Tuple[bool, bool, bool, str]:
+    ) -> Dict:
         """
         Determine if a GW event is worth observing based on various criteria.
 
@@ -240,7 +247,7 @@ class ProposalMwaGwBns(ProposalSettings):
             **kwargs: Additional keyword arguments.
 
         Returns:
-            Tuple[bool, bool, bool, str]: A tuple containing:
+            Dict: A dictionary containing:
                 - trigger_bool: Whether to trigger an observation.
                 - debug_bool: Whether to trigger a debug alert.
                 - pending_bool: Whether to create a pending observation.
@@ -273,12 +280,7 @@ class ProposalMwaGwBns(ProposalSettings):
         context = utils_gw.check_probabilities(telescope_settings, self, context)
 
         context["reached_end"] = True
-        return (
-            context["trigger_bool"],
-            context["debug_bool"],
-            context["pending_bool"],
-            context["decision_reason_log"],
-        )
+        return context
 
     # @log_event(
     #     log_location="end",

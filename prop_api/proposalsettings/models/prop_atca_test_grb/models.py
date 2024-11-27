@@ -65,7 +65,7 @@ class ProposalAtcaTestGrb(ProposalSettings):
         extra = "forbid"
 
     def is_worth_observing(
-        self, event: Event, **kwargs
+        self, context: Dict, **kwargs
     ) -> Tuple[bool, bool, bool, str]:
         """
         Determines if an event is worth observing based on the source settings.
@@ -81,17 +81,15 @@ class ProposalAtcaTestGrb(ProposalSettings):
                 - bool: True if the event requires immediate action.
                 - str: A message explaining the decision.
         """
+        event = context["event"]
 
         # returning three boolean values and log text
-        # return (
-        #     context["trigger_bool"],
-        #     context["debug_bool"],
-        #     context["pending_bool"],
-        #     context["decision_reason_log"],
-        # )
-
-        # Delegate to the source settings' worth_observing method
-        return (True, False, False, "test")
+        return {
+            "trigger_bool": True,
+            "debug_bool": False,
+            "pending_bool": False,
+            "decision_reason_log": "test",
+        }
 
     def trigger_gen_observation(self, context: Dict, **kwargs) -> Tuple[str, str]:
         """
