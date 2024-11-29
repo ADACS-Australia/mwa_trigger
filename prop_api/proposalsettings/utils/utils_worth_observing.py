@@ -29,19 +29,25 @@ def check_worth_observing(context):
     print("DEBUG - check_worth_observing")
 
     # make api request after saving prop_dec
-    boolean_log_values = proposal_worth_observing(
+    context = proposal_worth_observing(
         context=context,
     )
 
-    if boolean_log_values is None:
+    if context['trigger_bool'] is None:
         return context
 
-    context["trigger_bool"] = boolean_log_values["trigger_bool"]
-    context["debug_bool"] = boolean_log_values["debug_bool"]
-    context["pending_bool"] = boolean_log_values["pending_bool"]
-    context["decision_reason_log"] = boolean_log_values["decision_reason_log"]
+    # context["trigger_bool"] = boolean_log_values["trigger_bool"]
+    # context["debug_bool"] = boolean_log_values["debug_bool"]
+    # context["pending_bool"] = boolean_log_values["pending_bool"]
+    # context["decision_reason_log"] = boolean_log_values["decision_reason_log"]
 
-    print("DEBUG - boolean_log_values:", boolean_log_values)
+    print(
+        "DEBUG - boolean_log_values:",
+        context['trigger_bool'],
+        context['debug_bool'],
+        context['pending_bool'],
+        context['decision_reason_log'],
+    )
 
     context["trigger_decision"] = True
 
@@ -69,9 +75,13 @@ def proposal_worth_observing(context):
 
     logger.info(f"Checking that proposal {prop_dec.proposal} is worth observing.")
     # Defaults if not worth observing
-    trigger_bool = debug_bool = pending_bool = False
-    decision_reason_log = prop_dec.decision_reason
-    proj_source_bool = False
+    context['decision_reason_log'] = prop_dec.decision_reason
+    context['trigger_bool'] = context['debug_bool'] = context['pending_bool'] = False
+    context['proj_source_bool'] = False
+
+    # trigger_bool = debug_bool = pending_bool = False
+    # decision_reason_log = prop_dec.decision_reason
+    # proj_source_bool = False
 
     # if True:
     #     prop_dec.proposal.telescope_settings.event_telescope = None
@@ -83,6 +93,14 @@ def proposal_worth_observing(context):
     )
     print("DEBUG - event.telescope:", event.telescope)
 
+    stream = event.telescope.upper() + "_" + event.event_type.upper()
+    if stream[-2:] == "_-":
+        stream = stream[:-2]
+
+    print("--------------------------------------------------------")
+    print("DEBUG - stream: ", stream)
+    print("--------------------------------------------------------")
+
     # Continue to next test
     if (
         prop_dec.proposal.event_telescope is None
@@ -90,60 +108,59 @@ def proposal_worth_observing(context):
         == event.telescope.strip()
     ):
 
-        print(prop_dec.proposal.source_type)
-        print(prop_dec.event_group_id.source_type)
-
         # This project observes events from this telescope
         # Check if this proposal thinks this event is worth observing
         if (
             prop_dec.proposal.source_type == "FS"
             and prop_dec.event_group_id.source_type == "FS"
         ):
-            trigger_bool = True
-            decision_reason_log = f"{decision_reason_log}{datetime.now(dt.timezone.utc)}: Event ID {event.id}: Triggering on Flare Star {prop_dec.event_group_id.source_name}. \n"
-            proj_source_bool = True
+            context['trigger_bool'] = True
+            context['decision_reason_log'] = (
+                f"{context['decision_reason_log']}{datetime.now(dt.timezone.utc)}: Event ID {event.id}: Triggering on Flare Star {prop_dec.event_group_id.source_name}. \n"
+            )
+            context['proj_source_bool'] = True
 
         elif (
             prop_dec.proposal.source_type == prop_dec.event_group_id.source_type
+            and stream in prop_dec.proposal.streams
             and prop_dec.event_group_id.source_type in ["GRB", "GW", "NU"]
         ):
 
-            context_wo = prop_dec.proposal.is_worth_observing(
-                context=context,
-                dec=prop_dec.dec,
-                decision_reason_log=decision_reason_log,
-                prop_dec=prop_dec,
-            )
+            context = prop_dec.proposal.is_worth_observing(context=context)
 
-            trigger_bool = context_wo["trigger_bool"]
-            debug_bool = context_wo["debug_bool"]
-            pending_bool = context_wo["pending_bool"]
-            decision_reason_log = context_wo["decision_reason_log"]
+            # context['trigger_bool'] = context_wo["trigger_bool"]
+            # context['debug_bool'] = context_wo["debug_bool"]
+            # context['pending_bool'] = context_wo["pending_bool"]
+            # context['decision_reason_log'] = context_wo["decision_reason_log"]
 
-            proj_source_bool = True
+            # proj_source_bool = True
+            context['proj_source_bool'] = True
 
         else:
             print("DEBUG - proposal_worth_observing - not same values")
 
-        if not proj_source_bool:
+        if not context['proj_source_bool']:
             # Proposal does not observe this type of source so update message
-            decision_reason_log = f"{decision_reason_log}{datetime.now(dt.timezone.utc)}: Event ID {event.id}: This proposal does not observe {prop_dec.event_group_id.source_type}s. \n"
+            context['decision_reason_log'] = (
+                f"{context['decision_reason_log']}{datetime.now(dt.timezone.utc)}: Event ID {event.id}: This proposal does not observe {prop_dec.event_group_id.source_type}s. \n"
+            )
 
     else:
         # Proposal does not observe event from this telescope so update message
         print("DEBUG - proposal_worth_observing - event.id:", event.id)
         print("DEBUG - proposal_worth_observing - event.telescope:", event.telescope)
-        decision_reason_log = f"{decision_reason_log}{datetime.now(dt.timezone.utc)}: Event ID {event.id}: This proposal does not trigger on events from {event.telescope}. \n"
+        context['decision_reason_log'] = (
+            f"{context['decision_reason_log']}{datetime.now(dt.timezone.utc)}: Event ID {event.id}: This proposal does not trigger on events from {event.telescope}. \n"
+        )
 
-    print(trigger_bool, debug_bool, pending_bool, decision_reason_log)
+    print(
+        context['trigger_bool'],
+        context['debug_bool'],
+        context['pending_bool'],
+        context['decision_reason_log'],
+    )
 
-    return {
-        "trigger_bool": trigger_bool,
-        "debug_bool": debug_bool,
-        "pending_bool": pending_bool,
-        "proj_source_bool": proj_source_bool,
-        "decision_reason_log": decision_reason_log,
-    }
+    return context
 
 
 @log_event(log_location="end", message=f"make_trigger_decision completed", level="info")

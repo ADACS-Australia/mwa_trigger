@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from proposalsettings.models.proposal import ProposalSettings
 from pydantic import BaseModel
 
 
@@ -49,11 +50,37 @@ class EventGroupSchema(BaseModel):
         from_attributes = True
 
 
+# This schema is used to get the proposal decision object from the database and
+# proposal just id when request received
 class ProposalDecisionSchema(BaseModel):
     id: int
     decision: str
     decision_reason: Optional[str]
     proposal: Optional[int]  # Assuming this is the ID of the related ProposalSettings
+    event_group_id: EventGroupSchema  # event_group: EventGroupSchema
+    trig_id: Optional[str]
+    duration: Optional[float]
+    ra: Optional[float]
+    dec: Optional[float]
+    alt: Optional[float]
+    az: Optional[float]
+    ra_hms: Optional[str]
+    dec_dms: Optional[str]
+    pos_error: Optional[float]
+    recieved_data: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# This schema is used to get the proposal object from the database
+class ProposalDecision(BaseModel):
+    id: int
+    decision: str
+    decision_reason: Optional[str]
+    proposal: Optional[
+        ProposalSettings
+    ]  # Assuming this is the ID of the related ProposalSettings
     event_group_id: EventGroupSchema  # event_group: EventGroupSchema
     trig_id: Optional[str]
     duration: Optional[float]
@@ -138,19 +165,17 @@ class ObservationSchema(BaseModel):
 class SkyCoordSchema(BaseModel):
     ra: float
     dec: float
-    
+
     @classmethod
     def from_skycoord(cls, skycoord: SkyCoord):
-        return cls(
-            ra=skycoord.ra.deg,
-            dec=skycoord.dec.deg
-        )
+        return cls(ra=skycoord.ra.deg, dec=skycoord.dec.deg)
 
     def to_skycoord(self) -> SkyCoord:
         return SkyCoord(ra=self.ra * u.degree, dec=self.dec * u.degree)
 
     class Config:
         arbitrary_types_allowed = True
+
 
 class ProposalObservationRequest(BaseModel):
     prop_dec: ProposalDecisionSchema
@@ -165,6 +190,7 @@ class TriggerObservationRequest(BaseModel):
     reason: str = "First Observation"
     event_id: int = None
 
+
 class AllProposalsProcessRequest(BaseModel):
     prop_decs: List[ProposalDecisionSchema]
     voevents: List[EventSchema]
@@ -172,10 +198,12 @@ class AllProposalsProcessRequest(BaseModel):
     event_group: EventGroupSchema
     prop_decs_exist: bool
     event_coord: Optional[SkyCoordSchema] = None
-    
+
+
 class NewEventGroupSchema:
     def __init__(self, ignored: bool):
         self.ignored = ignored
+
 
 class ExistingEventGroupSchema:
     def __init__(self, event):
@@ -184,4 +212,6 @@ class ExistingEventGroupSchema:
         self.ra_hms = event.ra_hms
         self.dec_dms = event.dec_dms
         self.pos_error = event.pos_error
-        self.latest_event_observed = event.event_observed.isoformat() if event.event_observed else None
+        self.latest_event_observed = (
+            event.event_observed.isoformat() if event.event_observed else None
+        )

@@ -3,7 +3,7 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, Field
 
@@ -13,7 +13,11 @@ from ..utils.utils_log import log_event
 from .constants import SourceChoices, TriggerOnChoices
 from .event import Event
 from .telescope import EventTelescope, TelescopeProjectId
-from .telescopesettings import BaseTelescopeSettings
+from .telescopesettings import (
+    ATCATelescopeSettings,
+    BaseTelescopeSettings,
+    MWATelescopeSettings,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +59,9 @@ class ProposalSettings(BaseModel, ABC):
         description="The type of source to trigger on. Must be one of ['GRB', 'NU', 'GW', 'FS'].",
     )
 
-    telescope_settings: BaseTelescopeSettings
+    telescope_settings: Union[
+        BaseTelescopeSettings, ATCATelescopeSettings, MWATelescopeSettings
+    ]
 
     class Config:
         extra = "forbid"

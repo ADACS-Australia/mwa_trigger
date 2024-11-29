@@ -120,15 +120,24 @@ class ProposalAtcaShortGrb(ProposalSettings):
                 - str: A message explaining the decision.
         """
         event = context["event"]
+        prop_dec = context["prop_dec"]
+        decision_reason_log = context['decision_reason_log']
+        dec = prop_dec.dec
 
-        context_wo = self.worth_observing(event, self.telescope_settings, **kwargs)
+        context_wo = self.worth_observing(
+            event,
+            self.telescope_settings,
+            prop_dec=prop_dec,
+            dec=dec,
+            decision_reason_log=decision_reason_log,
+        )
 
-        return {
-            "trigger_bool": context_wo["trigger_bool"],
-            "debug_bool": context_wo["debug_bool"],
-            "pending_bool": context_wo["pending_bool"],
-            "decision_reason_log": context_wo["decision_reason_log"],
-        }
+        context["trigger_bool"] = context_wo["trigger_bool"]
+        context["debug_bool"] = context_wo["debug_bool"]
+        context["pending_bool"] = context_wo["pending_bool"]
+        context["decision_reason_log"] = context_wo["decision_reason_log"]
+
+        return context
 
     @log_event(
         log_location="end", message=f"Trigger observation completed", level="info"

@@ -320,7 +320,7 @@ def process_all_proposals(context_all):
         context = check_worth_observing(context)
 
         # TODO remove this after testing
-        # context["trigger_bool"] = True
+        context["trigger_bool"] = True
         # everthing implemened below after signals.py's line 408
         context = make_trigger_decision(context)
 

@@ -95,12 +95,9 @@ class ProposalMwaTestGrb(ProposalSettings):
         """
         event = context["event"]
         # returning three boolean values and log text
-        return {
-            "trigger_bool": True,
-            "debug_bool": False,
-            "pending_bool": False,
-            "decision_reason_log": "test",
-        }
+        context["trigger_bool"] = True
+
+        return context
 
     @log_event(
         log_location="end", message=f"Trigger observation completed", level="info"

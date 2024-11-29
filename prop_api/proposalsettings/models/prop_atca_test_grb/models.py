@@ -14,6 +14,7 @@ from ...telescopeprojectid_factory import TelescopeProjectIdFactory
 # general utils
 from ...utils import utils_helper as utils_helper
 from ...utils.utils_log import log_event
+from ...utils.utils_logpars import log_context
 
 # source and triggerchoices and event and proposal classes in models
 from ..constants import SourceChoices, TriggerOnChoices
@@ -64,6 +65,7 @@ class ProposalAtcaTestGrb(ProposalSettings):
     class Config:
         extra = "forbid"
 
+    @log_context(prefix="prop_atca_test_grb_worth_observing")
     def is_worth_observing(
         self, context: Dict, **kwargs
     ) -> Tuple[bool, bool, bool, str]:
@@ -81,15 +83,13 @@ class ProposalAtcaTestGrb(ProposalSettings):
                 - bool: True if the event requires immediate action.
                 - str: A message explaining the decision.
         """
+        print(f"DEBUG - START context keys: {context.keys()}")
         event = context["event"]
 
         # returning three boolean values and log text
-        return {
-            "trigger_bool": True,
-            "debug_bool": False,
-            "pending_bool": False,
-            "decision_reason_log": "test",
-        }
+        context["trigger_bool"] = True
+
+        return context
 
     def trigger_gen_observation(self, context: Dict, **kwargs) -> Tuple[str, str]:
         """
