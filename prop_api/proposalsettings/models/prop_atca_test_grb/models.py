@@ -66,9 +66,7 @@ class ProposalAtcaTestGrb(ProposalSettings):
         extra = "forbid"
 
     @log_context(prefix="prop_atca_test_grb_worth_observing")
-    def is_worth_observing(
-        self, context: Dict, **kwargs
-    ) -> Tuple[bool, bool, bool, str]:
+    def is_worth_observing(self, context: Dict, **kwargs) -> Dict:
         """
         Determines if an event is worth observing based on the source settings.
 
