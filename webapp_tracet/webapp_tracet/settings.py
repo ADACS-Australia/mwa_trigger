@@ -146,7 +146,6 @@ elif SYSTEM_ENV == "GITHUB_WORKFLOW":
 elif SYSTEM_ENV == "DEVELOPMENT":
     DEBUG = True
 
-
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
@@ -290,7 +289,7 @@ AUTH_PASSWORD = os.getenv("AUTH_PASSWORD")
 
 NINJA_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=365),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=365*2),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=365 * 2),
     "ALGORITHM": "HS256",  # Make sure both web and API use the same algorithm
     "SIGNING_KEY": JWT_SECRET_KEY,  # Shared secret key
     "VERIFYING_KEY": JWT_SECRET_KEY,

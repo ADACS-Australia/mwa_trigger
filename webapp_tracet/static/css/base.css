@@ -91,7 +91,7 @@ h3{
     white-space: nowrap;
     background-color: white;
     margin-right: auto;
-    margin-left: auto;
+    margin-left: 0;
 }
 
 .fl-table td, .fl-table th {
@@ -121,4 +121,20 @@ h3{
 
 .fl-table tr:nth-child(even) {
     background: #F8F8F8;
+}
+
+.stats-dropdown {
+    width: 120px !important;
+    display: inline-block;
+}
+
+.form-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px; 
+}
+
+.container-fluid {
+    margin-left: 0;  /* Remove left margin */
+    padding-left: 20px;  /* Add some padding from the left edge */
 }

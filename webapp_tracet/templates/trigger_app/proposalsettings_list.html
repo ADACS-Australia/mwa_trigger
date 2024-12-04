@@ -2,7 +2,7 @@
 
 {% block content %}
 <title>Current Proposal Settings</title>
-<div class="container-fluid">
+<div class="container-fluid ps-4">
 
   {% if user.is_authenticated %}
   <form action="{% url 'update_all_proposals' %}" method="post">
@@ -12,13 +12,13 @@
 
   {% endif %}
 
-  <h2>The latest active proposals</h2>
+  <h2>Active Proposals</h2>
 
   <div class="row mb-3">
     <div class="col-md-3">
       <form id="statsFilterForm" class="form-inline">
         <label for="statsDuration" class="mr-2">Statistics Duration:</label>
-        <select id="statsDuration" class="form-control" onchange="updateStats()">
+        <select id="statsDuration" class="form-control form-control-sm stats-dropdown" onchange="updateStats()">
           <option value="1">Last Month</option>
           <option value="6">Last 6 Months</option>
           <option value="12">Last Year</option>
@@ -88,22 +88,22 @@
 
   <h2>Archived Proposals</h2>
 
-  <div class="row mb-3">
-    <div class="col-md-3">
-      <form id="statsArchivedFilterForm" class="form-inline">
-        <label for="statsArchivedDuration" class="mr-2">Statistics Duration:</label>
-        <select id="statsArchivedDuration" class="form-control" onchange="updateArchivedStats()">
-          <option value="1">Last Month</option>
-          <option value="6">Last 6 Months</option>
-          <option value="12">Last Year</option>
-          <option value="0" selected>All Time</option>
-        </select>
-      </form>
-    </div>
-  </div>
-
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <form id="statsArchivedFilterForm" class="form-inline">
+            <label for="statsArchivedDuration" class="mr-2">Statistics Duration:</label>
+            <select id="statsArchivedDuration" class="form-control form-control-sm stats-dropdown" onchange="updateArchivedStats()">
+              <option value="1">Last Month</option>
+              <option value="6">Last 6 Months</option>
+              <option value="12">Last Year</option>
+              <option value="0" selected>All Time</option>
+            </select>
+          </form>
+        </div>
+      </div>
 
   <table class="fl-table" id="archivedStats">
+
     <thead>
     <tr>
       {% comment %} <th>ID_Version</th> {% endcomment %}
