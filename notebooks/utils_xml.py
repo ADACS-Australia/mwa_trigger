@@ -95,7 +95,7 @@ def modify_swift_dates(xml_content, new_date, new_isotime):
     return etree.tostring(root, pretty_print=True, encoding='unicode')
 
 
-def write_and_upload(xml_string):
+def write_and_upload(xml_string, topic=""):
 
     # Upload
     session = requests.session()
@@ -106,7 +106,7 @@ def write_and_upload(xml_string):
     else:
         url = "http://127.0.0.1:8000/event_create/"
 
-    data = {"xml_packet": xml_string}
+    data = {"xml_packet": xml_string, "topic": topic}
     response = session.post(url, data=data)
     return response
 

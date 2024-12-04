@@ -4,6 +4,7 @@ from datetime import datetime
 
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from django.db.models import Q
 from trigger_app.models.event import Event, EventGroup
 from trigger_app.models.proposal import ProposalDecision, ProposalSettings
 
@@ -210,18 +211,25 @@ def process_all_proposals(context):
         if stream[-2:] == "_-":
             stream = stream[:-2]
 
+        topic = event.topic.split('.')[-1]
+
         print("DEBUG - stream: ", stream)
+        print("DEBUG - topic: ", topic)
+
         print(
             "DEBUG - ProposalSettings.objects.filter(streams__contains=[stream]): ",
             ProposalSettings.objects.filter(streams__contains=[stream]),
         )
 
-        proposal_settings = ProposalSettings.objects.filter(
-            source_type=event_group.source_type,
-            event_telescope__name=event.telescope,
-            streams__contains=[stream],  #
-            active=True,  # TODO use this filter when active column is added in ProposalSettings model
-        ).order_by("priority")
+        proposal_settings = (
+            ProposalSettings.objects.filter(
+                source_type=event_group.source_type,
+                event_telescope__name=event.telescope,
+                active=True,  # TODO use this filter when active column is added in ProposalSettings model
+            )
+            .filter(Q(streams__contains=[stream]) | Q(streams__contains=[topic]))
+            .order_by("priority")
+        )
 
         print("DEBUG - num of proposals : ", len(proposal_settings))
 

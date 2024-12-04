@@ -9,7 +9,7 @@
             <contactPhone>+1-301-286-3106</contactPhone>
             <contactEmail>scott.barthelmy@nasa.gov</contactEmail>
         </Author>
-        <Date>2024-11-27T14:05:05</Date>
+        <Date>2024-12-05T00:46:58</Date>
         <Description>This VOEvent message was created with GCN VOE version: 15.08 17jun22</Description>
     </Who>
     <What>
@@ -113,7 +113,7 @@
                 <AstroCoords coord_system_id="UTC-FK5-GEO">
                     <Time unit="s">
                         <TimeInstant>
-                            <ISOTime>2024-11-27T14:05:05.25</ISOTime>
+                            <ISOTime>2024-12-05T00:46:58.25</ISOTime>
                         </TimeInstant>
                     </Time>
                     <Position2D unit="deg">

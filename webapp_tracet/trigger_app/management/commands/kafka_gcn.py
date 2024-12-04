@@ -92,6 +92,7 @@ class Command(BaseCommand):
                 for message in consumer.consume(timeout=1):
                     try:
                         value = message.value()
+                        topic = message.topic()
                         messageDate = datetime.today()
                         v = voeventparse.loads(value)
 
@@ -111,7 +112,7 @@ class Command(BaseCommand):
 
                         voevent_string = voeventparse.prettystr(v)
 
-                        new_event = parse_and_save_xml(voevent_string)
+                        new_event = parse_and_save_xml(voevent_string, topic=topic)
                         new_event_id = new_event.data["id"]
 
                         self.stdout.write(

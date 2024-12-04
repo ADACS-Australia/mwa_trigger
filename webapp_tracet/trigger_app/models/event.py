@@ -40,6 +40,7 @@ class Event(models.Model):
     telescope = models.CharField(max_length=64, blank=True, null=True)
     sequence_num = models.IntegerField(blank=True, null=True)
     event_type = models.CharField(max_length=64, blank=True, null=True)
+    topic = models.CharField(max_length=64, blank=True, null=True)
     role = models.CharField(max_length=64, blank=True, null=True)
     duration = models.FloatField(blank=True, null=True)
     ra = models.FloatField(blank=True, null=True)
@@ -81,4 +82,3 @@ class Event(models.Model):
 
     def __str__(self):
         return f"Event(id={self.id}, event_group_id={self.event_group_id})"
-

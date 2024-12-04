@@ -9,10 +9,26 @@
     {% csrf_token %}
     <button type="submit" class="btn btn-primary">Update Proposals</button>
   </form>
+
   {% endif %}
 
+  <h2>The latest active proposals</h2>
 
-  <h2>MWA VCS proposals</h2>
+  <div class="row mb-3">
+    <div class="col-md-3">
+      <form id="statsFilterForm" class="form-inline">
+        <label for="statsDuration" class="mr-2">Statistics Duration:</label>
+        <select id="statsDuration" class="form-control" onchange="updateStats()">
+          <option value="1">Last Month</option>
+          <option value="6">Last 6 Months</option>
+          <option value="12">Last Year</option>
+          <option value="0" selected>All Time</option>
+        </select>
+      </form>
+    </div>
+  </div>
+
+
   <table class="fl-table">
     <thead>
     <tr>
@@ -26,14 +42,15 @@
       <th>Source Type</th>
       <th>Event Telescope</th>
       <th>Project ID</th>
+      <th>Source Code</th>
+      <th>Decision Statistics <span id="duration-label">(All Time)</span></th>
       <th>Testing?</th>
       <th>Proposal Description</th>
-      <th>Source Code</th>
     </tr>
     </thead>
     <!-- Iterate over object_list -->
     {% for object in object_list %}
-    {% if "MWA_VCS" in object.telescope.name %}
+    {% comment %} {% if "MWA_VCS" in object.telescope.name %} {% endcomment %}
     <!-- Display Objects -->
     <tr>
       <td><a href='/proposal_edit/{{ object.id }}/' style="text-decoration:None">{{ object.id }}</a></td>
@@ -46,23 +63,50 @@
       <td>{{ object.source_type }}</td>
       <td>{% if object.event_telescope is None %} All {% else %} {{ object.event_telescope }} {% endif %}</td>
       <td>{{ object.project_id }}</td>
-      <td>{{ object.testing }}</td>
-      <td>{{ object.proposal_description }}</td>
       <td>
         <a href="{% url 'code_browser' %}?path={{ object.code_link }}" class="btn btn-info btn-sm">View Code</a>
       </td>
+      <td class="stats-cell" data-proposal-id="{{ object.id }}">
+        {% with decisions=object.get_decision_statistics_for_duration %}
+            {% if decisions.ignored > 0 %}<span class="grey-tr">Ignored: {{ decisions.ignored }}</span>{% endif %}
+            {% if decisions.error > 0 %}{% if decisions.ignored > 0 %}, {% endif %}<span class="NegativeTransaction">Error: {{ decisions.error }}</span>{% endif %}
+            {% if decisions.pending > 0 %}{% if decisions.ignored > 0 or decisions.error > 0 %}, {% endif %}<span class="PendingNoAnimation">Pending: {{ decisions.pending }}</span>{% endif %}
+            {% if decisions.triggered > 0 %}{% if decisions.ignored > 0 or decisions.error > 0 or decisions.pending > 0 %}, {% endif %}<span class="PositiveTransaction">Triggered: {{ decisions.triggered }}</span>{% endif %}
+            {% if decisions.ignored == 0 and decisions.error == 0 and decisions.pending == 0 and decisions.triggered == 0 %}No decisions{% endif %}
+        {% endwith %}
+      </td>
+      <td>{{ object.testing }}</td>
+      <td>{{ object.proposal_description }}</td>
     </tr>
-    {% endif %}
+    {% comment %} {% endif %} {% endcomment %}
     <!-- If object_list is empty  -->
     {% empty %}
     <li>No Settings yet.</li>
     {% endfor %}
     </table>
 
-  <h2>MWA Correlate proposals</h2>
-  <table class="fl-table">
+
+  <h2>Archived Proposals</h2>
+
+  <div class="row mb-3">
+    <div class="col-md-3">
+      <form id="statsArchivedFilterForm" class="form-inline">
+        <label for="statsArchivedDuration" class="mr-2">Statistics Duration:</label>
+        <select id="statsArchivedDuration" class="form-control" onchange="updateArchivedStats()">
+          <option value="1">Last Month</option>
+          <option value="6">Last 6 Months</option>
+          <option value="12">Last Year</option>
+          <option value="0" selected>All Time</option>
+        </select>
+      </form>
+    </div>
+  </div>
+
+
+  <table class="fl-table" id="archivedStats">
     <thead>
     <tr>
+      {% comment %} <th>ID_Version</th> {% endcomment %}
       <th>ID</th>
       <th>Active</th>
       <th>Version</th>
@@ -73,16 +117,17 @@
       <th>Source Type</th>
       <th>Event Telescope</th>
       <th>Project ID</th>
+      <th>Source Code</th>
+      <th>Decision Statistics <span id="archived-duration-label">(All Time)</span></th>
       <th>Testing?</th>
       <th>Proposal Description</th>
-      <th>Source Code</th>
     </tr>
     </thead>
-    <!-- Iterate over object_list -->
-    {% for object in object_list %}
-    {% if "MWA_correlate" in object.telescope.name %}
+    <!-- Iterate over archived_proposals -->
+    {% for object in archived_proposals %}
     <!-- Display Objects -->
     <tr>
+      {% comment %} <td>{{ object.id_version }}</td> {% endcomment %}
       <td><a href='/proposal_edit/{{ object.id }}/' style="text-decoration:None">{{ object.id }}</a></td>
       <td>{{ object.active }}</td>
       <td>{{ object.version }}</td>
@@ -93,64 +138,27 @@
       <td>{{ object.source_type }}</td>
       <td>{% if object.event_telescope is None %} All {% else %} {{ object.event_telescope }} {% endif %}</td>
       <td>{{ object.project_id }}</td>
-      <td>{{ object.testing }}</td>
-      <td>{{ object.proposal_description }}</td>
       <td>
         <a href="{% url 'code_browser' %}?path={{ object.code_link }}" class="btn btn-info btn-sm">View Code</a>
       </td>
-    </tr>
-    {% endif %}
-    <!-- If object_list is empty  -->
-    {% empty %}
-    <li>No Settings yet.</li>
-    {% endfor %}
-    </table>
-
-  <h2>ATCA proposals</h2>
-  <table class="fl-table">
-    <thead>
-    <tr>
-      <th>ID</th>
-      <th>Active</th>
-      <th>Version</th>
-      <th>Created At</th>
-      <th>Updated At</th>
-      <th>Proposal ID</th>
-      <th>Priority</th>
-      <th>Source Type</th>
-      <th>Event Telescope</th>
-      <th>Project ID</th>
-      <th>Testing?</th>
-      <th>Proposal Description</th>
-      <th>Source Code</th>
-    </tr>
-    </thead>
-    <!-- Iterate over object_list -->
-    {% for object in object_list %}
-    {% if "MWA" not in object.telescope.name %}
-    <!-- Display Objects -->
-    <tr>
-      <td><a href='/proposal_edit/{{ object.id }}/' style="text-decoration:None">{{ object.id }}</a></td>
-      <td>{{ object.active }}</td>
-      <td>{{ object.version }}</td>
-      <td>{{ object.created_at|timesince }} ago</td>
-      <td>{{ object.updated_at|timesince }} ago</td>
-      <td>{{ object.proposal_id }}</td>
-      <td>{{ object.priority }}</td>
-      <td>{{ object.source_type }}</td>
-      <td>{% if object.event_telescope is None %} All {% else %} {{ object.event_telescope }} {% endif %}</td>
-      <td>{{ object.project_id }}</td>
+      <td class="archived-stats-cell" data-archived-proposal-id-version="{{ object.id_version }}">
+        {% with decisions=object.get_decision_statistics_for_duration %}
+            {% if decisions.ignored > 0 %}<span class="grey-tr">Ignored: {{ decisions.ignored }}</span>{% endif %}
+            {% if decisions.error > 0 %}{% if decisions.ignored > 0 %}, {% endif %}<span class="NegativeTransaction">Error: {{ decisions.error }}</span>{% endif %}
+            {% if decisions.pending > 0 %}{% if decisions.ignored > 0 or decisions.error > 0 %}, {% endif %}<span class="PendingNoAnimation">Pending: {{ decisions.pending }}</span>{% endif %}
+            {% if decisions.triggered > 0 %}{% if decisions.ignored > 0 or decisions.error > 0 or decisions.pending > 0 %}, {% endif %}<span class="PositiveTransaction">Triggered: {{ decisions.triggered }}</span>{% endif %}
+            {% if decisions.ignored == 0 and decisions.error == 0 and decisions.pending == 0 and decisions.triggered == 0 %}No decisions{% endif %}
+        {% endwith %}
+      </td>
       <td>{{ object.testing }}</td>
       <td>{{ object.proposal_description }}</td>
-      <td>
-        <a href="{% url 'code_browser' %}?path={{ object.code_link }}" class="btn btn-info btn-sm">View Code</a>
-      </td>
     </tr>
-    {% endif %}
-    <!-- If object_list is empty  -->
+    <!-- If archived_proposals is empty  -->
     {% empty %}
-    <li>No Settings yet.</li>
+    <li>No Archived Settings yet.</li>
     {% endfor %}
-    </table>
+  </table>
 </div>
+
+
 {% endblock %}

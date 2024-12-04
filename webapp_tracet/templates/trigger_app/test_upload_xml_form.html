@@ -11,6 +11,7 @@
         It is best to change all proposals to testing mode before submitting them to assure no telescope time is wasted.</p>
     <form action = "" method = "post" onsubmit="return confirm('Are you sure you want to submit?{% if proposals %} The following proposals are not in testing mode {% for prop in proposals %} {{ prop.proposal_id }}{%endfor%}. {% endif %}');">
         {% csrf_token %}
+        <p><textarea name='topic' rows="1" cols="70" class="form-control" placeholder="Enter the topic name (e.g. gcn.classic.voevent.SWIFT_POINTDIR )"></textarea></p>
         <p><textarea name='xml_packet' rows="4" cols="70" class="form-control" placeholder="Enter the VOEvent xml file contents here."></textarea></p>
         <input type="submit" value=Submit>
     </form>

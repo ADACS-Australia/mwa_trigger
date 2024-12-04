@@ -24,6 +24,10 @@ h3{
     color: MediumSeaGreen;
 }
 
+.PendingNoAnimation {
+    color: blue;
+}
+
 .PendingTransaction {
     color: blue;
     animation: animate 0.5s linear infinite;

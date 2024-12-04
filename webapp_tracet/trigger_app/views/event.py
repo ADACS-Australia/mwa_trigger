@@ -1,4 +1,3 @@
-
 import logging
 
 import django_filters
@@ -11,10 +10,12 @@ from django.forms import DateTimeInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from rest_framework import status
-from rest_framework.authentication import (BasicAuthentication,
-                                           SessionAuthentication)
-from rest_framework.decorators import (api_view, authentication_classes,
-                                       permission_classes)
+from rest_framework.authentication import BasicAuthentication, SessionAuthentication
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from tracet import parse_xml
@@ -24,6 +25,7 @@ from .. import forms, models, serializers
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
+
 
 class EventFilter(django_filters.FilterSet):
     # DateTimeFromToRangeFilter raises exceptions in debugger for missing _before and _after keys
@@ -128,7 +130,8 @@ class EventFilter(django_filters.FilterSet):
 def EventList(request):
     # Apply filters
     f = EventFilter(
-        request.GET, queryset=models.event.Event.objects.all().filter(role="observation")
+        request.GET,
+        queryset=models.event.Event.objects.all().filter(role="observation"),
     )
     events = f.qs
 
@@ -163,10 +166,16 @@ def EventList(request):
         events = paginator.page(1)
 
     min_rec = (
-        models.event.Event.objects.filter().order_by("recieved_data").first().recieved_data
+        models.event.Event.objects.filter()
+        .order_by("recieved_data")
+        .first()
+        .recieved_data
     )
     min_obs = (
-        models.event.Event.objects.filter().order_by("event_observed").first().event_observed
+        models.event.Event.objects.filter()
+        .order_by("event_observed")
+        .first()
+        .event_observed
     )
 
     has_filter = any(field in request.GET for field in set(f.get_fields()))
@@ -222,10 +231,16 @@ def TestEventList(request):
         events = paginator.page(1)
 
     min_rec = (
-        models.event.Event.objects.filter().order_by("recieved_data").first().recieved_data
+        models.event.Event.objects.filter()
+        .order_by("recieved_data")
+        .first()
+        .recieved_data
     )
     min_obs = (
-        models.event.Event.objects.filter().order_by("event_observed").first().event_observed
+        models.event.Event.objects.filter()
+        .order_by("event_observed")
+        .first()
+        .event_observed
     )
 
     has_filter = any(field in request.GET for field in set(f.get_fields()))
@@ -242,6 +257,7 @@ def TestEventList(request):
         },
     )
 
+
 def voevent_view(request, id):
     event = models.event.Event.objects.get(id=id)
     v = vp.loads(event.xml_packet.encode())
@@ -249,8 +265,7 @@ def voevent_view(request, id):
     return HttpResponse(xml_pretty_str, content_type="text/xml")
 
 
-
-def parse_and_save_xml(xml):
+def parse_and_save_xml(xml, topic=""):
     logger.info(f"Attempting to parse xml {xml}")
     trig = parse_xml.parsed_VOEvent(None, packet=xml)
     logger.info(f"Successfully parsed xml {trig}")
@@ -262,6 +277,7 @@ def parse_and_save_xml(xml):
         "self_generated_trig_id": trig.self_generated_trig_id,
         "sequence_num": trig.sequence_num,
         "event_type": trig.event_type,
+        "topic": topic,
         "role": trig.role,
         "ra": trig.ra,
         "dec": trig.dec,
@@ -309,7 +325,8 @@ def event_create(request):
     logger.info("Request to create an event received", extra={"event_create": True})
     logger.info(f"request.data:{request.data}")
     xml_string = request.data["xml_packet"]
-    new_event = parse_and_save_xml(xml_string)
+    topic = request.data["topic"]
+    new_event = parse_and_save_xml(xml_string, topic=topic)
 
     if new_event:
         logger.info("Event created response given to user")
@@ -334,7 +351,11 @@ def test_upload_xml(request):
             # Parse and submit the Event
             xml_string = str(request.POST["xml_packet"])
             logger.info(f"Test_upload_xml xml_string:{xml_string}")
-            parse_and_save_xml(xml_string)
+
+            topic = str(request.POST["topic"])
+            logger.info(f"Test_upload_xml topic_string:{topic}")
+
+            parse_and_save_xml(xml_string, topic=topic)
             logger.info(f"Test_upload_xml xml_string:{xml_string}")
             return HttpResponseRedirect("/")
     else:

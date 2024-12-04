@@ -29,7 +29,11 @@ from trigger_app.views import (
     proposalsettings,
     user,
 )
-from trigger_app.views.proposalsettings import update_all_proposals
+from trigger_app.views.proposalsettings import (
+    archived_proposal_stats,
+    proposal_stats,
+    update_all_proposals,
+)
 
 from webapp_tracet.api import api
 
@@ -79,5 +83,13 @@ urlpatterns = [
         "code-browser/<path:file_path>",
         proposalsettings.view_code_file,
         name='view_code_file',
+    ),
+    path(
+        'api/proposal-stats/<int:proposal_id>/', proposal_stats, name='proposal_stats'
+    ),
+    path(
+        'api/archived-proposal-stats/<str:proposal_id_version>/',
+        archived_proposal_stats,
+        name='archived_proposal_stats',
     ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

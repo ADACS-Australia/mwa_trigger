@@ -1,18 +1,29 @@
 import os
+from datetime import datetime, timedelta
 
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.views.generic import ListView
 from tracet import parse_xml
 from trigger_app.utils.utils_update import update_proposal_settings_from_api
 
 from .. import forms, models
+from ..models.proposal import ProposalSettings, ProposalSettingsArchive
 
 
 class ProposalSettingsList(ListView):
     model = models.proposal.ProposalSettings
     ordering = ["priority"]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['archived_proposals'] = (
+            models.proposal.ProposalSettingsArchive.objects.all()
+        )
+        return context
 
 
 @login_required
@@ -204,3 +215,46 @@ def view_code_file(request, file_path):
         'trigger_app/view_code.html',
         {'file_path': file_path, 'content': content, 'target_dir': target_dir},
     )
+
+
+def proposal_stats(request, proposal_id):
+    duration = request.GET.get('duration', '0')  # Default to All time
+    proposal = ProposalSettings.objects.get(id=proposal_id)
+
+    if duration == '0':  # All time
+        stats = proposal.get_decision_statistics_for_duration()
+    else:
+        # Convert duration to integer months
+        months = int(duration)
+        stats = proposal.get_decision_statistics_for_duration(months)
+
+    return JsonResponse(stats)
+
+
+def archived_proposal_stats(request, proposal_id_version):
+    try:
+        duration = request.GET.get('duration', '0')  # Default to All time
+        # Filter by both id and version
+        proposal = ProposalSettingsArchive.objects.get(id_version=proposal_id_version)
+
+        if duration == '0':  # All time
+            stats = proposal.get_decision_statistics_all_time()
+        else:
+            # Convert duration to integer months
+            months = int(duration)
+            stats = proposal.get_decision_statistics_for_duration(months)
+
+        return JsonResponse(stats)
+
+    except ObjectDoesNotExist:
+        return JsonResponse(
+            {'error': f'Proposal not found with id {proposal_id_version}'},
+            status=404,
+        )
+    except MultipleObjectsReturned:
+        return JsonResponse(
+            {'error': 'Multiple proposals found. Please specify a version.'}, status=400
+        )
+    except Exception as e:
+        print(f"Error fetching archived proposal stats: {e}")
+        return JsonResponse({'error': str(e)}, status=500)

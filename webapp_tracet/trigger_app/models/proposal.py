@@ -1,5 +1,9 @@
+from datetime import datetime, timedelta
+
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.db.models import Count
+from django.utils import timezone
 
 from .constants import SOURCE_CHOICES, TRIGGER_ON
 from .event import EventGroup
@@ -103,6 +107,57 @@ class ProposalSettings(models.Model):
                 f"/shared/models/prop_{self.proposal_id.lower()}_{self.version}"
             )
         super().save(*args, **kwargs)
+
+    def get_decision_statistics_all_time(self):
+        decisions = (
+            self.proposaldecision_set.filter(version=self.version)
+            .values('decision')
+            .annotate(count=Count('decision'))
+        )
+        stats = {'ignored': 0, 'error': 0, 'pending': 0, 'triggered': 0, 'canceled': 0}
+        conversion = {
+            'P': 'pending',
+            'I': 'ignored',
+            'E': 'error',
+            'T': 'triggered',
+            'C': 'canceled',
+        }
+
+        for decision in decisions:
+            decision_code = decision['decision']
+            if decision_code in conversion:
+                stats[conversion[decision_code]] = decision['count']
+
+        return stats
+
+    def get_decision_statistics_for_duration(self, months=0):
+
+        if months == 0:  # All time
+            return self.get_decision_statistics_all_time()
+
+        start_date = timezone.now() - timedelta(days=months * 30)
+        decisions = (
+            self.proposaldecision_set.filter(recieved_data__gte=start_date)
+            .filter(version=self.version)
+            .values('decision')
+            .annotate(count=Count('decision'))
+        )
+
+        stats = {'ignored': 0, 'error': 0, 'pending': 0, 'triggered': 0, 'canceled': 0}
+        conversion = {
+            'P': 'pending',
+            'I': 'ignored',
+            'E': 'error',
+            'T': 'triggered',
+            'C': 'canceled',
+        }
+
+        for decision in decisions:
+            decision_code = decision['decision']
+            if decision_code in conversion:
+                stats[conversion[decision_code]] = decision['count']
+
+        return stats
 
 
 class ProposalDecision(models.Model):
@@ -252,6 +307,64 @@ class ProposalSettingsArchive(models.Model):
 
     def __str__(self):
         return f"{self.proposal_id} (v{self.version})"
+
+    def get_decision_statistics_for_duration(self, months=0):
+        if months == 0:  # All time
+            return self.get_decision_statistics_all_time()
+
+        start_date = timezone.now() - timedelta(days=months * 30)
+
+        # Filter ProposalDecision objects by both id and version
+        decisions = (
+            ProposalDecision.objects.filter(
+                proposal__id=self.id,
+                version=self.version,
+                recieved_data__gte=start_date,
+            )
+            .values('decision')
+            .annotate(count=Count('decision'))
+        )
+
+        stats = {'ignored': 0, 'error': 0, 'pending': 0, 'triggered': 0, 'canceled': 0}
+        conversion = {
+            'P': 'pending',
+            'I': 'ignored',
+            'E': 'error',
+            'T': 'triggered',
+            'C': 'canceled',
+        }
+
+        for decision in decisions:
+            decision_code = decision['decision']
+            if decision_code in conversion:
+                stats[conversion[decision_code]] = decision['count']
+
+        return stats
+
+    def get_decision_statistics_all_time(self):
+        # Filter ProposalDecision objects by both id and version
+
+        decisions = (
+            ProposalDecision.objects.filter(proposal__id=self.id, version=self.version)
+            .values('decision')
+            .annotate(count=Count('decision'))
+        )
+
+        stats = {'ignored': 0, 'error': 0, 'pending': 0, 'triggered': 0, 'canceled': 0}
+        conversion = {
+            'P': 'pending',
+            'I': 'ignored',
+            'E': 'error',
+            'T': 'triggered',
+            'C': 'canceled',
+        }
+
+        for decision in decisions:
+            decision_code = decision['decision']
+            if decision_code in conversion:
+                stats[conversion[decision_code]] = decision['count']
+
+        return stats
 
     class Meta:
         ordering = ["-created_at"]
