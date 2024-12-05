@@ -17,7 +17,9 @@ def user_alert_status(request):
         # For each proposals find the user and admin alerts
         u = request.user
         user_alerts = UserAlerts.objects.filter(user=u, proposal=prop)
-        alert_permissions = AlertPermission.objects.get(user=u, proposal=prop)
+        alert_permissions = AlertPermission.objects.filter(
+            user=u, proposal=prop
+        )  # AlertPermission.objects.get(user=u, proposal=prop)
         # Put them into a dict that can be looped over in the html
         prop_alert_list.append(
             {
@@ -59,4 +61,3 @@ def user_alert_create(request):
     else:
         form = UserAlertForm()
     return render(request, "trigger_app/form.html", {"form": form})
-

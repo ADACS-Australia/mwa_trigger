@@ -15,7 +15,7 @@
     <What>
         <Param name="Packet_Type" value="61" />
         <Param name="Pkt_Ser_Num" value="2" />
-        <Param name="TrigID" value="1351302" ucd="meta.id" />
+        <Param name="TrigID" value="1351319" ucd="meta.id" />
         <Param name="Segment_Num" value="0" ucd="meta.id.part" />
         <Param name="Burst_TJD" value="20003" unit="days" ucd="time" />
         <Param name="Burst_SOD" value="21050.25" unit="sec" ucd="time" />

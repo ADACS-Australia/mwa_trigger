@@ -8,10 +8,10 @@ docker compose up -d
 
 sleep 15s
 
-docker cp demo_trigger_db_updated.sql db-container:/
+docker cp demo_trigger_db_updated_v2.sql db-container:/
 
 sleep 5s
-docker exec -it db-container bash -c "PGPASSWORD=${POSTGRES_PASSWORD} psql -U trigger_admin -d trigger_db -f /demo_trigger_db_updated.sql"
+docker exec -it db-container bash -c "PGPASSWORD=${POSTGRES_PASSWORD} psql -U trigger_admin -d trigger_db -f /demo_trigger_db_updated_v2.sql"
 
 sleep 5s
 docker compose down

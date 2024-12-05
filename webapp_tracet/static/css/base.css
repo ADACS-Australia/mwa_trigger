@@ -91,7 +91,7 @@ h3{
     white-space: nowrap;
     background-color: white;
     margin-right: auto;
-    margin-left: 0;
+    margin-left: auto;
 }
 
 .fl-table td, .fl-table th {
@@ -132,9 +132,4 @@ h3{
     display: flex;
     align-items: center;
     gap: 10px; 
-}
-
-.container-fluid {
-    margin-left: 0;  /* Remove left margin */
-    padding-left: 20px;  /* Add some padding from the left edge */
 }
