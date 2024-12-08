@@ -2,7 +2,7 @@ import datetime as dt
 import logging
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -101,19 +101,31 @@ class ProposalMwaTestGrb(ProposalSettings):
     @log_event(
         log_location="end", message=f"Trigger observation completed", level="info"
     )
-    def trigger_gen_observation(self, context: Dict, **kwargs) -> Tuple[str, str]:
+    def trigger_gen_observation(self, context: Dict, **kwargs) -> Dict:
         """
         Triggers the generation of an observation based on the event context.
 
         This method is called after receiving a response that an event is worth observing.
-        It performs various checks and triggers observations for different telescopes (MWA, ATCA).
+        It performs various checks and triggers observations for MWA telescope based on
+        Swift GRB events.
 
         Args:
-            context (Dict): A dictionary containing the context of the event and observation.
+            context (Dict): A dictionary containing:
+                - event: Event information from Swift
+                - voevents: List of VOEvents associated with the observation
+                - event_id: Unique identifier for the event
+                - processing state flags
+                - decision logs
             **kwargs: Additional keyword arguments.
 
         Returns:
-            Tuple[str, str]: A tuple containing the decision and the decision reason log.
+            Dict: Updated context dictionary containing:
+                - decision: Final decision on observation
+                - decision_reason_log: Detailed log of decision process
+                - obsids: List of observation IDs if successful
+                - result: Dictionary containing trigger results
+                - request_sent_at: Timestamp of when request was sent
+                - reached_end: Flag indicating completion
         """
         print(f"DEBUG - START context keys: {context.keys()}")
 

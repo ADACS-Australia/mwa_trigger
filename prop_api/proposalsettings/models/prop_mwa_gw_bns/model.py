@@ -2,7 +2,7 @@ import datetime as dt
 import logging
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import Field
 
@@ -186,19 +186,20 @@ class ProposalMwaGwBns(ProposalSettings):
     @log_event(
         log_location="end", message=f"Trigger observation completed", level="info"
     )
-    def trigger_gen_observation(self, context: Dict, **kwargs) -> Tuple[str, str]:
+    def trigger_gen_observation(self, context: Dict, **kwargs) -> Dict:
         """
         Triggers the generation of an observation based on the event context.
-
-        This method is called after receiving a response that an event is worth observing.
-        It performs various checks and triggers observations for different telescopes (MWA, ATCA).
 
         Args:
             context (Dict): A dictionary containing the context of the event and observation.
             **kwargs: Additional keyword arguments.
 
         Returns:
-            Tuple[str, str]: A tuple containing the decision and the decision reason log.
+            Dict: Updated context containing:
+                - decision (str): Final observation decision
+                - decision_reason_log (str): Detailed log of the process
+                - reached_end (bool): Whether processing completed successfully
+                - stop_processing (bool): Whether to halt further processing
         """
         print(f"DEBUG - START context keys: {context.keys()}")
 
@@ -209,15 +210,11 @@ class ProposalMwaGwBns(ProposalSettings):
         print("DEBUG - context['stop_processing']: ", context["stop_processing"])
 
         if context["stop_processing"]:
-            return context["decision"], context["decision_reason_log"]
+            return context
 
         context = self.trigger_mwa_observation(
             telescope_settings=self.telescope_settings, context=context
         )
-
-        # context = self.trigger_atca_observation(
-        #     telescope_settings=self.telescope_settings, context=context
-        # )
 
         if (
             self.telescope_settings.telescope.name.startswith("ATCA") is False
@@ -290,48 +287,6 @@ class ProposalMwaGwBns(ProposalSettings):
         context["reached_end"] = True
         return context
 
-    # @log_event(
-    #     log_location="end",
-    #     message=f"Trigger ATCA observation for GW source completed",
-    #     level="info",
-    # )
-    # def trigger_atca_observation(
-    #     self,
-    #     context: Dict,
-    #     telescope_settings: Union[
-    #         BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
-    #     ],
-    #     **kwargs,
-    # ) -> Tuple[str, str]:
-    #     """
-    #     Trigger an ATCA observation for a GW event.
-
-    #     Args:
-    #         context (Dict): The context containing event and observation information.
-    #         telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
-    #             The settings for the ATCA telescope.
-    #         **kwargs: Additional keyword arguments.
-
-    #     Returns:
-    #         Tuple[str, str]: A tuple containing updated context information.
-    #     """
-
-    #     telescope_name = telescope_settings.telescope.name
-
-    #     if context["stop_processing"]:
-    #         return context
-
-    #     if telescope_name.startswith("ATCA") is False:
-    #         return context
-
-    #     context = utils_atca.handle_atca_observation(
-    #         telescope_settings=telescope_settings, context=context
-    #     )
-
-    #     context["reached_end"] = True
-
-    #     return context
-
     @log_event(
         log_location="end",
         message=f"Trigger MWA observation for GW source completed",
@@ -344,7 +299,7 @@ class ProposalMwaGwBns(ProposalSettings):
             BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
         ],
         **kwargs,
-    ) -> Tuple[str, str]:
+    ) -> Dict:
         """
         Trigger an MWA observation for a GW event.
 
@@ -355,7 +310,12 @@ class ProposalMwaGwBns(ProposalSettings):
             **kwargs: Additional keyword arguments.
 
         Returns:
-            Tuple[str, str]: A tuple containing updated context information.
+            Dict: Updated context containing:
+                - decision (str): Final observation decision
+                - decision_reason_log (str): Detailed log of the process
+                - reached_end (bool): Whether processing completed successfully
+                - stop_processing (bool): Whether to halt further processing
+                - obsids (List[str]): List of observation IDs if any were created
         """
 
         voevents = context["voevents"]

@@ -2,7 +2,7 @@ import datetime as dt
 import logging
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -98,15 +98,15 @@ class ProposalTest2Neutrino(ProposalSettings):
         Determines if an event is worth observing based on the source settings.
 
         Args:
-            event (Event): The event to evaluate.
+            context (Dict): Dictionary containing event information and processing state.
             **kwargs: Additional keyword arguments to pass to the worth_observing method.
 
         Returns:
-            Tuple[bool, bool, bool, str]: A tuple containing:
-                - bool: True if the event is worth observing, False otherwise.
-                - bool: True if the event passes additional criteria.
-                - bool: True if the event requires immediate action.
-                - str: A message explaining the decision.
+            Dict: Updated context dictionary containing:
+                - trigger_bool (bool): Whether to trigger an observation
+                - debug_bool (bool): Whether debug information was generated
+                - pending_bool (bool): Whether the decision is pending human review
+                - decision_reason_log (str): Log of decision making process
         """
         event = context["event"]
         prop_dec = context["prop_dec"]
@@ -131,19 +131,30 @@ class ProposalTest2Neutrino(ProposalSettings):
     @log_event(
         log_location="end", message=f"Trigger observation completed", level="info"
     )
-    def trigger_gen_observation(self, context: Dict, **kwargs) -> Tuple[str, str]:
+    def trigger_gen_observation(self, context: Dict, **kwargs) -> Dict:
         """
         Triggers the generation of an observation based on the event context.
 
         This method is called after receiving a response that an event is worth observing.
-        It performs various checks and triggers observations for different telescopes (MWA, ATCA).
+        It performs various checks and triggers observations for different telescopes (MWA, ATCA)
+        based on neutrino events.
 
         Args:
-            context (Dict): A dictionary containing the context of the event and observation.
+            context (Dict): A dictionary containing:
+                - event: Event information from neutrino detectors
+                - voevents: List of VOEvents associated with the observation
+                - event_id: Unique identifier for the event
+                - processing state flags
+                - decision logs
             **kwargs: Additional keyword arguments.
 
         Returns:
-            Tuple[str, str]: A tuple containing the decision and the decision reason log.
+            Dict: Updated context dictionary containing:
+                - decision: Final decision on observation
+                - decision_reason_log: Detailed log of decision process
+                - stop_processing: Processing status flag
+                - reached_end: Flag indicating completion
+                - Additional observation-specific data based on the scenario
         """
         print(f"DEBUG - START context keys: {context.keys()}")
 
@@ -194,6 +205,10 @@ class ProposalTest2Neutrino(ProposalSettings):
         """
         Determine if a Neutrino event is worth observing based on various criteria.
 
+        This method evaluates neutrino events against specific criteria including:
+        - Antares ranking thresholds for Antares events
+        - Default triggering for non-Antares events
+
         Args:
             event (Event): The Neutrino event to evaluate.
             telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
@@ -201,11 +216,11 @@ class ProposalTest2Neutrino(ProposalSettings):
             **kwargs: Additional keyword arguments.
 
         Returns:
-            Tuple[bool, bool, bool, str]: A tuple containing:
-                - trigger_bool: Whether to trigger an observation.
-                - debug_bool: Whether to trigger a debug alert.
-                - pending_bool: Whether to create a pending observation.
-                - decision_reason_log: A log of the decision-making process.
+            Dict: Updated context dictionary containing:
+                - trigger_bool (bool): Whether to trigger an observation
+                - debug_bool (bool): Whether debug information was generated
+                - pending_bool (bool): Whether the decision is pending human review
+                - decision_reason_log (str): Log of decision making process
         """
 
         print("DEBUG - WORTH OBSERVING NU")
@@ -257,18 +272,27 @@ class ProposalTest2Neutrino(ProposalSettings):
             BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
         ],
         **kwargs,
-    ) -> Tuple[str, str]:
+    ) -> Dict:
         """
-        Trigger an ATCA observation for a NU event.
+        Trigger an ATCA observation for a neutrino event based on the event context and telescope settings.
+
+        This method handles the generation of ATCA observations for neutrino events. It processes
+        the event context and generates appropriate observation parameters based on the telescope settings.
 
         Args:
-            context (Dict): The context containing event and observation information.
+            context (Dict): The context dictionary containing:
+                - event: Event information from neutrino detectors
+                - stop_processing: Processing control flag
+                - decision_reason_log: Ongoing log of decisions
             telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
-                The settings for the ATCA telescope.
-            **kwargs: Additional keyword arguments.
+                Configuration settings for the telescope, including observation parameters
+            **kwargs: Additional keyword arguments
 
         Returns:
-            Tuple[str, str]: A tuple containing updated context information.
+            Dict: Updated context dictionary containing:
+                - All input context fields, potentially modified
+                - reached_end: Flag indicating completion
+                - Additional observation-specific data based on the scenario
         """
 
         telescope_name = telescope_settings.telescope.name
@@ -299,18 +323,29 @@ class ProposalTest2Neutrino(ProposalSettings):
             BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
         ],
         **kwargs,
-    ) -> Tuple[str, str]:
+    ) -> Dict:
         """
-        Trigger an MWA observation for a NU event.
+        Trigger an MWA observation for a neutrino event based on the event context and telescope settings.
+
+        This method handles the generation of MWA observations for neutrino events. It processes
+        the event context and generates appropriate observation parameters based on the telescope settings.
 
         Args:
-            context (Dict): The context containing event and observation information.
+            context (Dict): The context dictionary containing:
+                - voevents: List of VOEvents associated with the observation
+                - event_id: Unique identifier for the event
+                - prop_dec: Proposal decision information
+                - stop_processing: Processing control flag
+                - decision_reason_log: Ongoing log of decisions
             telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
-                The settings for the MWA telescope.
-            **kwargs: Additional keyword arguments.
+                Configuration settings for the telescope, including observation parameters
+            **kwargs: Additional keyword arguments
 
         Returns:
-            Tuple[str, str]: A tuple containing updated context information.
+            Dict: Updated context dictionary containing:
+                - All input context fields, potentially modified
+                - reached_end: Flag indicating completion
+                - Additional observation-specific data based on the scenario
         """
 
         voevents = context["voevents"]

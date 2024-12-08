@@ -2,7 +2,7 @@ import datetime as dt
 import logging
 from datetime import datetime
 from functools import partial
-from typing import Tuple, Union
+from typing import Union
 
 from ...utils.utils_log import log_event, log_event_with_error
 from ..event import Event

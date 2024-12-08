@@ -2,7 +2,7 @@ import datetime as dt
 import logging
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
@@ -141,7 +141,7 @@ class ProposalAtcaShortGrb(ProposalSettings):
     @log_event(
         log_location="end", message=f"Trigger observation completed", level="info"
     )
-    def trigger_gen_observation(self, context: Dict, **kwargs) -> Tuple[str, str]:
+    def trigger_gen_observation(self, context: Dict, **kwargs) -> Dict[str, str]:
         """
         Triggers the generation of an observation based on the event context.
 
@@ -153,7 +153,9 @@ class ProposalAtcaShortGrb(ProposalSettings):
             **kwargs: Additional keyword arguments.
 
         Returns:
-            Tuple[str, str]: A tuple containing the decision and the decision reason log.
+            Dict[str, str]: Observation outcome containing:
+                - decision (str): Final observation decision
+                - decision_reason_log (str): Detailed log of the decision process
         """
         print(f"DEBUG - START context keys: {context.keys()}")
 
@@ -208,11 +210,13 @@ class ProposalAtcaShortGrb(ProposalSettings):
             **kwargs: Additional keyword arguments.
 
         Returns:
-            Tuple[bool, bool, bool, str]: A tuple containing:
-                - trigger_bool: Whether to trigger an observation.
-                - debug_bool: Whether to trigger a debug alert.
-                - pending_bool: Whether to create a pending observation.
-                - decision_reason_log: A log of the decision-making process.
+            Dict: Observation decision containing:
+                - trigger_bool (bool): Whether to trigger an observation
+                - debug_bool (bool): Whether to trigger a debug alert
+                - pending_bool (bool): Whether to create a pending observation
+                - decision_reason_log (str): Log of the decision-making process
+                - stop_processing (bool): Whether to halt further processing
+                - reached_end (bool): Whether processing completed successfully
         """
 
         print("DEBUG - worth_observing_grb")
@@ -269,7 +273,7 @@ class ProposalAtcaShortGrb(ProposalSettings):
             BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
         ],
         **kwargs,
-    ) -> Tuple[str, str]:
+    ) -> Dict:
         """
         Trigger an ATCA observation for a GRB event.
 
@@ -280,7 +284,11 @@ class ProposalAtcaShortGrb(ProposalSettings):
             **kwargs: Additional keyword arguments.
 
         Returns:
-            Tuple[str, str]: A tuple containing updated context information.
+            Dict: Updated context containing:
+                - decision (str): Final observation decision
+                - decision_reason_log (str): Detailed log of the process
+                - reached_end (bool): Whether processing completed successfully
+                - stop_processing (bool): Whether to halt further processing
         """
 
         telescope_name = telescope_settings.telescope.name

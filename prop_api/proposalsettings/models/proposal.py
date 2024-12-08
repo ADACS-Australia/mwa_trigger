@@ -3,7 +3,7 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -69,38 +69,38 @@ class ProposalSettings(BaseModel, ABC):
     @abstractmethod
     def is_worth_observing(
         self, context: Dict, **kwargs
-    ) -> Tuple[bool, bool, bool, str]:
+    ) -> Dict[str, Union[bool, str]]:
         """
-        Determines if an event is worth observing based on the source settings.
+        Evaluates whether an event meets the criteria for telescope observation.
 
         Args:
-            event (Event): The event to evaluate.
-            **kwargs: Additional keyword arguments to pass to the worth_observing method.
+            context (Dict): Event context containing relevant observation parameters
+            **kwargs: Additional parameters for observation evaluation
 
         Returns:
-            Tuple[bool, bool, bool, str]: A tuple containing:
-                - bool: True if the event is worth observing, False otherwise.
-                - bool: True if the event passes additional criteria.
-                - bool: True if the event requires immediate action.
-                - str: A message explaining the decision.
+            Dict[str, Union[bool, str]]: Observation decision containing:
+                - worth_observing (bool): Whether the event meets basic observation criteria
+                - passes_criteria (bool): Whether the event passes additional filters
+                - requires_immediate (bool): Whether immediate observation is needed
+                - message (str): Explanation of the decision
         """
-
-        # Delegate to the source settings' worth_observing method
         pass
 
     @abstractmethod
-    def trigger_gen_observation(self, context: Dict, **kwargs) -> Tuple[str, str]:
+    def trigger_gen_observation(self, context: Dict, **kwargs) -> Dict[str, str]:
         """
-        Triggers the generation of an observation based on the event context.
+        Initiates telescope observation based on event parameters.
 
-        This method is called after receiving a response that an event is worth observing.
-        It performs various checks and triggers observations for different telescopes (MWA, ATCA).
+        Processes approved observation requests by configuring and triggering
+        the appropriate telescope systems (MWA, ATCA) based on the event context.
 
         Args:
-            context (Dict): A dictionary containing the context of the event and observation.
-            **kwargs: Additional keyword arguments.
+            context (Dict): Event details and observation parameters
+            **kwargs: Additional configuration options
 
         Returns:
-            Tuple[str, str]: A tuple containing the decision and the decision reason log.
+            Dict[str, str]: Observation outcome containing:
+                - decision (str): Final observation decision
+                - reason (str): Detailed explanation of the decision
         """
         pass

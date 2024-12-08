@@ -2,7 +2,7 @@ import datetime as dt
 import logging
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -89,7 +89,7 @@ class ProposalAtcaTestGrb(ProposalSettings):
 
         return context
 
-    def trigger_gen_observation(self, context: Dict, **kwargs) -> Tuple[str, str]:
+    def trigger_gen_observation(self, context: Dict, **kwargs) -> Dict[str, str]:
         """
         Triggers the generation of an observation based on the event context.
 
@@ -101,7 +101,10 @@ class ProposalAtcaTestGrb(ProposalSettings):
             **kwargs: Additional keyword arguments.
 
         Returns:
-            Tuple[str, str]: A tuple containing the decision and the decision reason log.
+            Dict[str, str]: Observation outcome containing:
+                - decision (str): Final observation decision
+                - decision_reason_log (str): Detailed log of the decision process
+                - request_sent_at (datetime): Timestamp when the observation request was sent
         """
         print(f"DEBUG - START context keys: {context.keys()}")
 

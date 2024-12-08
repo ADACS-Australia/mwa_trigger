@@ -2,7 +2,7 @@ import datetime as dt
 import logging
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import Field
 
@@ -198,19 +198,28 @@ class ProposalMwaGwNsbh(ProposalSettings):
     @log_event(
         log_location="end", message=f"Trigger observation completed", level="info"
     )
-    def trigger_gen_observation(self, context: Dict, **kwargs) -> Tuple[str, str]:
+    def trigger_gen_observation(self, context: Dict, **kwargs) -> Dict:
         """
         Triggers the generation of an observation based on the event context.
 
         This method is called after receiving a response that an event is worth observing.
         It performs various checks and triggers observations for different telescopes (MWA, ATCA).
+        The method handles horizon checks and MWA-specific observation generation.
 
         Args:
-            context (Dict): A dictionary containing the context of the event and observation.
+            context (Dict): A dictionary containing:
+                - event information
+                - processing state
+                - decision logs
+                - observation parameters
             **kwargs: Additional keyword arguments.
 
         Returns:
-            Tuple[str, str]: A tuple containing the decision and the decision reason log.
+            Dict: Updated context dictionary containing:
+                - decision: Final decision on observation
+                - decision_reason_log: Detailed log of decision process
+                - stop_processing: Processing status flag
+                - reached_end: Completion status flag
         """
         print(f"DEBUG - START context keys: {context.keys()}")
 
@@ -310,18 +319,32 @@ class ProposalMwaGwNsbh(ProposalSettings):
             BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
         ],
         **kwargs,
-    ) -> Tuple[str, str]:
+    ) -> Dict:
         """
-        Trigger an MWA observation for a GW event.
+        Trigger an MWA observation for a GW event based on the event context and telescope settings.
+
+        This method handles different observation scenarios:
+        - First observation handling (including buffer dump)
+        - Early warning events
+        - Events with skymaps
+        - Repointing for updated skymaps
 
         Args:
-            context (Dict): The context containing event and observation information.
+            context (Dict): The context dictionary containing:
+                - voevents: List of VOEvents associated with the observation
+                - latestVoevent: Most recent VOEvent data
+                - prop_dec: Proposal decision information
+                - stop_processing: Processing control flag
+                - decision_reason_log: Ongoing log of decisions
             telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
-                The settings for the MWA telescope.
-            **kwargs: Additional keyword arguments.
+                Configuration settings for the telescope, including observation parameters
+            **kwargs: Additional keyword arguments
 
         Returns:
-            Tuple[str, str]: A tuple containing updated context information.
+            Dict: Updated context dictionary containing:
+                - All input context fields, potentially modified
+                - reached_end: Flag indicating completion
+                - Additional observation-specific data based on the scenario
         """
 
         voevents = context["voevents"]

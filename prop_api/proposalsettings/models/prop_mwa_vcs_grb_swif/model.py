@@ -2,7 +2,7 @@ import datetime as dt
 import logging
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -131,20 +131,32 @@ class ProposalMwaVcsGrbSwif(ProposalSettings):
     @log_event(
         log_location="end", message=f"Trigger observation completed", level="info"
     )
-    def trigger_gen_observation(self, context: Dict, **kwargs) -> Tuple[str, str]:
+    def trigger_gen_observation(self, context: Dict, **kwargs) -> Dict:
         """
         Triggers the generation of an observation based on the event context.
 
         This method is called after receiving a response that an event is worth observing.
-        It performs various checks and triggers observations for different telescopes (MWA, ATCA).
+        It performs various checks and triggers observations for MWA telescope based on
+        Swift GRB events using the Voltage Capture System (VCS).
 
         Args:
-            context (Dict): A dictionary containing the context of the event and observation.
+            context (Dict): A dictionary containing:
+                - event: Event information from Swift
+                - voevents: List of VOEvents associated with the observation
+                - event_id: Unique identifier for the event
+                - processing state flags
+                - decision logs
             **kwargs: Additional keyword arguments.
 
         Returns:
-            Tuple[str, str]: A tuple containing the decision and the decision reason log.
+            Dict: Updated context dictionary containing:
+                - decision: Final decision on observation
+                - decision_reason_log: Detailed log of decision process
+                - stop_processing: Processing status flag
+                - reached_end: Flag indicating completion
+                - Additional observation-specific data based on the scenario
         """
+
         print(f"DEBUG - START context keys: {context.keys()}")
 
         context = utils_helper.check_mwa_horizon_and_prepare_context(context)
@@ -191,18 +203,30 @@ class ProposalMwaVcsGrbSwif(ProposalSettings):
         """
         Determine if a GRB event is worth observing based on various criteria.
 
+        This method evaluates Swift GRB events against multiple criteria including:
+        - Position uncertainty checks
+        - ATCA declination limits
+        - Event likelihood/significance thresholds
+        - Event duration constraints
+
         Args:
             event (Event): The GRB event to evaluate.
             telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
-                The settings for the telescope.
-            **kwargs: Additional keyword arguments.
+                Configuration settings for the telescope, including observation parameters
+            **kwargs: Additional keyword arguments including:
+                - prop_dec: Proposal decision information
+                - dec: Declination value
+                - decision_reason_log: Ongoing log of decisions
 
         Returns:
-            Tuple[bool, bool, bool, str]: A tuple containing:
-                - trigger_bool: Whether to trigger an observation.
-                - debug_bool: Whether to trigger a debug alert.
-                - pending_bool: Whether to create a pending observation.
-                - decision_reason_log: A log of the decision-making process.
+            Dict: A dictionary containing:
+                - trigger_bool: Whether to trigger an observation
+                - debug_bool: Whether to trigger a debug alert
+                - pending_bool: Whether to create a pending observation
+                - decision_reason_log: A log of the decision-making process
+                - stop_processing: Processing control flag
+                - likely_bool: Event likelihood evaluation result
+                - reached_end: Flag indicating completion
         """
 
         print("DEBUG - worth_observing_grb")
@@ -262,18 +286,30 @@ class ProposalMwaVcsGrbSwif(ProposalSettings):
             BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
         ],
         **kwargs,
-    ) -> Tuple[str, str]:
+    ) -> Dict:
         """
-        Trigger an MWA observation for a GRB event.
+        Trigger an MWA observation for a GRB event based on the event context and telescope settings.
+
+        This method handles the generation of MWA observations for Swift GRB events using
+        the Voltage Capture System (VCS). It processes the event context and generates
+        appropriate observation parameters based on the telescope settings.
 
         Args:
-            context (Dict): The context containing event and observation information.
+            context (Dict): The context dictionary containing:
+                - voevents: List of VOEvents associated with the observation
+                - event_id: Unique identifier for the event
+                - prop_dec: Proposal decision information
+                - stop_processing: Processing control flag
+                - decision_reason_log: Ongoing log of decisions
             telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
-                The settings for the MWA telescope.
-            **kwargs: Additional keyword arguments.
+                Configuration settings for the telescope, including observation parameters
+            **kwargs: Additional keyword arguments
 
         Returns:
-            Tuple[str, str]: A tuple containing updated context information.
+            Dict: Updated context dictionary containing:
+                - All input context fields, potentially modified
+                - reached_end: Flag indicating completion
+                - Additional observation-specific data based on the scenario
         """
 
         voevents = context["voevents"]
