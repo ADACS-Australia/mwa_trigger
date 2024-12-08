@@ -28,9 +28,10 @@ Event Model
 * ``event_group_id`` - Foreign key to EventGroup model
 * ``trig_id`` - Event trigger ID
 * ``self_generated_trig_id`` - Boolean indicating if ID was self-generated
-* ``telescope`` - Telescope identifier
+* ``telescope`` - Telescope identifier (e.g., SWIFT, Fermi)
 * ``sequence_num`` - Sequence number
-* ``event_type`` - Type of event (e.g., GRB, GW)
+* ``event_type`` - Type of event (e.g., BAT_GRB_POS)
+* ``topic`` - Event topic from kafka stream
 * ``role`` - Event role
 * ``duration`` - Event duration
 * ``ra`` - Right Ascension (decimal degrees)
@@ -43,7 +44,7 @@ Event Model
 * ``xml_packet`` - XML packet data
 * ``ignored`` - Boolean indicating if event is ignored
 * ``source_name`` - Name of the source
-* ``source_type`` - Event source type (e.g., SWIFT, FERMI)
+* ``source_type`` - Event source type (e.g., GRB, GW)
 
 Fermi-specific fields:
 

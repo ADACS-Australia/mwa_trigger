@@ -11,20 +11,20 @@ The `models` module in `proposalsettings` defines the data models used for propo
 
    proposal_model
    telescope_settings_model
-   source_settings_model
+   proposal_settings_children
    other_models
 
 1. :doc:`ProposalSettings <proposal_model>`
    
-   Stores settings related to proposals, including methods for determining observation worthiness and triggering observations.
+   Parent class for proposals which hold parameters and methods for determining observation worthiness and triggering observations.
 
 2. :doc:`TelescopeSettings <telescope_settings_model>`
    
    Manages the configuration of telescopes, storing telescope-related parameters and data.
 
-3. :doc:`SourceSettings <source_settings_model>`
+3. :doc:`Proposal Settings Children Classes <proposal_settings_children>`
    
-   Defines settings for sources being observed, including logic for determining observation worthiness and triggering observations based on telescope type.
+   Defines actual proposal settings for parameters and methods including logic for determining observation worthiness and triggering observations based on telescope type.
 
 4. :doc:`Other Models <other_models>`
    
