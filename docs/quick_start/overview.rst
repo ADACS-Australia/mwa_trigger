@@ -19,19 +19,12 @@ The first function to be called is process_all_proposals. This function is main 
 .. image:: ../figures/prop_api_flow_diagram.png
    :alt: Function Diagram
 
-The main logics are implemented in the three functions in sourcesettings.py. Each source settings has three functions:
+The main logics are implemented in proposalsettings/models directory. Each proposal settings has own folder and main logics are implemented in the following functions:
 
-- worth_observing
-- trigger_atca_observation
-- trigger_mwa_observation
+- is_worth_observing
+- trigger_gen_observation
 
-The worth_observing function is used to determine if the source is worth observing. The trigger_atca_observation function is used to trigger the ATCA observation. The trigger_mwa_observation function is used to trigger the MWA observation. Currently, three source settings classes are implemented:
-
-- GWSourceSettings
-- GrbSourceSettings
-- NuSourceSettings
-
-Utility functions used for the worth_observing function are implemented in utils/utils_grb.py and utils/utils_gw.py. Utility functions for the trigger_atca_observation function are implemented in utils/utils_telescope_atca.py. Utility functions for the trigger_mwa_observation function are implemented in utils/utils_telesopce_gw.py and utils_telescope_nogw.py. All the logics are implemented in the source settings classes.
+The is_worth_observing function is used to determine if the source is worth observing. The trigger_gen_observation function holds the logic to trigger the observation and processing data before and after the observation. 
 
 The telescope settings classes are implemented in telescopesettings.py. Currently, one base asbtract and two telescope settings classes are implemented:
 
