@@ -3,7 +3,7 @@ from .models.constants import SourceChoices, TriggerOnChoices
 from .models.prop_atca_hess_grbs.model import ProposalAtcaHessGrbs
 from .models.prop_atca_long_grb.model import ProposalAtcaLongGrb
 from .models.prop_atca_short_grb.model import ProposalAtcaShortGrb
-from .models.prop_atca_test_grb.models import ProposalAtcaTestGrb
+from .models.prop_atca_test_grb.model import ProposalAtcaTestGrb
 from .models.prop_mwa_gw_bns.model import ProposalMwaGwBns
 from .models.prop_mwa_gw_nsbh.model import ProposalMwaGwNsbh
 from .models.prop_mwa_test_grb.model import ProposalMwaTestGrb

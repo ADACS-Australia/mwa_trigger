@@ -1,3 +1,5 @@
+from typing import List
+
 from .models.telescope import Telescope
 
 
@@ -24,15 +26,12 @@ class TelescopeFactory:
         return Telescope(name="ATCA", lon=149.550278, lat=-30.312778, height=237.0)
 
     @property
-    def telescopes(self):
+    def telescopes(self) -> List[Telescope]:
         """
-        Returns a list of all available Telescope objects.
-
-        This method dynamically generates a list of all Telescope objects
-        by iterating through the class attributes that start with "telescope_".
+        Get a list of all available telescopes.
 
         Returns:
-            list: A list of Telescope objects.
+            List[Telescope]: A list containing all telescope instances.
         """
         return [
             getattr(self, attr)

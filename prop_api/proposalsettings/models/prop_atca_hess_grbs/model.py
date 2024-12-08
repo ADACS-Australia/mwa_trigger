@@ -90,15 +90,13 @@ class ProposalAtcaHessGrbs(ProposalSettings):
         Determines if an event is worth observing based on the source settings.
 
         Args:
-            event (Event): The event to evaluate.
-            **kwargs: Additional keyword arguments to pass to the worth_observing method.
+            context (Dict): Dictionary containing event information and processing state
+                containing event, prop_dec, and decision_reason_log.
+            kwargs: Additional keyword arguments to pass to the worth_observing method.
 
         Returns:
-            Dict[bool, bool, bool, str]: A tuple containing:
-                - bool: True if the event is worth observing, False otherwise.
-                - bool: True if the event passes additional criteria.
-                - bool: True if the event requires immediate action.
-                - str: A message explaining the decision.
+            Dict: Updated context dictionary containing trigger_bool, debug_bool,
+                pending_bool, and decision_reason_log.
         """
         event = context["event"]
         prop_dec = context["prop_dec"]
@@ -122,22 +120,35 @@ class ProposalAtcaHessGrbs(ProposalSettings):
         return context
 
     @log_event(
-        log_location="end", message=f"Trigger observation completed", level="info"
+        log_location="end", message="Trigger observation completed", level="info"
     )
-    def trigger_gen_observation(self, context: Dict, **kwargs) -> Tuple[str, str]:
+    def trigger_gen_observation(self, context: Dict, **kwargs) -> Dict:
         """
         Triggers the generation of an observation based on the event context.
 
-        This method is called after receiving a response that an event is worth observing.
-        It performs various checks and triggers observations for different telescopes (MWA, ATCA).
-
         Args:
-            context (Dict): A dictionary containing the context of the event and observation.
-            **kwargs: Additional keyword arguments.
+            context (Dict): Dictionary containing event information and processing state:
+                - event: The event to evaluate
+                - event_id: ID of the event
+                - prop_dec: The proposal decision object
+                - decision_reason_log: Log of decision reasons
+                - trigger_bool: Whether to trigger an observation
+                - stop_processing: Flag to control processing flow
+
+            **kwargs: Additional keyword arguments
 
         Returns:
-            Tuple[str, str]: A tuple containing the decision and the decision reason log.
+            Dict: Updated context dictionary containing:
+                - decision: The final decision made
+                - decision_reason_log: Updated log of the decision process
+                - reached_end: Flag indicating completion
+                - stop_processing: Updated processing control flag
+
+        Note:
+            This method is called after receiving a response that an event is worth observing.
+            It performs various checks and triggers observations for different telescopes.
         """
+
         print(f"DEBUG - START context keys: {context.keys()}")
 
         context = utils_helper.check_mwa_horizon_and_prepare_context(context)
@@ -170,7 +181,7 @@ class ProposalAtcaHessGrbs(ProposalSettings):
     # Final aggregation function
     @log_event(
         log_location="end",
-        message=f"Worth observing for GRB source completed",
+        message="Worth observing for GRB source completed",
         level="info",
     )
     def worth_observing(
@@ -186,18 +197,18 @@ class ProposalAtcaHessGrbs(ProposalSettings):
 
         Args:
             event (Event): The GRB event to evaluate.
+
             telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
                 The settings for the telescope.
-            **kwargs: Additional keyword arguments.
+
+            **kwargs: Additional keyword arguments including prop_dec, dec,
+                and decision_reason_log.
 
         Returns:
-            Tuple[bool, bool, bool, str]: A tuple containing:
-                - trigger_bool: Whether to trigger an observation.
-                - debug_bool: Whether to trigger a debug alert.
-                - pending_bool: Whether to create a pending observation.
-                - decision_reason_log: A log of the decision-making process.
+            Dict: Context dictionary containing observation decision data:
+                trigger_bool, debug_bool, pending_bool, decision_reason_log,
+                stop_processing, likely_bool, and reached_end flags.
         """
-
         print("DEBUG - worth_observing_grb")
 
         prop_dec = kwargs.get("prop_dec")
@@ -255,18 +266,21 @@ class ProposalAtcaHessGrbs(ProposalSettings):
             BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings
         ],
         **kwargs,
-    ) -> Tuple[str, str]:
+    ) -> Dict:
         """
         Trigger an ATCA observation for a GRB event.
 
         Args:
             context (Dict): The context containing event and observation information.
+
             telescope_settings (Union[BaseTelescopeSettings, MWATelescopeSettings, ATCATelescopeSettings]):
                 The settings for the ATCA telescope.
+
             **kwargs: Additional keyword arguments.
 
         Returns:
-            Tuple[str, str]: A tuple containing updated context information.
+            Dict: Updated context dictionary containing:
+                decision, decision_reason_log, reached_end, and stop_processing flags.
         """
 
         telescope_name = telescope_settings.telescope.name

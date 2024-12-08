@@ -113,22 +113,20 @@ class ProposalAtcaLongGrb(ProposalSettings):
     class Config:
         extra = "forbid"
 
-    def is_worth_observing(
-        self, context: Dict, **kwargs
-    ) -> Tuple[bool, bool, bool, str]:
+    def is_worth_observing(self, context: Dict, **kwargs) -> Dict:
         """
         Determines if an event is worth observing based on the source settings.
 
         Args:
-            event (Event): The event to evaluate.
+            context (Dict): Dictionary containing event information and processing state.
             **kwargs: Additional keyword arguments to pass to the worth_observing method.
 
         Returns:
-            Tuple[bool, bool, bool, str]: A tuple containing:
-                - bool: True if the event is worth observing, False otherwise.
-                - bool: True if the event passes additional criteria.
-                - bool: True if the event requires immediate action.
-                - str: A message explaining the decision.
+            Dict: Updated context dictionary containing:
+                - trigger_bool (bool): Whether to trigger an observation
+                - debug_bool (bool): Whether debug information was generated
+                - pending_bool (bool): Whether the decision is pending human review
+                - decision_reason_log (str): Log of decision making process
         """
         event = context["event"]
         prop_dec = context["prop_dec"]
@@ -149,13 +147,6 @@ class ProposalAtcaLongGrb(ProposalSettings):
         context["decision_reason_log"] = context_wo["decision_reason_log"]
 
         return context
-
-        # return {
-        #     "trigger_bool": context_wo["trigger_bool"],
-        #     "debug_bool": context_wo["debug_bool"],
-        #     "pending_bool": context_wo["pending_bool"],
-        #     "decision_reason_log": context_wo["decision_reason_log"],
-        # }
 
     @log_event(
         log_location="end", message=f"Trigger observation completed", level="info"

@@ -71,15 +71,15 @@ class ProposalAtcaTestGrb(ProposalSettings):
         Determines if an event is worth observing based on the source settings.
 
         Args:
-            event (Event): The event to evaluate.
+            context (Dict): Dictionary containing event information and processing state.
             **kwargs: Additional keyword arguments to pass to the worth_observing method.
 
         Returns:
-            Tuple[bool, bool, bool, str]: A tuple containing:
-                - bool: True if the event is worth observing, False otherwise.
-                - bool: True if the event passes additional criteria.
-                - bool: True if the event requires immediate action.
-                - str: A message explaining the decision.
+            Dict: Updated context dictionary containing:
+                - trigger_bool (bool): Whether to trigger an observation
+                - debug_bool (bool): Whether debug information was generated
+                - pending_bool (bool): Whether the decision is pending human review
+                - decision_reason_log (str): Log of decision making process
         """
         print(f"DEBUG - START context keys: {context.keys()}")
         event = context["event"]
