@@ -65,16 +65,11 @@
     <thead>
       <tr>
         <th>Event ID</th>
-        <th>Source Type</th>
         <th>Telescope</th>
         <th>Event Type</th>
         <th>Event Time (UTC)</th>
         <th>Recieved (UTC)</th>
         <th>Trig ID</th>
-        <th>Source Name</th>
-        <th>Sequence number</th>
-        <th>Classification</th>
-        <th>Duration (s)</th>
         <th>RA (HH:MM:SS)</th>
         <th>Dec (DD:MM:SS)</th>
         {% if poserr_unit is not None and poserr_unit == "deg" %}
@@ -82,9 +77,6 @@
         {% else %}
           <th><a href="?{% url_switch request 'poserr_unit' %}">Position Error (arcmin)</a></th>
         {% endif %}
-        <th>Fermi Detection Probability (%)</th>
-        <th>SWIFT Rate Significance (sigma)</th>
-        <th>HESS Significance (%)</th>
       </tr>
     </thead>
     <!-- Iterate over object_list -->
@@ -96,7 +88,6 @@
       <tr>
     {% endif %}
       <td><a href="/voevent_view/{{ event.id }}" style="text-decoration:None">{{ event.id }}</a></td>
-      <td>{% if event.source_type  is not None %} {{ event.source_type }}  {% endif %}</td>
       <td>{{ event.telescope }}</td>
       <td>{{ event.event_type }}</td>
       <td>{{ event.event_observed|date:"Y-m-d H:i:s" }}</td>
@@ -107,10 +98,7 @@
       {% else %}
         <td>{{ event.trig_id }}</td>
       {% endif %}
-      <td>{% if event.source_name  is not None %} {{ event.source_name }}  {% endif %}</td>
-      <td>{% if event.sequence_num is not None %} {{ event.sequence_num }} {% endif %}</td>
-      <td>{% if event.classification  is not None %} {{ event.classification }}  {% endif %}</td>
-      <td>{% if event.duration     is not None %} {{ event.duration }}     {% endif %}</td>
+  
       <td>{% if event.ra_hms          is not None %} {{ event.ra_hms }}          {% endif %}</td>
       <td>{% if event.dec_dms         is not None %} {{ event.dec_dms }}         {% endif %}</td>
       <td>
@@ -122,10 +110,6 @@
         {% endif %}
       {% endif %}
       </td>
-      <td>{% if event.fermi_detection_prob is not None %} {{ event.fermi_detection_prob }}  {% endif %}</td>
-      <td>{% if event.swift_rate_signif    is not None %} {{ event.swift_rate_signif    }}  {% endif %}</td>
-      <td>{% if event.hess_significance    is not None %} {{ event.hess_significance    }}  {% endif %}</td>
-
     </tr>
     <!-- If object_list is empty  -->
     {% empty %}
@@ -155,6 +139,7 @@
           <th>Reason</th>
           <th>Cancel Obs?</th>
           <th>MWA response</th>
+          <th>OBSIDs</th>
         </tr>
       </thead>
       <!-- Iterate over object_list -->
@@ -214,6 +199,9 @@
         {% if ob.mwa_response is not None and ob.trigger_id is not None %}
         <td><a href="/observation_mwa_response/{{ ob.trigger_id }}" style="text-decoration:None">link</a></td>
         {% endif %}
+        {% if ob.mwa_response is not None and ob.trigger_id is not None %}
+          <td style="white-space: pre-wrap">{{ ob.mwa_response.obsid_list|join:", " }}</td>
+        {% endif %}
       </tr>
       <!-- If object_list is empty  -->
       {% empty %}
@@ -221,15 +209,13 @@
       {% endfor %}
     </table>
     {% for ob in obs %}
-    {% if ob.mwa_sky_map_pointings %}
-    <div style="display: flex; justify-content: center;">
-      {% if ob.trigger_id %}
-      <b>MWA OBSID: {{ob.trigger_id}}</b>
+      {% if ob.mwa_sky_map_pointings %}
+        <div style="display: flex; justify-content: center;">
+            {% if ob.trigger_id %}
+            <b>MWA OBSID: {{ob.trigger_id}}</b>
+            {% endif %}
+            <img src="/media/{{ob.mwa_sky_map_pointings}}" style="object-fit: cover; width: 640px; height: 360px" width="640px"/>
+        </div>
       {% endif %}
-      <img src="/media/{{ob.mwa_sky_map_pointings}}" style="object-fit: cover; width: 640px; height: 360px" width="640px"/>
-    </div>
-
-    {% endif %}
-    
   {% endfor %}
 {% endblock %}

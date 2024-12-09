@@ -124,13 +124,15 @@
     <thead>
     <tr>
       <th>Proposal ID</th>
+      <th>Priority</th>
       <th>Target Telescope</th>
       <th>Source Type</th>
       <th>Event Telescope</th>
       <th>Project ID</th>
       <th>Testing?</th>
       <th>Proposal Description</th>
-      <th>Proposal Flow Diagram</th>
+      <th>Decision Statistics <span id="duration-label">(Last Month)</span></th>
+
     </tr>
     </thead>
     <!-- Iterate over object_list -->
@@ -138,13 +140,24 @@
     <!-- Display Objects -->
     <tr>
       <td><a href='/proposal_edit/{{ setting.id }}/' style="text-decoration:None">{{ setting.proposal_id }}</a></td>
+      <td>{{ setting.priority }}</td>
       <td>{{ setting.telescope }}</td>
       <td>{{ setting.get_source_type_display }}</td>
-      <td>{% if setting.event_telescope is None %} All {% else %} {{ setting.event_telescope }} {% endif %}</td>
+      <td>{{ setting.event_telescope }}</td>
       <td>{{ setting.project_id }}</td>
       <td>{{ setting.testing }}</td>
-      <td>{{ setting.proposal_description }}</td>
-      <td><a href='/proposal_decision_path/{{ setting.id }}/' style="text-decoration:None">View Flow Diagram</a></td>
+      <td title="{{ setting.proposal_description }}">{{ setting.proposal_description|truncatechars:50 }}</td>
+
+      <td class="stats-cell" data-proposal-id="{{ object.id }}">
+        {% with decisions=setting.get_decision_statistics_for_duration %}
+            {% if decisions.ignored > 0 %}<span class="grey-tr">Ignored: {{ decisions.ignored }}</span>{% endif %}
+            {% if decisions.error > 0 %}{% if decisions.ignored > 0 %}, {% endif %}<span class="NegativeTransaction">Error: {{ decisions.error }}</span>{% endif %}
+            {% if decisions.pending > 0 %}{% if decisions.ignored > 0 or decisions.error > 0 %}, {% endif %}<span class="PendingNoAnimation">Pending: {{ decisions.pending }}</span>{% endif %}
+            {% if decisions.triggered > 0 %}{% if decisions.ignored > 0 or decisions.error > 0 or decisions.pending > 0 %}, {% endif %}<span class="PositiveTransaction">Triggered: {{ decisions.triggered }}</span>{% endif %}
+            {% if decisions.ignored == 0 and decisions.error == 0 and decisions.pending == 0 and decisions.triggered == 0 %}No decisions{% endif %}
+        {% endwith %}
+      </td>
+
     </tr>
     <!-- If object_list is empty  -->
     {% empty %}

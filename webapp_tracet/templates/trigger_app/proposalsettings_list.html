@@ -19,10 +19,10 @@
       <form id="statsFilterForm" class="form-inline">
         <label for="statsDuration" class="mr-2">Statistics Duration:</label>
         <select id="statsDuration" class="form-control form-control-sm stats-dropdown" onchange="updateStats()">
-          <option value="1">Last Month</option>
+          <option value="1" selected>Last Month</option>
           <option value="6">Last 6 Months</option>
           <option value="12">Last Year</option>
-          <option value="0" selected>All Time</option>
+          <option value="0">All Time</option>
         </select>
       </form>
     </div>
@@ -43,7 +43,7 @@
       <th>Event Telescope</th>
       <th>Project ID</th>
       <th>Source Code</th>
-      <th>Decision Statistics <span id="duration-label">(All Time)</span></th>
+      <th>Decision Statistics <span id="duration-label">(Last Month)</span></th>
       <th>Testing?</th>
       <th>Proposal Description</th>
     </tr>
@@ -76,7 +76,7 @@
         {% endwith %}
       </td>
       <td>{{ object.testing }}</td>
-      <td>{{ object.proposal_description }}</td>
+      <td title="{{ object.proposal_description }}">{{ object.proposal_description|truncatechars:50 }}</td>
     </tr>
     {% comment %} {% endif %} {% endcomment %}
     <!-- If object_list is empty  -->
@@ -93,10 +93,10 @@
           <form id="statsArchivedFilterForm" class="form-inline">
             <label for="statsArchivedDuration" class="mr-2">Statistics Duration:</label>
             <select id="statsArchivedDuration" class="form-control form-control-sm stats-dropdown" onchange="updateArchivedStats()">
-              <option value="1">Last Month</option>
+              <option value="1" selected>Last Month</option>
               <option value="6">Last 6 Months</option>
               <option value="12">Last Year</option>
-              <option value="0" selected>All Time</option>
+              <option value="0">All Time</option>
             </select>
           </form>
         </div>
@@ -118,7 +118,7 @@
       <th>Event Telescope</th>
       <th>Project ID</th>
       <th>Source Code</th>
-      <th>Decision Statistics <span id="archived-duration-label">(All Time)</span></th>
+      <th>Decision Statistics <span id="archived-duration-label">(Last Month)</span></th>
       <th>Testing?</th>
       <th>Proposal Description</th>
     </tr>
@@ -151,7 +151,7 @@
         {% endwith %}
       </td>
       <td>{{ object.testing }}</td>
-      <td>{{ object.proposal_description }}</td>
+      <td title="{{ object.proposal_description }}">{{ object.proposal_description|truncatechars:50 }}</td>
     </tr>
     <!-- If archived_proposals is empty  -->
     {% empty %}

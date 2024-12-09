@@ -218,11 +218,11 @@ def view_code_file(request, file_path):
 
 
 def proposal_stats(request, proposal_id):
-    duration = request.GET.get('duration', '0')  # Default to All time
+    duration = request.GET.get('duration', '1')  # Default to last month
     proposal = ProposalSettings.objects.get(id=proposal_id)
 
     if duration == '0':  # All time
-        stats = proposal.get_decision_statistics_for_duration()
+        stats = proposal.get_decision_statistics_all_time()
     else:
         # Convert duration to integer months
         months = int(duration)
@@ -233,7 +233,7 @@ def proposal_stats(request, proposal_id):
 
 def archived_proposal_stats(request, proposal_id_version):
     try:
-        duration = request.GET.get('duration', '0')  # Default to All time
+        duration = request.GET.get('duration', '1')  # Default to last month
         # Filter by both id and version
         proposal = ProposalSettingsArchive.objects.get(id_version=proposal_id_version)
 

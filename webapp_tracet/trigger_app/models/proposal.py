@@ -130,7 +130,7 @@ class ProposalSettings(models.Model):
 
         return stats
 
-    def get_decision_statistics_for_duration(self, months=0):
+    def get_decision_statistics_for_duration(self, months=1):
 
         if months == 0:  # All time
             return self.get_decision_statistics_all_time()
@@ -308,7 +308,7 @@ class ProposalSettingsArchive(models.Model):
     def __str__(self):
         return f"{self.proposal_id} (v{self.version})"
 
-    def get_decision_statistics_for_duration(self, months=0):
+    def get_decision_statistics_for_duration(self, months=1):
         if months == 0:  # All time
             return self.get_decision_statistics_all_time()
 
