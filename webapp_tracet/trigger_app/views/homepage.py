@@ -20,7 +20,7 @@ def home_page(request):
             voevent__role="observation"
         ),
     )
-    recent_event_groups_swift = f.qs[:10]
+    recent_event_groups_swift = f.qs[:20]
 
     # Filter out ignored event groups and telescope=swift and show only the 5 most recent
     # recent_event_groups_swift = models.EventGroup.objects.filter(
@@ -54,4 +54,3 @@ def home_page(request):
         "recent_event_groups_lvc": list(recent_event_group_info_lvc),
     }
     return render(request, "trigger_app/home_page.html", context)
-

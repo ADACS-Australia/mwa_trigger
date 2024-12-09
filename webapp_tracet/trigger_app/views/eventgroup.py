@@ -69,7 +69,10 @@ def TestEventGroupList(request):
         req = QueryDict("ignored=False&source_type=GRB&telescope=SWIFT")
 
     f = EventGroupFilter(
-        req, queryset=models.event.EventGroup.objects.distinct().filter(voevent__role="test")
+        req,
+        queryset=models.event.EventGroup.objects.distinct().filter(
+            voevent__role="test"
+        ),
     )
     eventgroups = f.qs
 
@@ -97,7 +100,6 @@ def TestEventGroupList(request):
             "page_obj": page_obj,
         },
     )
-    
 
 
 def EventGroup_details(request, tid):
@@ -124,12 +126,16 @@ def EventGroup_details(request, tid):
             event.classification = None
 
     # list all prop decisions
-    prop_decs = models.proposal.ProposalDecision.objects.filter(event_group_id=event_group)
+    prop_decs = models.proposal.ProposalDecision.objects.filter(
+        event_group_id=event_group
+    )
 
     # Grab obs if the exist
     obs = []
     for prop_dec in prop_decs:
-        obs += models.observation.Observations.objects.filter(proposal_decision_id=prop_dec)
+        obs += models.observation.Observations.objects.filter(
+            proposal_decision_id=prop_dec
+        )
     strip_time_stamp(prop_decs)
 
     # Get position error units
@@ -147,7 +153,6 @@ def EventGroup_details(request, tid):
     return render(request, "trigger_app/event_group_details.html", context)
 
 
-
 def grab_decisions_for_event_groups(event_groups):
     # For the event groups, grab all useful information like each proposal decision was
 
@@ -158,11 +163,24 @@ def grab_decisions_for_event_groups(event_groups):
     proposal_decision_list = []
     proposal_decision_id_list = []
     role_list = []
+    stream_list = []
 
     for event_group in event_groups:
-        event_group_events = models.event.Event.objects.filter(event_group_id=event_group)
+        event_group_events = models.event.Event.objects.filter(
+            event_group_id=event_group
+        ).order_by("recieved_data")
+
+        event_group_events_not_ignored = models.event.Event.objects.filter(
+            event_group_id=event_group, ignored=False
+        ).order_by("recieved_data")
+
         telescope_list.append(
             " ".join(set(event_group_events.values_list("telescope", flat=True)))
+        )
+        stream_list.append(
+            " ".join(
+                set(event_group_events_not_ignored.values_list("event_type", flat=True))
+            )
         )
         event_with_source_name = list(
             filter(lambda x: x.source_name is not None, list(event_group_events))
@@ -204,10 +222,12 @@ def grab_decisions_for_event_groups(event_groups):
                 source_name_list,
                 proposal_decision_list,
                 proposal_decision_id_list,
+                stream_list,
             )
         ),
         event_groups,
     )
+
 
 def strip_time_stamp(prop_decs):
     for prop_dec in prop_decs:
