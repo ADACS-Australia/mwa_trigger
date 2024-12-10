@@ -249,7 +249,11 @@
         <td><a href="/observation_mwa_response/{{ ob.trigger_id }}" style="text-decoration:None">link</a></td>
         {% endif %}
         {% if ob.mwa_response is not None and ob.trigger_id is not None %}
-          <td style="white-space: pre-wrap">{{ ob.mwa_response.obsid_list|join:", " }}</td>
+          <td scope="row">
+            {% for obsid in ob.mwa_response.obsid_list %}
+              <a href="https://ws.mwatelescope.org/observation/obs/?obsid={{ obsid }}" style="text-decoration:None">{{ obsid }}</a>{% if not forloop.last %}<br>{% endif %}
+            {% endfor %}
+          </td>
         {% endif %}
       </tr>
       <!-- If object_list is empty  -->

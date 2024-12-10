@@ -39,8 +39,8 @@
       <th>Updated At</th>
       <th>Proposal ID</th>
       <th>Priority</th>
-      <th>Source Type</th>
-      <th>Event Telescope</th>
+      {% comment %} <th>Source Type</th> {% endcomment %}
+      {% comment %} <th>Event Telescope</th> {% endcomment %}
       <th>Project ID</th>
       <th>Source Code</th>
       <th>Decision Statistics <span id="duration-label">(Last Month)</span></th>
@@ -60,8 +60,8 @@
       <td>{{ object.updated_at|timesince }} ago</td>
       <td>{{ object.proposal_id }}</td>
       <td>{{ object.priority }}</td>
-      <td>{{ object.source_type }}</td>
-      <td>{% if object.event_telescope is None %} All {% else %} {{ object.event_telescope }} {% endif %}</td>
+      {% comment %} <td>{{ object.source_type }}</td> {% endcomment %}
+      {% comment %} <td>{% if object.event_telescope is None %} All {% else %} {{ object.event_telescope }} {% endif %}</td> {% endcomment %}
       <td>{{ object.project_id }}</td>
       <td>
         <a href="{% url 'code_browser' %}?path={{ object.code_link }}" class="btn btn-info btn-sm">View Code</a>
@@ -114,8 +114,8 @@
       <th>Updated At</th>
       <th>Proposal ID</th>
       <th>Priority</th>
-      <th>Source Type</th>
-      <th>Event Telescope</th>
+      {% comment %} <th>Source Type</th> {% endcomment %}
+      {% comment %} <th>Event Telescope</th> {% endcomment %}
       <th>Project ID</th>
       <th>Source Code</th>
       <th>Decision Statistics <span id="archived-duration-label">(Last Month)</span></th>
@@ -135,8 +135,8 @@
       <td>{{ object.updated_at|timesince }} ago</td>
       <td>{{ object.proposal_id }}</td>
       <td>{{ object.priority }}</td>
-      <td>{{ object.source_type }}</td>
-      <td>{% if object.event_telescope is None %} All {% else %} {{ object.event_telescope }} {% endif %}</td>
+      {% comment %} <td>{{ object.source_type }}</td> {% endcomment %}
+      {% comment %} <td>{% if object.event_telescope is None %} All {% else %} {{ object.event_telescope }} {% endif %}</td> {% endcomment %}
       <td>{{ object.project_id }}</td>
       <td>
         <a href="{% url 'code_browser' %}?path={{ object.code_link }}" class="btn btn-info btn-sm">View Code</a>

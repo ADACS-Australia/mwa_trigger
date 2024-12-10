@@ -5,9 +5,11 @@ Creating New Proposal
 
 Overview
 --------
-Abstract/Base proposal settings model class is defined in prop_api/proposalsettings/models/proposal.py. The model consist of the proposal settings parameters and the telescope settings. The telescope settings classes are defined in prop_api/proposalsettings/models/telescopesettings.py.
+The abstract/base class for proposal settings models is defined in ``prop_api/proposalsettings/models/proposal.py``. This model includes both the proposal settings parameters and the telescope settings. The classes for telescope settings are defined separately in ``prop_api/proposalsettings/models/telescopesettings.py``.
 
-Actual list of proposal settings models are created in separate directories started with prop_ and names of models in models directory. Then, its added to the factory classe in prop_api/proposalsettings/proposalsettings_factory.py. Using the factory classes is the recommended way to create new proposal settings models and other list of models. The list of the models in the factory classes are used in the proposal api. Besides proposal settings models, other list of models are also created in the factory classes and shown in the code block below.
+The current list of proposal settings models is organized into separate directories, each prefixed with ``prop_``, while the models themselves reside in the ``models`` directory. These models are then registered in the factory class located at ``prop_api/proposalsettings/proposalsettings_factory.py``.
+
+Using factory classes is the recommended approach for creating new proposal settings models and other related models. The models listed in the factory classes are integral to the proposal API. In addition to proposal settings models, other related models are also defined and managed within the factory classes, as illustrated in the code block below.
 
 .. code-block::
 
@@ -16,20 +18,19 @@ Actual list of proposal settings models are created in separate directories star
     prop_api/proposalsettings/eventtelescope_factory.py           - event telescope
     prop_api/proposalsettings/proposalsettings_factory.py         - proposal settings
 
-The classes are added to the list of the models in the factory classes automatically when the classes are created. The list of the models are used in the proposal api endpoints. Please refer to the :ref:`Proposal api <prop_api_endpoints>` for the details of the api endpoints. if you need to more info about the factory classes, please check the code and :ref:`Proposal package factory classes <prop_api_factory>`
+After new classes are created and added to the factory class, they are automatically used in the proposal API endpoints. Using the button on web application, the new proposal settings model is added to the database.  For more details about the API endpoints, refer to the :ref:`Proposal api <prop_api_endpoints>` for the details of the api endpoints. To learn more about the factory classes, see the code and :ref:`Proposal package factory classes <prop_api_factory>`.
 
 Creating New Proposal Settings Model
 ------------------------------------
 
-The example bare minimum new proposal settings models are created in two folders in 
+Example bare-minimum proposal settings models are created in the following two folders in 
 
 .. code-block::
 
     prop_api/proposalsettings/models/prop_atca_test_grb
     prop_api/proposalsettings/models/prop_mwa_test_grb
     
-The folder name should match the corresponding class name and proposal ID, as demonstrated in the example. Using the proposal ID, the folder is copied to the shared directory and displayed in the web application.
-
+The folder name should match the corresponding class name and proposal ID, as shown in the example. When the update button is clicked, the folder is copied to the shared directory between the web and API containers using the proposal ID and is displayed in the web application.
 
 .. code-block::
 
@@ -49,7 +50,7 @@ The folder name should match the corresponding class name and proposal ID, as de
         id: int = 20
         proposal_id: str = "ATCA_test_GRB"
         
-The variables for the parent class ProposalSettings are defined in the class variables and additional variables can be defined in the class. Please see the class for prop_mwa_gw_bns as example. All the logics can be defined in the two main functions in the class. is_worth_observing function will define three trigger variables and one log text and add them to the context dictionary. 
+The variables for the parent ``class ProposalSettings`` are defined as class variables, with the option to add additional variables within the class. For an example, refer to the ``prop_mwa_gw_bns`` class. All logic can be implemented in the class's two main functions. The ``is_worth_observing`` function defines three trigger variables and one log message, adding them to the context dictionary. 
 
 .. code-block::
 
@@ -67,8 +68,11 @@ The variables for the parent class ProposalSettings are defined in the class var
 
         return context
 
-The trigger_gen_observation function is used to trigger the observation. This function is called when the is_worth_observing function returns True. This function is used to generate the trigger telescope using trigger_telescope function in telescope settings class and add it to the database on web application using save_observation function in telescope settings class. 
-Also, it adds the log text to the context dictionary.
+The ``trigger_gen_observation`` function is responsible for initiating the observation process. 
+It is called when the ``is_worth_observing`` function returns ``True``. This function uses the 
+``trigger_telescope`` method from the telescope settings class to generate the telescope trigger 
+and saves it to the database in the web application using the ``save_observation`` method from 
+the same class. Additionally, it adds a log message to the context dictionary.
 
 .. code-block::
 
@@ -96,11 +100,14 @@ Also, it adds the log text to the context dictionary.
         return context
 
 
-After creating the new proposal settings model, it needs to be added to the factory classes in prop_api/proposalsettings/proposalsettings_factory.py.
+After creating a new proposal settings model, it must be registered in the factory classes located at ``prop_api/proposalsettings/proposalsettings_factory.py``.
 
 
 .. code-block::
+
     from .models.prop_atca_test_grb.model import ProposalAtcaTestGrb
+
+    ...
 
     class ProposalSettingsFactory:
         ...
@@ -111,16 +118,23 @@ After creating the new proposal settings model, it needs to be added to the fact
             prop = ProposalAtcaTestGrb()
             return prop
 
+Several factory classes are utilized to generate lists for event telescope IDs, telescope IDs, and project IDs. These factory classes play a key role in creating new proposal settings models.
 
-Several factory classes are used to create the list for the event telescope, telescope and project ids. These factory classes are used in creating the new proposal settings model. 
-**The id is unique** and is used to identify the proposal settings model in the database. **If the existing id is used, the existing proposal settings model is updated**.
+**The ID is unique** and serves to identify the proposal settings model in the database. **If an existing ID is used, the corresponding proposal settings model will be updated instead of creating a new one.**
 
-Once the proposal settings model is created, it can be used in the proposal api immediately. To use the proposal settings model in the web application, 
-**the update button needs to be clicked**.
-Utility functions for the worth_observing function are implemented in utils_grb.py and utils_gw.py. For detailed information, please refer to the code.
 
-Utility functions for the trigger_atca_observation function are implemented in utils_telescope_atca.py, while those for the trigger_mwa_observation function are implemented in utils_telescope_gw.py and utils_telescope_nogw.py.
+Once a proposal settings model is created, it can be immediately used in the proposal API. To enable its use in the web application, **the update button must be clicked**.
+
+Utility functions related to the ``worth_observing`` function are implemented in ``utils_grb.py`` and ``utils_gw.py``. For more details, please refer to the corresponding code.
+
+For the ``trigger_atca_observation`` function, utility functions are implemented in ``utils_telescope_atca.py``. Similarly, utility functions for the ``trigger_mwa_observation`` function are implemented in ``utils_telescope_gw.py`` and ``utils_telescope_nogw.py``.
 
 Utility functions located in the proposal settings directory are specific to their corresponding model classes and do not interfere with other proposal settings models. However, utility functions located outside the proposal settings directory are shared across all proposal settings models.
 
 If a specific utility function is needed for a new proposal settings model and requires modification, it is recommended to add the utility function to the appropriate proposal settings directory and make the necessary changes there.
+
+* Utility functions within the proposal settings directory are specific to their respective model classes and do not interfere with other models.
+
+* Utility functions located outside the proposal settings directory are shared among all proposal settings models.
+
+If a new proposal settings model requires a specific utility function with modifications, it is recommended to place the function in the relevant proposal settings directory and apply the necessary changes there.

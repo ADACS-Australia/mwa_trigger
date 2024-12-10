@@ -177,11 +177,21 @@ def grab_decisions_for_event_groups(event_groups):
         telescope_list.append(
             " ".join(set(event_group_events.values_list("telescope", flat=True)))
         )
+
+        # stream_list.append(
+        #     event_group_events_not_ignored.first().event_type
+        #     if event_group_events_not_ignored.exists()
+        #     else ""
+        # )
+
         stream_list.append(
-            " ".join(
+            list(
                 set(event_group_events_not_ignored.values_list("event_type", flat=True))
             )
+            if event_group_events_not_ignored.exists()
+            else []
         )
+
         event_with_source_name = list(
             filter(lambda x: x.source_name is not None, list(event_group_events))
         )

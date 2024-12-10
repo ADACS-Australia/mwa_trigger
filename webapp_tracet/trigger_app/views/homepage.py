@@ -1,3 +1,5 @@
+import time
+
 from django.conf import settings
 from django.http import QueryDict
 from django.shortcuts import render
@@ -12,7 +14,10 @@ def home_page(request):
 
     prop_settings = models.proposal.ProposalSettings.objects.all()
 
-    req = QueryDict("ignored=False&source_type=GRB&telescope=SWIFT")
+    # req = QueryDict("ignored=False&source_type=GRB&telescope=SWIFT")
+    req = QueryDict("ignored=False")
+
+    start_time = time.time()
 
     f = EventGroupFilter(
         req,
@@ -20,29 +25,26 @@ def home_page(request):
             voevent__role="observation"
         ),
     )
-    recent_event_groups_swift = f.qs[:20]
+    recent_event_groups = f.qs[:60]
+
+    # recent_event_groups = models.event.EventGroup.objects.filter(
+    #     ignored=False, voevent__role="observation"
+    # )[:60]
 
     # Filter out ignored event groups and telescope=swift and show only the 5 most recent
-    # recent_event_groups_swift = models.EventGroup.objects.filter(
+    # recent_event_groups = models.EventGroup.objects.filter(
     #     ignored=False, source_type="GRB")[:20]
-    recent_event_group_info_swift, _ = grab_decisions_for_event_groups(
-        recent_event_groups_swift
-    )
 
-    recent_event_group_info_swift = filter(
-        lambda x: x[2] == "SWIFT", recent_event_group_info_swift
-    )
+    recent_event_group_info, _ = grab_decisions_for_event_groups(recent_event_groups)
 
-    recent_event_groups_lvc = models.event.EventGroup.objects.filter(
-        ignored=False, source_type="GW"
-    )[:10]
-    recent_event_group_info_lvc, _ = grab_decisions_for_event_groups(
-        recent_event_groups_lvc
-    )
+    end_time = time.time()
+    print(f"Time taken: {end_time - start_time} seconds")
 
-    recent_event_group_info_lvc = filter(
-        lambda x: x[2] == "LVC", recent_event_group_info_lvc
-    )
+    # recent_event_group_info_swift = filter(
+    #     lambda x: x[2] == "SWIFT", recent_event_group_info_swift
+    # )
+
+    # print([x[2] for x in recent_event_group_info_swift])
 
     context = {
         "twistd_comet_status": comet_status,
@@ -50,7 +52,6 @@ def home_page(request):
         "settings": prop_settings,
         "remotes": ", ".join(settings.VOEVENT_REMOTES),
         "tcps": ", ".join(settings.VOEVENT_TCP),
-        "recent_event_groups_swift": list(recent_event_group_info_swift),
-        "recent_event_groups_lvc": list(recent_event_group_info_lvc),
+        "recent_event_groups": list(recent_event_group_info),
     }
     return render(request, "trigger_app/home_page.html", context)
