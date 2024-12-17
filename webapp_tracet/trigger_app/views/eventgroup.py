@@ -26,7 +26,7 @@ def EventGroupList(request):
     # Apply filters
     req = request.GET
     if not req.dict():
-        req = QueryDict("ignored=False&source_type=GRB&telescope=SWIFT")
+        req = QueryDict("ignored=False&telescope=SWIFT")
 
     f = EventGroupFilter(
         req,
@@ -66,7 +66,7 @@ def TestEventGroupList(request):
     # Apply filters
     req = request.GET
     if not req.dict():
-        req = QueryDict("ignored=False&source_type=GRB&telescope=SWIFT")
+        req = QueryDict("ignored=False&telescope=SWIFT")
 
     f = EventGroupFilter(
         req,

@@ -21,6 +21,14 @@ explanations of the software methodologies and layout (Developer Documentation) 
    intro/what_is_tracet
    intro/overview_of_tracet
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Quick Start:
+
+   quick_start/overview
+   quick_start/creating_new_proposal
+   quick_start/deleting_proposal
+
 
 .. toctree::
    :maxdepth: 4
@@ -35,17 +43,10 @@ explanations of the software methodologies and layout (Developer Documentation) 
    :caption: Docker Scripts and Server Setup:
 
    docker_development/development_deployment
-   docker_development/accessing_databases
-   docker_development/nginx_production
+   .. docker_development/accessing_databases
+   .. docker_development/nginx_production
    docker_development/restarting_nimbus
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Quick Start:
-
-   quick_start/overview
-   quick_start/creating_new_proposal
-   quick_start/deleting_proposal
 
 
 .. toctree::
