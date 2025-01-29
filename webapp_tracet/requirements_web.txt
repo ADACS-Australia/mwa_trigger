@@ -29,5 +29,6 @@ twilio==9.2.3
 urllib3==2.2.2
 virtualenv==20.26.3
 voevent-parse==1.0.3
+voevet2dict>=0.1.0
 python-json-logger
 django-ninja-jwt[crypto]

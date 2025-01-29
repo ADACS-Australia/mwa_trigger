@@ -9,3 +9,4 @@ mhealpy
 gcn_kafka >= 0.3
 voevent-parse >=1.0.3
 pre-commit
+voevent2dict >= 0.1.0
