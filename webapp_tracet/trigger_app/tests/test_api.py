@@ -1,14 +1,13 @@
 import json
 
 import requests
-from trigger_app.models import Event, ProposalDecision
+from trigger_app.models.event import Event
+from trigger_app.models.proposal import ProposalDecision
 from trigger_app.schemas import EventSchema, ProposalDecisionSchema
 
 # Fetch the instances from the database
 prop_dec = ProposalDecision.objects.get(id=77790)
-voevent_instances = Event.objects.filter(
-    event_group_id=prop_dec.event_group_id.id
-)
+voevent_instances = Event.objects.filter(event_group_id=prop_dec.event_group_id.id)
 voevent_instance = voevent_instances[0]
 
 # Serialize the instances to JSON-compatible dictionaries
