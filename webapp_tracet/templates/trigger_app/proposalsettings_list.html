@@ -7,7 +7,7 @@
   {% if user.is_authenticated %}
   <form action="{% url 'update_all_proposals' %}" method="post">
     {% csrf_token %}
-    <button type="submit" class="btn btn-primary">Update Proposals</button>
+    <button type="submit" class="btn btn-primary">Scan Proposals</button>
   </form>
 
   {% endif %}
@@ -35,8 +35,8 @@
       <th>ID</th>
       <th>Active</th>
       <th>Version</th>
-      <th>Created At</th>
-      <th>Updated At</th>
+      <th>Last Updated</th>
+      <th>Last Scanned</th>
       <th>Proposal ID</th>
       <th>Priority</th>
       {% comment %} <th>Source Type</th> {% endcomment %}
@@ -110,8 +110,8 @@
       <th>ID</th>
       <th>Active</th>
       <th>Version</th>
-      <th>Created At</th>
-      <th>Updated At</th>
+      <th>Last Updated</th>
+      <th>Last Scanned</th>
       <th>Proposal ID</th>
       <th>Priority</th>
       {% comment %} <th>Source Type</th> {% endcomment %}
